@@ -19,6 +19,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var ruInputSource: TISInputSource?
     
+    var isRecordPaused = false;
+    
     var ruIcon = #imageLiteral(resourceName: "ru")
     
     var enIcon = #imageLiteral(resourceName: "gb")
@@ -89,6 +91,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func handleEvent(_ event: NSEvent) {
+        print(event)
+        if isRecordPaused { return }
+        
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let withOption = flags == .option
         let withCommand = flags == .command
@@ -96,32 +101,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isLeftMouseDown = event.type == .leftMouseDown
         let code = isLeftMouseDown ? 0 : event.keyCode
         let isWordBreak = code == Key.Esc || code == Key.Tab || code == Key.Space;
+        let isEnter = code == Key.Enter;
+        let isArrow = code == Key.LeftArrow || code == Key.RightArrow || code == Key.UpArrow || code == Key.DownArrow;
     
         if KeyboardUtils.checkActionKeyPress(code, withOption) {
             switchLang()
+            isRecordPaused = true
             KeyboardUtils.changeTypedText(record)
+            isRecordPaused = false
             return
         }
     
-        // Reset record and skip event work is break or shorcut is started
-        if isLeftMouseDown || isWordBreak || (withOption && code != Key.Option) || withCommand {
+        // Reset record and skip event word is break or shorcut is started
+        if isEnter || isLeftMouseDown || isWordBreak || isArrow || (withOption && code != Key.Option) || withCommand {
             record = []
             return
         }
         
         // Remove last symbol if Backspace
-        if code == Key.Backspace && record.count > 0 {
-            record.removeLast()
+        if code == Key.Backspace {
+            if record.count > 0 {
+                record.removeLast()
+            }
             return
         }
         
         // Record pressed key
         if event.type == .keyDown && !event.isARepeat {
             let entry = [(withShift: withShift, code: event.keyCode)]
-            print(event.keyCode)
-            record = WorkspaceUtils.appWasChanged()
-                ? entry
-                : record + entry;
+            record = WorkspaceUtils.appWasChanged() ? entry : record + entry
         }
     }
 

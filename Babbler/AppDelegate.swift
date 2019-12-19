@@ -91,7 +91,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func handleEvent(_ event: NSEvent) {
-        print(event)
         if isRecordPaused { return }
         
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
@@ -105,6 +104,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isArrow = code == Key.LeftArrow || code == Key.RightArrow || code == Key.UpArrow || code == Key.DownArrow;
     
         if KeyboardUtils.checkActionKeyPress(code, withOption) {
+            print("switch:", record)
             switchLang()
             isRecordPaused = true
             KeyboardUtils.changeTypedText(record)
@@ -130,6 +130,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if event.type == .keyDown && !event.isARepeat {
             let entry = [(withShift: withShift, code: event.keyCode)]
             record = WorkspaceUtils.appWasChanged() ? entry : record + entry
+            print("record:", record)
         }
     }
 
@@ -152,6 +153,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        SecurityInputUtils.listenForSecurityInput {
+            print("Security input: ", $0, $1)
+        }
         NSApp.setActivationPolicy(.regular)
         ruIcon.size = NSMakeSize(16.0, 16.0)
         enIcon.size = NSMakeSize(16.0, 16.0)
@@ -176,3 +180,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         KeyboardUtils.addGlobalEventListener(handleEvent)
     }
 }
+

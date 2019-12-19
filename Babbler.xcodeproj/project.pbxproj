@@ -14,6 +14,7 @@
 		7AC0131423A68CD200FA3F07 /* WorkspaceUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131323A68CD200FA3F07 /* WorkspaceUtils.swift */; };
 		7AC0131723A68CDF00FA3F07 /* KeyboardUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131523A68CDF00FA3F07 /* KeyboardUtils.swift */; };
 		7AC0131823A68CDF00FA3F07 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131623A68CDF00FA3F07 /* Key.swift */; };
+		7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		7AC0131323A68CD200FA3F07 /* WorkspaceUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = WorkspaceUtils.swift; path = ../../hooey/test/WorkspaceUtils.swift; sourceTree = "<group>"; };
 		7AC0131523A68CDF00FA3F07 /* KeyboardUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeyboardUtils.swift; path = ../../hooey/test/KeyboardUtils.swift; sourceTree = "<group>"; };
 		7AC0131623A68CDF00FA3F07 /* Key.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Key.swift; path = ../../hooey/test/Key.swift; sourceTree = "<group>"; };
+		7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityInputUtils.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +70,7 @@
 				7AC0131323A68CD200FA3F07 /* WorkspaceUtils.swift */,
 				7AC0130C23A68C9A00FA3F07 /* Info.plist */,
 				7AC0130D23A68C9A00FA3F07 /* Babbler.entitlements */,
+				7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */,
 			);
 			path = Babbler;
 			sourceTree = "<group>";
@@ -144,6 +147,7 @@
 			files = (
 				7AC0131723A68CDF00FA3F07 /* KeyboardUtils.swift in Sources */,
 				7AC0131823A68CDF00FA3F07 /* Key.swift in Sources */,
+				7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */,
 				7AC0130623A68C9700FA3F07 /* ViewController.swift in Sources */,
 				7AC0130423A68C9700FA3F07 /* AppDelegate.swift in Sources */,
 				7AC0131423A68CD200FA3F07 /* WorkspaceUtils.swift in Sources */,

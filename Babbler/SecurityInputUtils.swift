@@ -54,7 +54,9 @@ class SecurityInputUtils: NSObject {
     ) -> Void {
         Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             let isSecureInputEnabled = IsSecureEventInputEnabled();
-            callback(isSecureInputEnabled, self.getSecurityInputEnablerApp())
+            let securityInputEnablerApp = isSecureInputEnabled ? self.getSecurityInputEnablerApp() : nil
+            
+            callback(isSecureInputEnabled, securityInputEnablerApp)
         }
     }
 }

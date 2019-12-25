@@ -36,6 +36,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var record: [(withShift: Bool, code: UInt16)] = []
     
+    func print(_ items: Any...) {
+//        let dateFormatter : DateFormatter = DateFormatter()
+//        dateFormatter.dateFormat = "hh:mm:ss:SSS"
+//        let date = Date()
+//
+//        Swift.print( dateFormatter.string(from: date), items)
+    }
+    
     func hasPrivileges() -> Bool {
       return AXIsProcessTrustedWithOptions(
         [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
@@ -54,8 +62,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         var iconName = ""
         if LanguageUtils.isRussian(currentLang) {
             iconName = "ru"
-        } else {
+        } else if LanguageUtils.isEnglish(currentLang) {
             iconName = "en"
+        } else {
+            iconName = "default"
         }
         
         if isSecurityInput {
@@ -71,6 +81,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func updateSecurityInputMessage() {
+        print("update")
         let title = securityApp != nil
             ? "⛔️ \"\(securityApp!)\" enabled security input mode"
             : "⛔️ Some app enabled security input mode"
@@ -81,8 +92,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func handleEvent(_ event: NSEvent) {
+//        let pasteboard = NSPasteboard.general
+        // let copiedString = pasteboard.string(forType: .string)
+//        print(copiedString)
         if isRecordPaused { return }
-        
+        print("event", event.type == .leftMouseDown ? -1 : event.keyCode)
+
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let withOption = flags == .option
         let withCommand = flags == .command
@@ -95,9 +110,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
     
         if KeyboardUtils.checkActionKeyPress(code, withOption) {
-            print("switch:", record)
-            LanguageUtils.swapLang()
+            print("switch")
             isRecordPaused = true
+            LanguageUtils.swapLang()
             KeyboardUtils.changeTypedText(record)
             isRecordPaused = false
             return
@@ -128,7 +143,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             record = []
         }
         record.append(entry)
-        print("record:", record)
     }
 
     @objc func quit() {
@@ -140,6 +154,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func addInputSourceMenuItems(_ menu: NSMenu) -> Void {
+        menu.addItem(NSMenuItem.separator())
         for inputSource in LanguageUtils.inputSources! {
             let item = NSMenuItem(
                 title: inputSource.name,
@@ -157,7 +172,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         SecurityInputUtils.listenForSecurityInput {
             self.securityApp = $1
-            self.isSecurityInput = $0
+            if self.isSecurityInput != $0 {
+                self.isSecurityInput = $0
+            }
         }
         NSApp.setActivationPolicy(.regular)
         icons.forEach { icon in
@@ -188,6 +205,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         messageMenuItem!.isHidden = true;
         statusBarItem.menu!.addItem(messageMenuItem!)
         addInputSourceMenuItems(statusBarItem.menu!)
+        statusBarItem.menu!.addItem(NSMenuItem.separator())
         statusBarItem.menu!.addItem(withTitle: "Quit", action: #selector(quit), keyEquivalent: "")
         
         currentLang = LanguageUtils.getCurrentLanguage()

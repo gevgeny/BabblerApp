@@ -69,7 +69,7 @@ import Carbon
         
         return nil
     }
-    
+
     @objc static func change() {
         if LanguageUtils.changeCallback != nil {
             LanguageUtils.changeCallback!()
@@ -89,28 +89,5 @@ import Carbon
     
     @objc class func onItemSelect() {
         print("sender")
-    }
-    
-    static func addInputSourceMenuItems(_ menu: NSMenu) -> Void {
-//        menu.addItem(
-//            withTitle: "inputSource.name",
-//            action: #selector(LanguageUtils.change),
-//            keyEquivalent: ""
-//        )
-        
-        for inputSource in inputSources! {
-//            let item = NSMenuItem(
-//                title: inputSource.name,
-//                action: #selector(LanguageUtils.onItemSelect),
-//                keyEquivalent: ""
-//            )
-            //item.identifier = NSUserInterfaceItemIdentifier(rawValue: inputSource.id)
-//            item.state = NSControl.StateValue.on
-            //item.image = NSImage(iconRef: inputSource.iconRef!)
-            //item.image?.size = NSMakeSize(16.0, 16.0)
-            //item.isEnabled = true
-            menu.addItem(withTitle: inputSource.name, action: Selector(("onItemSelect")), keyEquivalent: "")
-        }
-//        menu.addItem(NSMenuItem.separator())
     }
 }

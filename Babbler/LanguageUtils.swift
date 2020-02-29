@@ -34,14 +34,20 @@ import Carbon
     
     static func swapLang() {
         let lang = TISCopyCurrentKeyboardInputSource().takeUnretainedValue()
+        var err: OSStatus
         
         if isRussian(lang) {
-            TISSelectInputSource(LanguageUtils.enInputSource)
+            AppDelegate.print("current ru, set en")
+            err = TISSelectInputSource(LanguageUtils.enInputSource)
         } else {
-            TISSelectInputSource(LanguageUtils.ruInputSource)
+            AppDelegate.print("current en, set ru")
+            err = TISSelectInputSource(LanguageUtils.ruInputSource)
+        }
+        if (err != 0) {
+            AppDelegate.print("TISSelectInputSource error")
         }
     }
-    
+
     static func switchLang(_ langName: String) {
         let inputSource = inputSources!.first { $0.name == langName }
         
@@ -71,6 +77,7 @@ import Carbon
     }
 
     @objc static func change() {
+        AppDelegate.print(TISCopyCurrentKeyboardInputSource().takeUnretainedValue())
         if LanguageUtils.changeCallback != nil {
             LanguageUtils.changeCallback!()
         }

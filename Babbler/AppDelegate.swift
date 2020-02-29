@@ -17,7 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var messageMenuItem: NSMenuItem?
     
-    var isRecordPaused = false
+    var isWaitingForSwitch = false
     
     var isSecurityInput = false { didSet { updateSecurityInputMessage() } }
     
@@ -36,12 +36,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var record: [(withShift: Bool, code: UInt16)] = []
     
+    var text: String = ""
+    
+    static func print(_ items: Any...) {
+        let dateFormatter : DateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "hh:mm:ss:SSS"
+        let date = Date()
+
+        Swift.print( dateFormatter.string(from: date), items)
+    }
+    
     func print(_ items: Any...) {
-//        let dateFormatter : DateFormatter = DateFormatter()
-//        dateFormatter.dateFormat = "hh:mm:ss:SSS"
-//        let date = Date()
-//
-//        Swift.print( dateFormatter.string(from: date), items)
+        AppDelegate.print(items)
     }
     
     func hasPrivileges() -> Bool {
@@ -58,6 +64,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.runModal()
         quit()
     }
+
     func updateMenuBarIcon() {
         var iconName = ""
         if LanguageUtils.isRussian(currentLang) {
@@ -81,7 +88,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func updateSecurityInputMessage() {
-        print("update")
         let title = securityApp != nil
             ? "⛔️ \"\(securityApp!)\" enabled security input mode"
             : "⛔️ Some app enabled security input mode"
@@ -92,11 +98,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func handleEvent(_ event: NSEvent) {
-//        let pasteboard = NSPasteboard.general
-        // let copiedString = pasteboard.string(forType: .string)
-//        print(copiedString)
-        if isRecordPaused { return }
-        print("event", event.type == .leftMouseDown ? -1 : event.keyCode)
+        if isWaitingForSwitch { return }
+        if (event.type == .keyDown) {
+           // print("event",event.keyCode,  event.characters!)
+        }
+        
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let withOption = flags == .option
@@ -107,20 +113,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isArrow = code == Key.LeftArrow || code == Key.RightArrow || code == Key.UpArrow || code == Key.DownArrow
         let isEnter = code == Key.Enter
         let isRecordCanceled = code == Key.Esc || code == Key.Tab || isArrow || isEnter || isLeftMouseDown
-        
     
         if KeyboardUtils.checkActionKeyPress(code, withOption) {
-            print("switch")
-            isRecordPaused = true
-            LanguageUtils.swapLang()
-            KeyboardUtils.changeTypedText(record)
-            isRecordPaused = false
+            print("switch", text)
+            self.isWaitingForSwitch = true
+            KeyboardUtils.fetchSelection {text in
+                self.print("fetched text",  text)
+                if (text == "") {
+                    LanguageUtils.swapLang()
+                } else {
+                    self.isWaitingForSwitch = false
+                }
+            }
             return
         }
-    
+        
         // Reset record and skip event word is break or shorcut is started
         if isRecordCanceled || (withOption && code != Key.Option) || withCommand {
             record = []
+            text = ""
+            
             return
         }
         
@@ -128,6 +140,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if code == Key.Backspace {
             if record.count > 0 {
                 record.removeLast()
+                text = String(text.dropLast())
             }
             return
         }
@@ -141,8 +154,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isWordBreak = record.last?.code == Key.Space && entry.code != Key.Space
         if (isWordBreak || WorkspaceUtils.appWasChanged()) {
             record = []
+            text = ""
         }
         record.append(entry)
+        text += event.characters!
     }
 
     @objc func quit() {
@@ -196,8 +211,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         LanguageUtils.onLanguageChange {
             self.currentLang = LanguageUtils.getCurrentLanguage()
+            
+            if (self.isWaitingForSwitch) {
+                KeyboardUtils.changeTypedText(self.record)
+                self.isWaitingForSwitch = false
+//                self.print("switched", self.text)
+            }
         }
-        
+
         NSApp.setActivationPolicy(.accessory)
         statusBarItem.menu = NSMenu()
         statusBarItem.menu?.autoenablesItems = true
@@ -207,7 +228,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         addInputSourceMenuItems(statusBarItem.menu!)
         statusBarItem.menu!.addItem(NSMenuItem.separator())
         statusBarItem.menu!.addItem(withTitle: "Quit", action: #selector(quit), keyEquivalent: "")
-        
+
         currentLang = LanguageUtils.getCurrentLanguage()
         KeyboardUtils.addGlobalEventListener(handleEvent)
     }

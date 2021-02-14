@@ -7,19 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7A765D5F25D916460076B974 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D5E25D916460076B974 /* Key.swift */; };
+		7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6125D91EB60076B974 /* KeyboardUtils.swift */; };
+		7A765D6525D98B170076B974 /* WorkspaceUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6425D98B170076B974 /* WorkspaceUtils.swift */; };
 		7AC0130423A68C9700FA3F07 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130323A68C9700FA3F07 /* AppDelegate.swift */; };
 		7AC0130623A68C9700FA3F07 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130523A68C9700FA3F07 /* ViewController.swift */; };
 		7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130723A68C9A00FA3F07 /* Assets.xcassets */; };
 		7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130923A68C9A00FA3F07 /* Main.storyboard */; };
-		7AC0131423A68CD200FA3F07 /* WorkspaceUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131323A68CD200FA3F07 /* WorkspaceUtils.swift */; };
-		7AC0131723A68CDF00FA3F07 /* KeyboardUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131523A68CDF00FA3F07 /* KeyboardUtils.swift */; };
-		7AC0131823A68CDF00FA3F07 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131623A68CDF00FA3F07 /* Key.swift */; };
 		7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */; };
 		7AC0131C23AE10D600FA3F07 /* LanguageUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131B23AE10D600FA3F07 /* LanguageUtils.swift */; };
 		7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7A765D5E25D916460076B974 /* Key.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Key.swift; sourceTree = "<group>"; };
+		7A765D6125D91EB60076B974 /* KeyboardUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardUtils.swift; sourceTree = "<group>"; };
+		7A765D6425D98B170076B974 /* WorkspaceUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceUtils.swift; sourceTree = "<group>"; };
 		7AC0130023A68C9700FA3F07 /* Babbler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Babbler.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7AC0130323A68C9700FA3F07 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AC0130523A68C9700FA3F07 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -27,9 +30,6 @@
 		7AC0130A23A68C9A00FA3F07 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		7AC0130C23A68C9A00FA3F07 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7AC0130D23A68C9A00FA3F07 /* Babbler.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Babbler.entitlements; sourceTree = "<group>"; };
-		7AC0131323A68CD200FA3F07 /* WorkspaceUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = WorkspaceUtils.swift; path = ../../hooey/test/WorkspaceUtils.swift; sourceTree = "<group>"; };
-		7AC0131523A68CDF00FA3F07 /* KeyboardUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = KeyboardUtils.swift; path = ../../hooey/test/KeyboardUtils.swift; sourceTree = "<group>"; };
-		7AC0131623A68CDF00FA3F07 /* Key.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Key.swift; path = ../../hooey/test/Key.swift; sourceTree = "<group>"; };
 		7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityInputUtils.swift; sourceTree = "<group>"; };
 		7AC0131B23AE10D600FA3F07 /* LanguageUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageUtils.swift; sourceTree = "<group>"; };
 		7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TISInputSourceExtension.swift; sourceTree = "<group>"; };
@@ -69,14 +69,14 @@
 				7AC0130523A68C9700FA3F07 /* ViewController.swift */,
 				7AC0130723A68C9A00FA3F07 /* Assets.xcassets */,
 				7AC0130923A68C9A00FA3F07 /* Main.storyboard */,
-				7AC0131523A68CDF00FA3F07 /* KeyboardUtils.swift */,
-				7AC0131623A68CDF00FA3F07 /* Key.swift */,
-				7AC0131323A68CD200FA3F07 /* WorkspaceUtils.swift */,
 				7AC0130C23A68C9A00FA3F07 /* Info.plist */,
 				7AC0130D23A68C9A00FA3F07 /* Babbler.entitlements */,
 				7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */,
 				7AC0131B23AE10D600FA3F07 /* LanguageUtils.swift */,
 				7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */,
+				7A765D5E25D916460076B974 /* Key.swift */,
+				7A765D6125D91EB60076B974 /* KeyboardUtils.swift */,
+				7A765D6425D98B170076B974 /* WorkspaceUtils.swift */,
 			);
 			path = Babbler;
 			sourceTree = "<group>";
@@ -151,14 +151,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7AC0131723A68CDF00FA3F07 /* KeyboardUtils.swift in Sources */,
-				7AC0131823A68CDF00FA3F07 /* Key.swift in Sources */,
 				7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */,
+				7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */,
 				7AC0130623A68C9700FA3F07 /* ViewController.swift in Sources */,
 				7AC0130423A68C9700FA3F07 /* AppDelegate.swift in Sources */,
-				7AC0131423A68CD200FA3F07 /* WorkspaceUtils.swift in Sources */,
+				7A765D5F25D916460076B974 /* Key.swift in Sources */,
 				7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */,
 				7AC0131C23AE10D600FA3F07 /* LanguageUtils.swift in Sources */,
+				7A765D6525D98B170076B974 /* WorkspaceUtils.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

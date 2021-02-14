@@ -1,11 +1,3 @@
-//
-//  AppDelegate.swift
-//  test
-//
-//  Created by Eugene Gluhotorenko on 12/7/19.
-//  Copyright © 2019 Eugene Gluhotorenko. All rights reserved.
-//
-
 import Cocoa
 import Carbon
 
@@ -100,7 +92,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func handleEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
         if (event.type == .keyDown) {
-           // print("event",event.keyCode,  event.characters!)
+            print("event",event.keyCode,  event.characters!)
         }
         
 
@@ -110,54 +102,48 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let withShift = flags == .shift
         let isLeftMouseDown = event.type == .leftMouseDown
         let code = isLeftMouseDown ? 0 : event.keyCode
-        let isArrow = code == Key.LeftArrow || code == Key.RightArrow || code == Key.UpArrow || code == Key.DownArrow
-        let isEnter = code == Key.Enter
-        let isRecordCanceled = code == Key.Esc || code == Key.Tab || isArrow || isEnter || isLeftMouseDown
-    
+        let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
+        let isEnter = code == Key.enter
+        let isDelete = code == Key.delete
+        let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
+
         if KeyboardUtils.checkActionKeyPress(code, withOption) {
             print("switch", text)
             self.isWaitingForSwitch = true
-            KeyboardUtils.fetchSelection {text in
-                self.print("fetched text",  text)
-                if (text == "") {
-                    LanguageUtils.swapLang()
-                } else {
-                    self.isWaitingForSwitch = false
-                }
-            }
+            LanguageUtils.swapLang()
             return
         }
         
-        // Reset record and skip event word is break or shorcut is started
-        if isRecordCanceled || (withOption && code != Key.Option) || withCommand {
+        // Erase record and skip event word is break or shorcut is started
+        if isRecordCanceled || (withOption && code != Key.option) || withCommand {
             record = []
             text = ""
             
             return
         }
         
-        // Remove last symbol if Backspace
-        if code == Key.Backspace {
-            if record.count > 0 {
-                record.removeLast()
-                text = String(text.dropLast())
-            }
+        // Delete last symbol if delete was pressed
+        if isDelete && record.count > 0 {
+            record.removeLast()
+            text = String(text.dropLast())
+        }
+        
+        if code == Key.delete || event.type != .keyDown || event.isARepeat {
             return
         }
         
-        if event.type != .keyDown || event.isARepeat {
-            return
-        }
-        
-        // Record pressed key
-        let entry = (withShift: withShift, code: event.keyCode)
-        let isWordBreak = record.last?.code == Key.Space && entry.code != Key.Space
-        if (isWordBreak || WorkspaceUtils.appWasChanged()) {
+        let isWordBreak = record.last?.code == Key.space && event.keyCode != Key.space
+        let appDidChange = WorkspaceUtils.checkCurrentApp()
+        if (isWordBreak || appDidChange) {
             record = []
             text = ""
         }
+        
+        // Save pressed key
+        let entry = (withShift: withShift, code: event.keyCode)
         record.append(entry)
         text += event.characters!
+        print("text", text)
     }
 
     @objc func quit() {
@@ -208,14 +194,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             showError(error!, "")
             return
         }
-        
+
         LanguageUtils.onLanguageChange {
             self.currentLang = LanguageUtils.getCurrentLanguage()
             
             if (self.isWaitingForSwitch) {
-                KeyboardUtils.changeTypedText(self.record)
+                if (self.record.count > 0) {
+                    // Replace typed text with delay in order to wait till the lang is changed.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
+                        KeyboardUtils.replaceTypedText(self.record)
+                    }
+                } else {
+//                    KeyboardUtils.fetchSelection {text in
+//                        self.print("fetched text",  text)
+//                    }
+                }
                 self.isWaitingForSwitch = false
-//                self.print("switched", self.text)
             }
         }
 

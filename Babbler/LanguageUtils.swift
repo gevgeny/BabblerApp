@@ -1,11 +1,3 @@
-//
-//  LanguageUtils.swift
-//  Babbler
-//
-//  Created by Eugene Gluhotorenko on 12/21/19.
-//  Copyright © 2019 Eugene Gluhotorenko. All rights reserved.
-//
-
 import Cocoa
 import Carbon
 

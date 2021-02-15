@@ -92,7 +92,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func handleEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
         if (event.type == .keyDown) {
-            print("event",event.keyCode,  event.characters!)
+            //print("event",event.keyCode,  event.characters!)
         }
         
 
@@ -108,7 +108,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
 
         if KeyboardUtils.checkActionKeyPress(code, withOption) {
-            print("switch", text)
+            //print("switch", text)
             self.isWaitingForSwitch = true
             LanguageUtils.swapLang()
             return
@@ -143,7 +143,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let entry = (withShift: withShift, code: event.keyCode)
         record.append(entry)
         text += event.characters!
-        print("text", text)
+        //print("text", text)
     }
 
     @objc func quit() {
@@ -201,13 +201,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if (self.isWaitingForSwitch) {
                 if (self.record.count > 0) {
                     // Replace typed text with delay in order to wait till the lang is changed.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         KeyboardUtils.replaceTypedText(self.record)
                     }
                 } else {
-//                    KeyboardUtils.fetchSelection {text in
-//                        self.print("fetched text",  text)
-//                    }
+                    KeyboardUtils.fetchSelectedText {text in
+                        self.print("fetched text",  text)
+                        //KeyboardUtils.typeText(text);
+                    }
                 }
                 self.isWaitingForSwitch = false
             }

@@ -48,20 +48,49 @@ import Cocoa
             eventDown?.post(tap: loc)
             eventUp?.post(tap: loc)
         }
-//
-//        let cmdd = CGEvent(keyboardEventSource: src, virtualKey: 0x38, keyDown: true)
-//        let cmdu = CGEvent(keyboardEventSource: src, virtualKey: 0x38, keyDown: false)
-//        let spcd = CGEvent(keyboardEventSource: src, virtualKey: 0x31, keyDown: true)
-//        let spcu = CGEvent(keyboardEventSource: src, virtualKey: 0x31, keyDown: false)
-//
-//        //spcd?.flags = CGEventFlags.maskCommand;
-//
-//        let loc = CGEventTapLocation.cghidEventTap
-//
-//        cmdd?.post(tap: loc)
-//        spcd?.post(tap: loc)
-//        spcu?.post(tap: loc)
-//        cmdu?.post(tap: loc)
+    }
+    
+    static func fetchSelectedText(_ callback: @escaping (String) -> Void) -> Void {
+        // Save current text from clipboard
+        let clipboardText = NSPasteboard.general.string(forType: .string) ?? ""
+        NSPasteboard.general.clearContents()
+        
+        // Fire Cmd+C
+        let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
+        let loc = CGEventTapLocation.cghidEventTap
+        let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.c, keyDown: true)
+        let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.c, keyDown: false)
+        eventDown?.flags = CGEventFlags.maskCommand;
+        eventDown?.post(tap: loc)
+        eventUp?.post(tap: loc)
+        
+        // Wait till text copied
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            // Get new text from clipboard
+            let newClipboardText = NSPasteboard.general.string(forType: .string) ?? ""
+            
+            // Put old text into clipboard
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(clipboardText, forType: .string);
+            
+            callback(newClipboardText);
+        }
+    }
+    
+    static func typeText(_ text: String) {
+        text.forEach { char in
+            let code = Array(String(char).utf16)[0]
+            let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
+            let loc = CGEventTapLocation.cghidEventTap
+            let eventDown = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true)
+            let eventUp = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)
+            
+//            if withShift {
+//                eventDown?.flags = CGEventFlags.maskShift;
+//            }
+            eventDown?.post(tap: loc)
+            eventUp?.post(tap: loc)
+        }
     }
 }
 

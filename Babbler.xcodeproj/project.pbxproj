@@ -10,6 +10,7 @@
 		7A765D5F25D916460076B974 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D5E25D916460076B974 /* Key.swift */; };
 		7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6125D91EB60076B974 /* KeyboardUtils.swift */; };
 		7A765D6525D98B170076B974 /* WorkspaceUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6425D98B170076B974 /* WorkspaceUtils.swift */; };
+		7A765D6825D99C220076B974 /* SettingsWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A765D6725D99C220076B974 /* SettingsWindow.xib */; };
 		7AC0130423A68C9700FA3F07 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130323A68C9700FA3F07 /* AppDelegate.swift */; };
 		7AC0130623A68C9700FA3F07 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130523A68C9700FA3F07 /* ViewController.swift */; };
 		7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130723A68C9A00FA3F07 /* Assets.xcassets */; };
@@ -23,6 +24,7 @@
 		7A765D5E25D916460076B974 /* Key.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Key.swift; sourceTree = "<group>"; };
 		7A765D6125D91EB60076B974 /* KeyboardUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardUtils.swift; sourceTree = "<group>"; };
 		7A765D6425D98B170076B974 /* WorkspaceUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceUtils.swift; sourceTree = "<group>"; };
+		7A765D6725D99C220076B974 /* SettingsWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SettingsWindow.xib; sourceTree = "<group>"; };
 		7AC0130023A68C9700FA3F07 /* Babbler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Babbler.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7AC0130323A68C9700FA3F07 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AC0130523A68C9700FA3F07 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -77,6 +79,7 @@
 				7A765D5E25D916460076B974 /* Key.swift */,
 				7A765D6125D91EB60076B974 /* KeyboardUtils.swift */,
 				7A765D6425D98B170076B974 /* WorkspaceUtils.swift */,
+				7A765D6725D99C220076B974 /* SettingsWindow.xib */,
 			);
 			path = Babbler;
 			sourceTree = "<group>";
@@ -141,6 +144,7 @@
 			files = (
 				7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */,
 				7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */,
+				7A765D6825D99C220076B974 /* SettingsWindow.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

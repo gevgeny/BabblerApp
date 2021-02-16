@@ -201,13 +201,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if (self.isWaitingForSwitch) {
                 if (self.record.count > 0) {
                     // Replace typed text with delay in order to wait till the lang is changed.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                         KeyboardUtils.replaceTypedText(self.record)
                     }
                 } else {
                     KeyboardUtils.fetchSelectedText {text in
                         self.print("fetched text",  text)
-                        //KeyboardUtils.typeText(text);
+                        KeyboardUtils.typeText(text);
+                        
                     }
                 }
                 self.isWaitingForSwitch = false

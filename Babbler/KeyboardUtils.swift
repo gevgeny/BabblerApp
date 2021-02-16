@@ -77,20 +77,30 @@ import Cocoa
         }
     }
     
-    static func typeText(_ text: String) {
-        text.forEach { char in
-            let code = Array(String(char).utf16)[0]
-            let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
-            let loc = CGEventTapLocation.cghidEventTap
-            let eventDown = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true)
-            let eventUp = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)
-            
-//            if withShift {
-//                eventDown?.flags = CGEventFlags.maskShift;
-//            }
-            eventDown?.post(tap: loc)
-            eventUp?.post(tap: loc)
+    static func translateText(_ text: String) -> String {
+        let tranlatedText = text.map{char -> String in
+            if (ruEnDictionary[String(char)] != nil) {
+                return ruEnDictionary[String(char)]!
+            } else if (enRuDictionary[String(char)] != nil){
+                return enRuDictionary[String(char)]!
+            } else {
+                return String(char);
+            }
         }
+        return tranlatedText.joined();
+    }
+
+    static func typeText(_ text: String) {
+        let tranlatedText = translateText(text)
+        
+        let utf16Chars = Array(tranlatedText.utf16)
+        let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true);
+        event1?.flags = .maskNonCoalesced
+        event1?.keyboardSetUnicodeString(stringLength: utf16Chars.count, unicodeString: utf16Chars)
+        event1?.post(tap: .cghidEventTap)
+
+        let event2 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: false);
+        event2?.flags = .maskNonCoalesced
+        event2?.post(tap: .cghidEventTap)
     }
 }
-

@@ -4,27 +4,25 @@ import Carbon
 
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
-
-    var statusBarItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     
-    var messageMenuItem: NSMenuItem?
+    var statusItemController: StatusItemController?;
     
     var isWaitingForSwitch = false
     
-    var isSecurityInput = false { didSet { updateSecurityInputMessage() } }
+    var isSecurityInput = false {
+        didSet {
+            statusItemController!.updateSecurityInputMessage(securityApp, isSecurityInput)
+            statusItemController!.updateMenuBarIcon(currentLang, isSecurityInput)
+        }
+    }
     
     var securityApp: String?
     
-    var currentLang: TISInputSource? { didSet { updateMenuBarIcon() } }
-    
-    var icons = [
-        "ru": #imageLiteral(resourceName: "ru"),
-        "ru_warn": #imageLiteral(resourceName: "ru_warn"),
-        "en": #imageLiteral(resourceName: "gb"),
-        "en_warn": #imageLiteral(resourceName: "gb_warn"),
-        "default": #imageLiteral(resourceName: "default"),
-        "default_warn": #imageLiteral(resourceName: "default_warn")
-    ]
+    var currentLang: TISInputSource? {
+        didSet {
+            statusItemController!.updateMenuBarIcon(currentLang, isSecurityInput)
+        }
+    }
     
     var record: [(withShift: Bool, code: UInt16)] = []
     
@@ -55,38 +53,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.addButton(withTitle: "OK")
         alert.runModal()
         quit()
-    }
-
-    func updateMenuBarIcon() {
-        var iconName = ""
-        if LanguageUtils.isRussian(currentLang) {
-            iconName = "ru"
-        } else if LanguageUtils.isEnglish(currentLang) {
-            iconName = "en"
-        } else {
-            iconName = "default"
-        }
-        
-        if isSecurityInput {
-            iconName += "_warn"
-        }
-        statusBarItem.button!.image = icons[iconName]
-        
-        for menuItem in statusBarItem.menu!.items {
-            menuItem.state = NSControl.StateValue.off
-        }
-        let currentMenuItem = statusBarItem.menu!.items.first { $0.title == currentLang!.name }
-        currentMenuItem!.state = NSControl.StateValue.on
-    }
-    
-    func updateSecurityInputMessage() {
-        let title = securityApp != nil
-            ? "⛔️ \"\(securityApp!)\" enabled security input mode"
-            : "⛔️ Some app enabled security input mode"
-        messageMenuItem?.isHidden = !isSecurityInput;
-        messageMenuItem?.attributedTitle = NSAttributedString(string: title, attributes: [NSAttributedString.Key.foregroundColor: NSColor.red]
-        )
-        updateMenuBarIcon()
     }
     
     func handleEvent(_ event: NSEvent) {
@@ -178,9 +144,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         NSApp.setActivationPolicy(.regular)
-        icons.forEach { icon in
-            icon.value.size = NSMakeSize(16.0, 16.0)
-        }
         
         if !hasPrivileges() {
             showError(
@@ -214,17 +177,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self.isWaitingForSwitch = false
             }
         }
-
-        NSApp.setActivationPolicy(.accessory)
-        statusBarItem.menu = NSMenu()
-        statusBarItem.menu?.autoenablesItems = true
-        messageMenuItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-        messageMenuItem!.isHidden = true;
-        statusBarItem.menu!.addItem(messageMenuItem!)
-        addInputSourceMenuItems(statusBarItem.menu!)
-        statusBarItem.menu!.addItem(NSMenuItem.separator())
-        statusBarItem.menu!.addItem(withTitle: "Quit", action: #selector(quit), keyEquivalent: "")
-
+        
+        statusItemController = StatusItemController();
         currentLang = LanguageUtils.getCurrentLanguage()
         KeyboardUtils.addGlobalEventListener(handleEvent)
     }

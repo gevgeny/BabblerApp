@@ -57,10 +57,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func handleEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
-        if (event.type == .keyDown) {
-            //print("event",event.keyCode,  event.characters!)
-        }
-        
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let withOption = flags == .option
@@ -109,7 +105,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let entry = (withShift: withShift, code: event.keyCode)
         record.append(entry)
         text += event.characters!
-        //print("text", text)
     }
 
     @objc func quit() {
@@ -151,7 +146,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 "Go to System Prefences -> Security & Privacy -> Accessibility, and add the app into the list.\nThen restart the app."
             )
         }
-        let error = LanguageUtils.fetchInputSources();
+        let error = LanguageUtils.initInputSources();
         
         if error != nil {
             showError(error!, "")
@@ -159,7 +154,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         LanguageUtils.onLanguageChange {
-            self.currentLang = LanguageUtils.getCurrentLanguage()
+            self.currentLang = LanguageUtils.getCurrentInputSource()
             
             if (self.isWaitingForSwitch) {
                 if (self.record.count > 0) {
@@ -179,7 +174,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         statusItemController = StatusItemController();
-        currentLang = LanguageUtils.getCurrentLanguage()
+        currentLang = LanguageUtils.getCurrentInputSource()
         KeyboardUtils.addGlobalEventListener(handleEvent)
     }
 }

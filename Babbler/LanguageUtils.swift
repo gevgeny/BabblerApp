@@ -10,7 +10,7 @@ import Carbon
     
     static var ruInputSource: TISInputSource?
     
-    static func getCurrentLanguage() -> TISInputSource {
+    static func getCurrentInputSource() -> TISInputSource {
         return TISCopyCurrentKeyboardInputSource().takeUnretainedValue()
     }
     
@@ -46,7 +46,7 @@ import Carbon
         TISSelectInputSource(inputSource!)
     }
     
-    static func fetchInputSources() -> String? {
+    static func initInputSources() -> String? {
         let inputSourceNSArray = TISCreateInputSourceList(nil, false).takeRetainedValue() as NSArray
         let inputSourceList = inputSourceNSArray as! [TISInputSource]
         inputSources = inputSourceList.filter {
@@ -62,8 +62,6 @@ import Carbon
             return "Russian input source not found"
         }
         ruInputSource = ru
-        
-        print(enInputSource!.name)
         
         return nil
     }

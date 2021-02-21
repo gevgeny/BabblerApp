@@ -1,8 +1,8 @@
 import Cocoa
 import Carbon
 
-class StatusItemController {
-    let statusItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+class StatusItemController: NSObject {
+    let statusItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     
     var messageMenuItem: NSMenuItem?
     
@@ -15,43 +15,55 @@ class StatusItemController {
         "default_warn": #imageLiteral(resourceName: "default_warn")
     ]
     
-    init() {
-        icons.forEach { icon in
-            icon.value.size = NSMakeSize(16.0, 16.0)
-        }
+    override init() {
+        super.init()
         NSApp.setActivationPolicy(.accessory)
         statusItem.menu = NSMenu()
-        statusItem.menu?.autoenablesItems = true
+        statusItem.menu?.autoenablesItems = false
         messageMenuItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         messageMenuItem!.isHidden = true;
         statusItem.menu!.addItem(messageMenuItem!)
+        statusItem.menu!.addItem(NSMenuItem.separator())
         addInputSourceMenuItems(statusItem.menu!)
+        let openSettingsMenuItem = NSMenuItem(
+            title: "Open Settings",
+            action: #selector(self.openSettings),
+            keyEquivalent: ""
+        )
+        openSettingsMenuItem.target = self;
+        statusItem.menu!.addItem(openSettingsMenuItem)
         statusItem.menu!.addItem(NSMenuItem.separator())
         statusItem.menu!.addItem(withTitle: "Quit", action: #selector(quit), keyEquivalent: "")
+        
     }
     
     @objc func onLanguageItemSelect(_ targetMenuItem: NSMenuItem) {
         LanguageUtils.switchLang(targetMenuItem.title)
     }
     
+    
     @objc func quit() {
         NSApplication.shared.terminate(self)
     }
     
+    @objc func openSettings() {
+        print("openSettings")
+        var myWindow: NSWindow? = nil
+        let storyboard = NSStoryboard(name: NSStoryboard.Name("Main"),bundle: nil)
+        let controller = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier("preferencesView")) as! NSViewController
+        print("controller", controller)
+        myWindow = NSWindow(contentViewController: controller)
+        NSApp.activate(ignoringOtherApps: true)
+        myWindow?.makeKeyAndOrderFront(self)
+        let vc = NSWindowController(window: myWindow)
+        vc.showWindow(self)
+    }
+    
+    
     func updateMenuBarIcon(_ lang: TISInputSource?, _ isSecurityInput: Bool) {
-        var iconName = ""
-        if LanguageUtils.isRussian(lang) {
-            iconName = "ru"
-        } else if LanguageUtils.isEnglish(lang) {
-            iconName = "en"
-        } else {
-            iconName = "default"
-        }
-        
-        if isSecurityInput {
-            iconName += "_warn"
-        }
-        statusItem.button!.image = icons[iconName]
+        let inputSource = LanguageUtils.getCurrentInputSource()
+        print(LanguageUtils.getCurrentInputSource())
+        statusItem.button!.image = ImageUtils.getLangImage(inputSource, isSecurityInput)
         
         for menuItem in statusItem.menu!.items {
             menuItem.state = NSControl.StateValue.off

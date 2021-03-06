@@ -13,8 +13,11 @@
 		7A765D6D25DC56B50076B974 /* KeyDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6C25DC56B50076B974 /* KeyDictionary.swift */; };
 		7A765D8E25DF09F50076B974 /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D8D25DF09F50076B974 /* StatusItemController.swift */; };
 		7A765D9325E2D7170076B974 /* ImageUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9225E2D7170076B974 /* ImageUtils.swift */; };
+		7A765D9C25E7ABCE0076B974 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9A25E7ABCE0076B974 /* SettingsViewController.swift */; };
+		7A765D9D25E7ABCE0076B974 /* SettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */; };
+		7A765DA025EBAED70076B974 /* InputSourceCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9F25EBAED70076B974 /* InputSourceCellView.swift */; };
+		7A906C5925F3F95A00913B56 /* PreferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A906C5825F3F95A00913B56 /* PreferenceStore.swift */; };
 		7AC0130423A68C9700FA3F07 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130323A68C9700FA3F07 /* AppDelegate.swift */; };
-		7AC0130623A68C9700FA3F07 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130523A68C9700FA3F07 /* ViewController.swift */; };
 		7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130723A68C9A00FA3F07 /* Assets.xcassets */; };
 		7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130923A68C9A00FA3F07 /* Main.storyboard */; };
 		7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */; };
@@ -29,9 +32,12 @@
 		7A765D6C25DC56B50076B974 /* KeyDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyDictionary.swift; sourceTree = "<group>"; };
 		7A765D8D25DF09F50076B974 /* StatusItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
 		7A765D9225E2D7170076B974 /* ImageUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUtils.swift; sourceTree = "<group>"; };
+		7A765D9A25E7ABCE0076B974 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SettingsViewController.xib; sourceTree = "<group>"; };
+		7A765D9F25EBAED70076B974 /* InputSourceCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSourceCellView.swift; sourceTree = "<group>"; };
+		7A906C5825F3F95A00913B56 /* PreferenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferenceStore.swift; sourceTree = "<group>"; };
 		7AC0130023A68C9700FA3F07 /* Babbler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Babbler.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7AC0130323A68C9700FA3F07 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		7AC0130523A68C9700FA3F07 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		7AC0130723A68C9A00FA3F07 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7AC0130A23A68C9A00FA3F07 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		7AC0130C23A68C9A00FA3F07 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -72,7 +78,6 @@
 			isa = PBXGroup;
 			children = (
 				7AC0130323A68C9700FA3F07 /* AppDelegate.swift */,
-				7AC0130523A68C9700FA3F07 /* ViewController.swift */,
 				7AC0130723A68C9A00FA3F07 /* Assets.xcassets */,
 				7AC0130923A68C9A00FA3F07 /* Main.storyboard */,
 				7AC0130C23A68C9A00FA3F07 /* Info.plist */,
@@ -86,6 +91,10 @@
 				7A765D6C25DC56B50076B974 /* KeyDictionary.swift */,
 				7A765D8D25DF09F50076B974 /* StatusItemController.swift */,
 				7A765D9225E2D7170076B974 /* ImageUtils.swift */,
+				7A765D9A25E7ABCE0076B974 /* SettingsViewController.swift */,
+				7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */,
+				7A765D9F25EBAED70076B974 /* InputSourceCellView.swift */,
+				7A906C5825F3F95A00913B56 /* PreferenceStore.swift */,
 			);
 			path = Babbler;
 			sourceTree = "<group>";
@@ -149,6 +158,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */,
+				7A765D9D25E7ABCE0076B974 /* SettingsViewController.xib in Resources */,
 				7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -160,11 +170,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A906C5925F3F95A00913B56 /* PreferenceStore.swift in Sources */,
+				7A765DA025EBAED70076B974 /* InputSourceCellView.swift in Sources */,
 				7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */,
 				7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */,
+				7A765D9C25E7ABCE0076B974 /* SettingsViewController.swift in Sources */,
 				7A765D8E25DF09F50076B974 /* StatusItemController.swift in Sources */,
 				7A765D6D25DC56B50076B974 /* KeyDictionary.swift in Sources */,
-				7AC0130623A68C9700FA3F07 /* ViewController.swift in Sources */,
 				7AC0130423A68C9700FA3F07 /* AppDelegate.swift in Sources */,
 				7A765D5F25D916460076B974 /* Key.swift in Sources */,
 				7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */,

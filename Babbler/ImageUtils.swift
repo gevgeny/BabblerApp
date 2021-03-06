@@ -20,7 +20,8 @@ import Carbon
 //        let caLayer = CALayer();
 //
 //        caLayer.addSublayer(<#T##layer: CALayer##CALayer#>)
-        
+        // https://riptutorial.com/ios/example/16243/how-to-add-a-uiimage-to-a-calayer
+        // https://stackoverflow.com/questions/41386423/get-image-from-calayer-or-nsview-swift-3
         
         return NSImage(cgImage: cgimg!, size: NSMakeSize(16.0, 16.0))
     }

@@ -6,6 +6,8 @@ class StatusItemController: NSObject {
     
     var messageMenuItem: NSMenuItem?
     
+    var settingsViewController: SettingsViewController?
+    
     var icons = [
         "ru": #imageLiteral(resourceName: "ru"),
         "ru_warn": #imageLiteral(resourceName: "ru_warn"),
@@ -27,7 +29,7 @@ class StatusItemController: NSObject {
         addInputSourceMenuItems(statusItem.menu!)
         let openSettingsMenuItem = NSMenuItem(
             title: "Open Settings",
-            action: #selector(self.openSettings),
+            action: #selector(openSettings),
             keyEquivalent: ""
         )
         openSettingsMenuItem.target = self;
@@ -50,15 +52,13 @@ class StatusItemController: NSObject {
         print("openSettings")
         var myWindow: NSWindow? = nil
         let storyboard = NSStoryboard(name: NSStoryboard.Name("Main"),bundle: nil)
-        let controller = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier("preferencesView")) as! NSViewController
-        print("controller", controller)
-        myWindow = NSWindow(contentViewController: controller)
+        settingsViewController = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier("preferencesView")) as? SettingsViewController
+        myWindow = NSWindow(contentViewController: settingsViewController!)
         NSApp.activate(ignoringOtherApps: true)
         myWindow?.makeKeyAndOrderFront(self)
         let vc = NSWindowController(window: myWindow)
         vc.showWindow(self)
     }
-    
     
     func updateMenuBarIcon(_ lang: TISInputSource?, _ isSecurityInput: Bool) {
         let inputSource = LanguageUtils.getCurrentInputSource()

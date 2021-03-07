@@ -43,7 +43,7 @@ extension SettingsViewController: NSTableViewDataSource, NSTableViewDelegate {
         } else {
             let cellIdentifier = NSUserInterfaceItemIdentifier(rawValue: "inputSourceCell")
             let cellView = tableView.makeView(withIdentifier: cellIdentifier, owner: self) as! InputSourceCellView
-            cellView.initInputOptions(app.path)
+            cellView.initInputOptions(app.id)
             return cellView
         }
     }

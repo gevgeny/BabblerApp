@@ -80,7 +80,7 @@
                                                                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wTe-Vd-bdv">
                                                                     <rect key="frame" x="3" y="8" width="24" height="24"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="NSActionTemplate" catalog="system" id="Zd2-uR-GTO"/>
+                                                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="NSActionTemplate" id="Zd2-uR-GTO"/>
                                                                 </imageView>
                                                                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsExpansionToolTips="YES" translatesAutoresizingMaskIntoConstraints="NO" id="g5n-hU-ka8">
                                                                     <rect key="frame" x="33" y="12" width="253" height="17"/>
@@ -120,7 +120,7 @@
                                                                     <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
                                                                     <popUpButtonCell key="cell" type="check" bezelStyle="regularSquare" imagePosition="left" lineBreakMode="truncatingTail" inset="2" id="LPH-F4-05u">
                                                                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                        <font key="font" metaFont="system"/>
+                                                                        <font key="font" metaFont="menu"/>
                                                                         <menu key="menu" id="kSm-EQ-Yxt"/>
                                                                     </popUpButtonCell>
                                                                 </popUpButton>
@@ -182,6 +182,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="NSActionTemplate" catalog="system" width="15" height="15"/>
+        <image name="NSActionTemplate" width="15" height="15"/>
     </resources>
 </document>

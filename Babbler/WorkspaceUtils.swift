@@ -6,13 +6,15 @@ func getCurrentAppName () -> String {
     return frontApp?.localizedName ?? ""
 }
 
-typealias AppInfo = (name: String, path: String, icon: NSImage)
+typealias AppInfo = (name: String, id: String, icon: NSImage)
 
 @objc class WorkspaceUtils: NSObject {
     
     static private var lastActiveAppName = getCurrentAppName();
     
     static private var listAllAppsCallback: ((_ apps: [AppInfo]) -> Void)?
+    
+    static private var onActiveAppChangedHandler: ((_ app: NSRunningApplication) -> Void)?
     
     static func checkCurrentApp() -> Bool {
         let currentActiveAppName = getCurrentAppName()
@@ -55,23 +57,30 @@ typealias AppInfo = (name: String, path: String, icon: NSImage)
             let item = result as! NSMetadataItem
             let name = item.value(forAttribute: kMDItemDisplayName as String) as! String;
             let path = item.value(forAttribute: kMDItemPath as String) as! String;
+            let id = item.value(forAttribute: kMDItemCFBundleIdentifier as String) as! String;
             let icon = NSWorkspace.shared.icon(forFile: path);
-            
-            return (name, path, icon)
+            return (name, id, icon)
         }.sorted {
             $0.name < $1.name
         }
         
         WorkspaceUtils.listAllAppsCallback!(apps)
-        
+    
+    }
+    
+    public static func onActiveAppChanged(_ callback: @escaping (_ app: NSRunningApplication) -> Void) {
+        WorkspaceUtils.onActiveAppChangedHandler = callback
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(WorkspaceUtils.appActivated),
+            name: NSWorkspace.didActivateApplicationNotification,
+            object: nil
+        )
+    }
 
-//        for result in query.results {
-//            ??            guard let item = result as? NSMetadataItem else {
-//                print("Result was not an NSMetadataItem, \(result)")
-//                continue
-//            }
-//            print(item.value(forAttribute: kMDItemPath as String))
-////            print(result)
-//        }
+    @objc private static func appActivated(notification: NSNotification) {
+        let info = notification.userInfo!
+        let app = info[NSWorkspace.applicationUserInfoKey] as! NSRunningApplication
+        WorkspaceUtils.onActiveAppChangedHandler!(app)
     }
 }

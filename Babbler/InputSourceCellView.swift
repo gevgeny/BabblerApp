@@ -3,7 +3,7 @@ import Carbon
 
 class InputSourceCellView: NSTableCellView {
     
-    var appPath: String?
+    var appId: String?
     
     @IBOutlet weak var popup: NSPopUpButton?
     
@@ -16,21 +16,20 @@ class InputSourceCellView: NSTableCellView {
     }
     
     @objc func resetInputLanguage(_ targetMenuItem: NSMenuItem) {
-        let appPath = targetMenuItem.representedObject as! String
+        let appId = targetMenuItem.representedObject as! String
         
-        preferenceStore.resetInputSource(appPath)
+        preferenceStore.resetInputSource(appId)
     }
     
     @objc func setInputLanguage(_ targetMenuItem: NSMenuItem) {
-        let data = targetMenuItem.representedObject as! (appPath: String, inputSource: TISInputSource)
-        print(data.appPath)
-        preferenceStore.setInputSource(data.appPath, data.inputSource.name)
+        let data = targetMenuItem.representedObject as! (appId: String, inputSource: TISInputSource)
+        preferenceStore.setInputSource(data.appId, data.inputSource.name)
     }
     
-    func initInputOptions(_ appPath: String) {
-        self.appPath = appPath
+    func initInputOptions(_ appId: String) {
+        self.appId = appId
         
-        let selectedLangInput = preferenceStore.appInputSources[appPath]
+        let selectedLangInput = preferenceStore.appInputSources[appId]
         let menu = self.popup!.menu!
         
         let item = NSMenuItem(
@@ -40,7 +39,7 @@ class InputSourceCellView: NSTableCellView {
         )
         item.attributedTitle = NSAttributedString(string: "(not set)", attributes: [NSAttributedString.Key.foregroundColor: NSColor.gray])
         item.target = self
-        item.representedObject = appPath
+        item.representedObject = appId
         
         menu.addItem(item)
         if (selectedLangInput == nil) {
@@ -53,7 +52,7 @@ class InputSourceCellView: NSTableCellView {
                 action: #selector(setInputLanguage),
                 keyEquivalent: ""
             )
-            item.representedObject = (appPath: appPath, inputSource: inputSource)
+            item.representedObject = (appId: appId, inputSource: inputSource)
             item.target = self
             
             item.image = NSImage(iconRef: inputSource.iconRef!)

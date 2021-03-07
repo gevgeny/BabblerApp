@@ -29,14 +29,14 @@ import Carbon
         var err: OSStatus
         
         if isRussian(lang) {
-            AppDelegate.print("current ru, set en")
+            print("current ru, set en")
             err = TISSelectInputSource(LanguageUtils.enInputSource)
         } else {
-            AppDelegate.print("current en, set ru")
+            print("current en, set ru")
             err = TISSelectInputSource(LanguageUtils.ruInputSource)
         }
         if (err != 0) {
-            AppDelegate.print("TISSelectInputSource error")
+            print("TISSelectInputSource error")
         }
     }
 
@@ -67,7 +67,7 @@ import Carbon
     }
 
     @objc static func change() {
-        AppDelegate.print(TISCopyCurrentKeyboardInputSource().takeUnretainedValue())
+        print(TISCopyCurrentKeyboardInputSource().takeUnretainedValue())
         if LanguageUtils.changeCallback != nil {
             LanguageUtils.changeCallback!()
         }
@@ -82,9 +82,5 @@ import Carbon
             object: nil,
             suspensionBehavior: .deliverImmediately
         )
-    }
-    
-    @objc class func onItemSelect() {
-        print("sender")
     }
 }

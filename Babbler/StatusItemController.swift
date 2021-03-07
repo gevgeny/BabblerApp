@@ -8,15 +8,6 @@ class StatusItemController: NSObject {
     
     var settingsViewController: SettingsViewController?
     
-    var icons = [
-        "ru": #imageLiteral(resourceName: "ru"),
-        "ru_warn": #imageLiteral(resourceName: "ru_warn"),
-        "en": #imageLiteral(resourceName: "gb"),
-        "en_warn": #imageLiteral(resourceName: "gb_warn"),
-        "default": #imageLiteral(resourceName: "default"),
-        "default_warn": #imageLiteral(resourceName: "default_warn")
-    ]
-    
     override init() {
         super.init()
         NSApp.setActivationPolicy(.accessory)
@@ -35,7 +26,13 @@ class StatusItemController: NSObject {
         openSettingsMenuItem.target = self;
         statusItem.menu!.addItem(openSettingsMenuItem)
         statusItem.menu!.addItem(NSMenuItem.separator())
-        statusItem.menu!.addItem(withTitle: "Quit", action: #selector(quit), keyEquivalent: "")
+        let quitMenuItem = NSMenuItem(
+            title: "Quit",
+            action: #selector(quit),
+            keyEquivalent: ""
+        )
+        quitMenuItem.target = self;
+        statusItem.menu!.addItem(quitMenuItem)
         
     }
     
@@ -49,7 +46,6 @@ class StatusItemController: NSObject {
     }
     
     @objc func openSettings() {
-        print("openSettings")
         var myWindow: NSWindow? = nil
         let storyboard = NSStoryboard(name: NSStoryboard.Name("Main"),bundle: nil)
         settingsViewController = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier("preferencesView")) as? SettingsViewController
@@ -80,6 +76,7 @@ class StatusItemController: NSObject {
                 action: #selector(onLanguageItemSelect),
                 keyEquivalent: ""
             )
+            item.target = self;
             item.identifier = NSUserInterfaceItemIdentifier(rawValue: inputSource.id)
             item.image = NSImage(iconRef: inputSource.iconRef!)
             item.image!.size = NSMakeSize(16.0, 16.0)

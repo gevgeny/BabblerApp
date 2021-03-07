@@ -1,7 +1,6 @@
 import Cocoa
 import Carbon
 
-
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
     
@@ -28,18 +27,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var text: String = ""
     
-    static func print(_ items: Any...) {
-        let dateFormatter : DateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "hh:mm:ss:SSS"
-        let date = Date()
-
-        Swift.print( dateFormatter.string(from: date), items)
-    }
-    
-    func print(_ items: Any...) {
-        AppDelegate.print(items)
-    }
-    
     func hasPrivileges() -> Bool {
       return AXIsProcessTrustedWithOptions(
         [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
@@ -52,7 +39,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.alertStyle = .warning
         alert.addButton(withTitle: "OK")
         alert.runModal()
-        quit()
+        NSApplication.shared.terminate(self)
     }
     
     func handleEvent(_ event: NSEvent) {
@@ -70,7 +57,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
 
         if KeyboardUtils.checkActionKeyPress(code, withOption) {
-            //print("switch", text)
             self.isWaitingForSwitch = true
             LanguageUtils.swapLang()
             return
@@ -106,30 +92,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         record.append(entry)
         text += event.characters!
     }
-
-    @objc func quit() {
-        NSApplication.shared.terminate(self)
-    }
-    
-    @objc func onLanguageItemSelect(_ targetMenuItem: NSMenuItem) {
-        LanguageUtils.switchLang(targetMenuItem.title)
-    }
-
-    func addInputSourceMenuItems(_ menu: NSMenu) -> Void {
-        menu.addItem(NSMenuItem.separator())
-        for inputSource in LanguageUtils.inputSources! {
-            let item = NSMenuItem(
-                title: inputSource.name,
-                action: #selector(onLanguageItemSelect),
-                keyEquivalent: ""
-            )
-            item.identifier = NSUserInterfaceItemIdentifier(rawValue: inputSource.id)
-            item.image = NSImage(iconRef: inputSource.iconRef!)
-            item.image!.size = NSMakeSize(16.0, 16.0)
-            menu.addItem(item)
-        }
-        menu.addItem(NSMenuItem.separator())
-    }
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         SecurityInputUtils.listenForSecurityInput {
@@ -164,12 +126,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                 } else {
                     KeyboardUtils.fetchSelectedText {text in
-                        self.print("fetched text",  text)
+                        print("fetched text",  text)
                         KeyboardUtils.typeText(text);
                         
                     }
                 }
                 self.isWaitingForSwitch = false
+            }
+        }
+        
+        WorkspaceUtils.onActiveAppChanged { app in
+            let appId = app.bundleIdentifier!
+            
+            if (preferenceStore.appInputSources[appId] != nil) {
+                let inputSource = preferenceStore.appInputSources[appId]!
+                LanguageUtils.switchLang(inputSource)
             }
         }
         

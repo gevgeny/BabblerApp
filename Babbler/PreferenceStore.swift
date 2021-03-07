@@ -24,13 +24,13 @@ class PreferenceStore {
         }
     }
     
-    func setInputSource(_ appPath: String, _ inputSourceName: String) {
-        self.appInputSources[appPath] = inputSourceName
+    func setInputSource(_ appId: String, _ inputSourceName: String) {
+        self.appInputSources[appId] = inputSourceName
         UserDefaults.standard.set(self.appInputSources, forKey: appInputSourcesKey)
     }
     
-    func resetInputSource(_ appPath: String) {
-        self.appInputSources[appPath] = nil
+    func resetInputSource(_ appId: String) {
+        self.appInputSources[appId] = nil
         UserDefaults.standard.set(self.appInputSources, forKey: appInputSourcesKey)
     }
 }

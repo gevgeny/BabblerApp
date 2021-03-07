@@ -52,7 +52,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isLeftMouseDown = event.type == .leftMouseDown
         let code = isLeftMouseDown ? 0 : event.keyCode
         let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
-        let isEnter = code == Key.enter
+        let isEnter = code == Key.enter || code == Key.returnKey
         let isDelete = code == Key.delete
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
 

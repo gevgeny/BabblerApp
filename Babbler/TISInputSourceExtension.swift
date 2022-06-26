@@ -45,6 +45,7 @@ extension TISInputSource {
         return getProperty(kTISPropertyInputSourceLanguages) as! [String]
     }
     
+    
     var iconRef: IconRef? {
         return OpaquePointer(TISGetInputSourceProperty(self, kTISPropertyIconRef)) as IconRef?
     }

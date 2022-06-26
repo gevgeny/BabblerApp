@@ -11,11 +11,11 @@ import Foundation
 let appInputSourcesKey = "appInputSources"
 
 class PreferenceStore {
-    var appInputSources: [String: String]
+    private var appInputSources: [String: [String]]
     
     init() {
         let defaults = UserDefaults.standard
-        let appInputSources = defaults.dictionary(forKey: appInputSourcesKey) as? [String: String]
+        let appInputSources = defaults.dictionary(forKey: appInputSourcesKey) as? [String: [String]]
         if (appInputSources == nil) {
             self.appInputSources = [:]
             defaults.set(self.appInputSources, forKey: appInputSourcesKey)
@@ -24,9 +24,15 @@ class PreferenceStore {
         }
     }
     
-    func setInputSource(_ appId: String, _ inputSourceName: String) {
-        self.appInputSources[appId] = inputSourceName
+    func setInputSource(_ appId: String, _ inputSourceId: String, _ inputSourceName: String) {
+        self.appInputSources[appId] = [inputSourceId, inputSourceName]
         UserDefaults.standard.set(self.appInputSources, forKey: appInputSourcesKey)
+    }
+    
+    func getInputSource(_ appId: String) -> [String]? {
+        let inputSource = self.appInputSources[appId]
+
+        return inputSource
     }
     
     func resetInputSource(_ appId: String) {

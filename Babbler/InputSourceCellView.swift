@@ -23,13 +23,14 @@ class InputSourceCellView: NSTableCellView {
     
     @objc func setInputLanguage(_ targetMenuItem: NSMenuItem) {
         let data = targetMenuItem.representedObject as! (appId: String, inputSource: TISInputSource)
-        preferenceStore.setInputSource(data.appId, data.inputSource.name)
+        preferenceStore.setInputSource(data.appId, data.inputSource.id, data.inputSource.name)
     }
     
     func initInputOptions(_ appId: String) {
         self.appId = appId
         
-        let selectedLangInput = preferenceStore.appInputSources[appId]
+        let selectedLangInput = preferenceStore.getInputSource(appId)
+        print("appId", appId, selectedLangInput)
         let menu = self.popup!.menu!
         
         let item = NSMenuItem(
@@ -45,7 +46,6 @@ class InputSourceCellView: NSTableCellView {
         if (selectedLangInput == nil) {
             menu.performActionForItem(at: menu.index(of: item))
         }
-        
         LanguageUtils.inputSources?.forEach { inputSource in
             let item = NSMenuItem(
                 title: inputSource.name,
@@ -59,7 +59,7 @@ class InputSourceCellView: NSTableCellView {
             item.image!.size = NSMakeSize(16.0, 16.0)
             
             menu.addItem(item)
-            if (selectedLangInput == inputSource.name) {
+            if (selectedLangInput?[0] == inputSource.id) {
                 menu.performActionForItem(at: menu.index(of: item))
             }
         }

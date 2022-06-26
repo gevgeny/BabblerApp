@@ -61,12 +61,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             LanguageUtils.swapLang()
             return
         }
-        
         // Erase record and skip event word is break or shorcut is started
         if isRecordCanceled || (withOption && code != Key.option) || withCommand {
             record = []
             text = ""
-            
+            print("canceled")
             return
         }
         
@@ -79,7 +78,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if code == Key.delete || event.type != .keyDown || event.isARepeat {
             return
         }
-        
         let isWordBreak = record.last?.code == Key.space && event.keyCode != Key.space
         let appDidChange = WorkspaceUtils.checkCurrentApp()
         if (isWordBreak || appDidChange) {
@@ -91,6 +89,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let entry = (withShift: withShift, code: event.keyCode)
         record.append(entry)
         text += event.characters!
+        print("text", text)
     }
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
@@ -117,7 +116,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         LanguageUtils.onLanguageChange {
             self.currentLang = LanguageUtils.getCurrentInputSource()
-            
             if (self.isWaitingForSwitch) {
                 if (self.record.count > 0) {
                     // Replace typed text with delay in order to wait till the lang is changed.
@@ -126,9 +124,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                 } else {
                     KeyboardUtils.fetchSelectedText {text in
-                        print("fetched text",  text)
+                        // print("fetched text",  text)
                         KeyboardUtils.typeText(text);
-                        
+
                     }
                 }
                 self.isWaitingForSwitch = false
@@ -137,10 +135,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         WorkspaceUtils.onActiveAppChanged { app in
             let appId = app.bundleIdentifier!
-            
-            if (preferenceStore.appInputSources[appId] != nil) {
-                let inputSource = preferenceStore.appInputSources[appId]!
-                LanguageUtils.switchLang(inputSource)
+            let inputSource = preferenceStore.getInputSource(appId)
+            if (inputSource != nil) {
+                LanguageUtils.switchLang(inputSource![0])
             }
         }
         
@@ -149,3 +146,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         KeyboardUtils.addGlobalEventListener(handleEvent)
     }
 }
+

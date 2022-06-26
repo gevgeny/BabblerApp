@@ -37,7 +37,7 @@ class StatusItemController: NSObject {
     }
     
     @objc func onLanguageItemSelect(_ targetMenuItem: NSMenuItem) {
-        LanguageUtils.switchLang(targetMenuItem.title)
+        LanguageUtils.switchLang(targetMenuItem.representedObject as! String)
     }
     
     
@@ -58,8 +58,9 @@ class StatusItemController: NSObject {
     
     func updateMenuBarIcon(_ lang: TISInputSource?, _ isSecurityInput: Bool) {
         let inputSource = LanguageUtils.getCurrentInputSource()
-        print(LanguageUtils.getCurrentInputSource())
-        statusItem.button!.image = ImageUtils.getLangImage(inputSource, isSecurityInput)
+        statusItem.button!.attributedTitle = NSAttributedString(
+            string: LanguageImages[lang!.id] ?? lang!.name,
+            attributes: [NSAttributedString.Key.baselineOffset: -0.7])
         
         for menuItem in statusItem.menu!.items {
             menuItem.state = NSControl.StateValue.off
@@ -80,6 +81,7 @@ class StatusItemController: NSObject {
             item.identifier = NSUserInterfaceItemIdentifier(rawValue: inputSource.id)
             item.image = NSImage(iconRef: inputSource.iconRef!)
             item.image!.size = NSMakeSize(16.0, 16.0)
+            item.representedObject = inputSource.id
             menu.addItem(item)
         }
         menu.addItem(NSMenuItem.separator())

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2892A62828679F340026FC99 /* LanguageImages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2892A62728679F340026FC99 /* LanguageImages.swift */; };
 		7A765D5F25D916460076B974 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D5E25D916460076B974 /* Key.swift */; };
 		7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6125D91EB60076B974 /* KeyboardUtils.swift */; };
 		7A765D6525D98B170076B974 /* WorkspaceUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6425D98B170076B974 /* WorkspaceUtils.swift */; };
@@ -26,6 +27,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2892A62728679F340026FC99 /* LanguageImages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageImages.swift; sourceTree = "<group>"; };
 		7A765D5E25D916460076B974 /* Key.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Key.swift; sourceTree = "<group>"; };
 		7A765D6125D91EB60076B974 /* KeyboardUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardUtils.swift; sourceTree = "<group>"; };
 		7A765D6425D98B170076B974 /* WorkspaceUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceUtils.swift; sourceTree = "<group>"; };
@@ -95,6 +97,7 @@
 				7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */,
 				7A765D9F25EBAED70076B974 /* InputSourceCellView.swift */,
 				7A906C5825F3F95A00913B56 /* PreferenceStore.swift */,
+				2892A62728679F340026FC99 /* LanguageImages.swift */,
 			);
 			path = Babbler;
 			sourceTree = "<group>";
@@ -179,6 +182,7 @@
 				7A765D6D25DC56B50076B974 /* KeyDictionary.swift in Sources */,
 				7AC0130423A68C9700FA3F07 /* AppDelegate.swift in Sources */,
 				7A765D5F25D916460076B974 /* Key.swift in Sources */,
+				2892A62828679F340026FC99 /* LanguageImages.swift in Sources */,
 				7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */,
 				7AC0131C23AE10D600FA3F07 /* LanguageUtils.swift in Sources */,
 				7A765D6525D98B170076B974 /* WorkspaceUtils.swift in Sources */,

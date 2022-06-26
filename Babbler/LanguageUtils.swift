@@ -40,9 +40,8 @@ import Carbon
         }
     }
 
-    static func switchLang(_ langName: String) {
-        let inputSource = inputSources!.first { $0.name == langName }
-        
+    static func switchLang(_ langId: String) {
+        let inputSource = inputSources!.first { $0.id == langId }
         TISSelectInputSource(inputSource!)
     }
     
@@ -67,7 +66,6 @@ import Carbon
     }
 
     @objc static func change() {
-        print(TISCopyCurrentKeyboardInputSource().takeUnretainedValue())
         if LanguageUtils.changeCallback != nil {
             LanguageUtils.changeCallback!()
         }

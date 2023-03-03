@@ -134,10 +134,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         WorkspaceUtils.onActiveAppChanged { app in
-            let appId = app.bundleIdentifier!
-            let inputSource = preferenceStore.getInputSource(appId)
-            if (inputSource != nil) {
-                LanguageUtils.switchLang(inputSource![0])
+            if let appId = app.bundleIdentifier {
+                let inputSource = preferenceStore.getInputSource(appId)
+                if (inputSource != nil) {
+                    LanguageUtils.switchLang(inputSource![0])
+                }
             }
         }
         
@@ -146,4 +147,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         KeyboardUtils.addGlobalEventListener(handleEvent)
     }
 }
+
 

@@ -4,29 +4,32 @@ import Cocoa
 let keyboardDelay = UInt64(50_000_000)
 
 @objc class KeyboardUtils: NSObject {
+    static private var actionKeyCode = CGKeyCode(58);
     
-    static private var isOptionPressed = false;
+    static private var actionKeyFlag: NSEvent.ModifierFlags = .option;
+    
+    static private var isActionKeyPressed = false;
     
     static func addGlobalEventListener(_ callback: @escaping (NSEvent) -> Void) -> Void {
         NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp, .leftMouseDown, .flagsChanged]) {
             callback($0);
         };
     }
-    
+  
     static func checkActionKeyPress(_ code: UInt16, _ flags: NSEvent.ModifierFlags) -> Bool {
-        if (flags == .option && code == Key.option) {
-            isOptionPressed = true;
+        if (flags == actionKeyFlag && code == actionKeyCode) {
+            isActionKeyPressed = true;
             return false
-        } else if (code == Key.option && isOptionPressed) {
-            isOptionPressed = false
+        } else if (code == actionKeyCode && isActionKeyPressed) {
+            isActionKeyPressed = false
             return true
         } else {				        
-            isOptionPressed = false
+            isActionKeyPressed = false
             return false
         }
     }
-     
-    static func deleteLastTypedWord(_ src: CGEventSource?, _ loc: CGEventTapLocation) {
+
+    private static func deleteLastTypedWord(_ src: CGEventSource?, _ loc: CGEventTapLocation) {
         let deleteDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
         let deleteUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
         
@@ -35,14 +38,13 @@ let keyboardDelay = UInt64(50_000_000)
         deleteUp?.post(tap: loc)
     }
     
-    static func replaceTypedText(_ record: [(withShift: Bool, code: UInt16)]) async {
-        let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
-        let loc = CGEventTapLocation.cghidEventTap
-                
-        deleteLastTypedWord(src, loc)
-        try? await Task.sleep(nanoseconds: keyboardDelay)
-        
-        // Type new text
+    private static func typeRecordedText(
+        _ record: [(withShift: Bool, code: UInt16)],
+        _ src: CGEventSource?,
+        _ loc: CGEventTapLocation
+    ) {
+        let actionUp = CGEvent(keyboardEventSource: src, virtualKey: actionKeyCode, keyDown: false)
+         
         record.forEach { (withShift: Bool, code: UInt16) in
             let eventDown = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true)
             let eventUp = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)
@@ -50,9 +52,24 @@ let keyboardDelay = UInt64(50_000_000)
             if withShift {
                 eventDown?.flags = CGEventFlags.maskShift;
             }
+            actionUp?.post(tap: loc)
             eventDown?.post(tap: loc)
             eventUp?.post(tap: loc)
         }
+    }
+
+    
+    
+    static func replaceTypedText(_ record: [(withShift: Bool, code: UInt16)]) async {
+        let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
+        let loc = CGEventTapLocation.cghidEventTap
+                
+        deleteLastTypedWord(src, loc)
+        
+        try? await Task.sleep(nanoseconds: keyboardDelay)
+        
+         
+        typeRecordedText(record, src, loc)
     }
     
     static func fetchSelectedText(_ callback: @escaping (String) -> Void) -> Void {

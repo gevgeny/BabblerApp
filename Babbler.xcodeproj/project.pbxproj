@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		285B522A29BDD87600D50A2D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130323A68C9700FA3F07 /* AppDelegate.swift */; };
 		2892A62828679F340026FC99 /* LanguageImages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2892A62728679F340026FC99 /* LanguageImages.swift */; };
 		7A765D5F25D916460076B974 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D5E25D916460076B974 /* Key.swift */; };
 		7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6125D91EB60076B974 /* KeyboardUtils.swift */; };
@@ -18,7 +19,6 @@
 		7A765D9D25E7ABCE0076B974 /* SettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */; };
 		7A765DA025EBAED70076B974 /* InputSourceCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9F25EBAED70076B974 /* InputSourceCellView.swift */; };
 		7A906C5925F3F95A00913B56 /* PreferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A906C5825F3F95A00913B56 /* PreferenceStore.swift */; };
-		7AC0130423A68C9700FA3F07 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130323A68C9700FA3F07 /* AppDelegate.swift */; };
 		7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130723A68C9A00FA3F07 /* Assets.xcassets */; };
 		7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130923A68C9A00FA3F07 /* Main.storyboard */; };
 		7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */; };
@@ -177,10 +177,10 @@
 				7A765DA025EBAED70076B974 /* InputSourceCellView.swift in Sources */,
 				7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */,
 				7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */,
+				285B522A29BDD87600D50A2D /* AppDelegate.swift in Sources */,
 				7A765D9C25E7ABCE0076B974 /* SettingsViewController.swift in Sources */,
 				7A765D8E25DF09F50076B974 /* StatusItemController.swift in Sources */,
 				7A765D6D25DC56B50076B974 /* KeyDictionary.swift in Sources */,
-				7AC0130423A68C9700FA3F07 /* AppDelegate.swift in Sources */,
 				7A765D5F25D916460076B974 /* Key.swift in Sources */,
 				2892A62828679F340026FC99 /* LanguageImages.swift in Sources */,
 				7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */,
@@ -325,7 +325,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Babbler/Babbler.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = S6G53UGWX8;
@@ -346,7 +346,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Babbler/Babbler.entitlements;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = S6G53UGWX8;

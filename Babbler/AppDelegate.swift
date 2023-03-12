@@ -7,8 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItemController: StatusItemController?;
     
     var isWaitingForSwitch = false
-    
-    var isAlreadyTranslatingWord = false
+
     
     var isSecurityInput = false {
         didSet {
@@ -24,12 +23,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             statusItemController!.updateMenuBarIcon(currentLang, isSecurityInput)
         }
     }
-    
+     
     var record: [(withShift: Bool, code: UInt16)] = []
     
     var text: String = ""
     
-    var counter = 1
     
     func hasPrivileges() -> Bool {
       return AXIsProcessTrustedWithOptions(
@@ -59,8 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isEnter = code == Key.enter || code == Key.returnKey
         let isDelete = code == Key.delete
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
-
-        print(code, flags)
+       
         if KeyboardUtils.checkActionKeyPress(code, flags) {
             self.isWaitingForSwitch = true
             LanguageUtils.swapLang()
@@ -72,7 +69,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             text = ""
             return
         }
-               
+         
         // Delete last symbol if delete was pressed
         if isDelete && record.count > 0 {
             record.removeLast()
@@ -116,37 +113,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             showError(error!, "")
             return
         }
-
+           
         LanguageUtils.onLanguageChange {
-            self.counter += 1;
-            let counter = self.counter;
             self.currentLang = LanguageUtils.getCurrentInputSource()
            
             if (!self.isWaitingForSwitch) { return }
-            
-
-            self.isAlreadyTranslatingWord = true
+        
                 
             // If the last word need to be translated
             if (self.record.count > 0) {
                 // Replace typed text with delay in order to wait till the lang is changed.
-                print(counter, "start")
                 Task {
                     try? await Task.sleep(nanoseconds: keyboardDelay)
                     await KeyboardUtils.replaceTypedText(self.record)
-                    print(counter, "done")
-                    self.isAlreadyTranslatingWord = false
                 }
             }
-            // If the selected text need to be translated
+            // If the record is empty, it makes sense to try check if selected text need to be translated
             else {
                 KeyboardUtils.fetchSelectedText {text in
+                    if (text.count == 0) { return }
+                    
                     KeyboardUtils.typeText(text);
                 }
-                self.isAlreadyTranslatingWord = false
             }
+            
             self.isWaitingForSwitch = false
-        
         }
         
         WorkspaceUtils.onActiveAppChanged { app in

@@ -1,6 +1,8 @@
 import Foundation
 import Cocoa
 
+let keyboardDelay = UInt64(50_000_000)
+
 @objc class KeyboardUtils: NSObject {
     
     static private var isOptionPressed = false;
@@ -11,8 +13,8 @@ import Cocoa
         };
     }
     
-    static func checkActionKeyPress(_ code: UInt16, _ withOption: Bool) -> Bool {
-        if (withOption && code == Key.option) {
+    static func checkActionKeyPress(_ code: UInt16, _ flags: NSEvent.ModifierFlags) -> Bool {
+        if (flags == .option && code == Key.option) {
             isOptionPressed = true;
             return false
         } else if (code == Key.option && isOptionPressed) {
@@ -23,19 +25,22 @@ import Cocoa
             return false
         }
     }
+     
+    static func deleteLastTypedWord(_ src: CGEventSource?, _ loc: CGEventTapLocation) {
+        let deleteDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
+        let deleteUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
+        
+        deleteDown?.flags = CGEventFlags.maskAlternate;
+        deleteDown?.post(tap: loc)
+        deleteUp?.post(tap: loc)
+    }
     
-    static func replaceTypedText(_ record: [(withShift: Bool, code: UInt16)]) {
+    static func replaceTypedText(_ record: [(withShift: Bool, code: UInt16)]) async {
         let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
         let loc = CGEventTapLocation.cghidEventTap
-        
-        // Delete last typed text
-        for _ in 1...record.count {
-            let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
-            let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
-            
-            eventDown?.post(tap: loc)
-            eventUp?.post(tap: loc)
-        }
+                
+        deleteLastTypedWord(src, loc)
+        try? await Task.sleep(nanoseconds: keyboardDelay)
         
         // Type new text
         record.forEach { (withShift: Bool, code: UInt16) in
@@ -64,9 +69,10 @@ import Cocoa
         eventDown?.post(tap: loc)
         eventUp?.post(tap: loc)
         
-        // Wait till text copied
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            // Get new text from clipboard
+        Task {
+            // Wait till text copied
+            try? await Task.sleep(nanoseconds: keyboardDelay)
+            
             let newClipboardText = NSPasteboard.general.string(forType: .string) ?? ""
             
             // Put old text into clipboard

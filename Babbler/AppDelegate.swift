@@ -8,6 +8,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var isWaitingForSwitch = false
     
+    var isAlreadyTranslatingWord = false
+    
     var isSecurityInput = false {
         didSet {
             statusItemController!.updateSecurityInputMessage(securityApp, isSecurityInput)
@@ -26,6 +28,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var record: [(withShift: Bool, code: UInt16)] = []
     
     var text: String = ""
+    
+    var counter = 1
     
     func hasPrivileges() -> Bool {
       return AXIsProcessTrustedWithOptions(
@@ -56,7 +60,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isDelete = code == Key.delete
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
 
-        if KeyboardUtils.checkActionKeyPress(code, withOption) {
+        print(code, flags)
+        if KeyboardUtils.checkActionKeyPress(code, flags) {
             self.isWaitingForSwitch = true
             LanguageUtils.swapLang()
             return
@@ -65,10 +70,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if isRecordCanceled || (withOption && code != Key.option) || withCommand {
             record = []
             text = ""
-            print("canceled")
             return
         }
-        
+               
         // Delete last symbol if delete was pressed
         if isDelete && record.count > 0 {
             record.removeLast()
@@ -89,7 +93,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let entry = (withShift: withShift, code: event.keyCode)
         record.append(entry)
         text += event.characters!
-        print("text", text)
     }
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
@@ -104,7 +107,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !hasPrivileges() {
             showError(
                 "Accessibility privileges are not granted",
-                "Go to System Prefences -> Security & Privacy -> Accessibility, and add the app into the list.\nThen restart the app."
+                "Go to System Prefences -> Security & Privacy -> Accessibility, and add the app into the list.\nThen restart the app.\n\n ⚠️ By adding the app into the list you allow it to read your keyboard!"
             )
         }
         let error = LanguageUtils.initInputSources();
@@ -115,22 +118,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         LanguageUtils.onLanguageChange {
+            self.counter += 1;
+            let counter = self.counter;
             self.currentLang = LanguageUtils.getCurrentInputSource()
-            if (self.isWaitingForSwitch) {
-                if (self.record.count > 0) {
-                    // Replace typed text with delay in order to wait till the lang is changed.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        KeyboardUtils.replaceTypedText(self.record)
-                    }
-                } else {
-                    KeyboardUtils.fetchSelectedText {text in
-                        // print("fetched text",  text)
-                        KeyboardUtils.typeText(text);
+           
+            if (!self.isWaitingForSwitch) { return }
+            
 
-                    }
+            self.isAlreadyTranslatingWord = true
+                
+            // If the last word need to be translated
+            if (self.record.count > 0) {
+                // Replace typed text with delay in order to wait till the lang is changed.
+                print(counter, "start")
+                Task {
+                    try? await Task.sleep(nanoseconds: keyboardDelay)
+                    await KeyboardUtils.replaceTypedText(self.record)
+                    print(counter, "done")
+                    self.isAlreadyTranslatingWord = false
                 }
-                self.isWaitingForSwitch = false
             }
+            // If the selected text need to be translated
+            else {
+                KeyboardUtils.fetchSelectedText {text in
+                    KeyboardUtils.typeText(text);
+                }
+                self.isAlreadyTranslatingWord = false
+            }
+            self.isWaitingForSwitch = false
+        
         }
         
         WorkspaceUtils.onActiveAppChanged { app in
@@ -147,5 +163,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         KeyboardUtils.addGlobalEventListener(handleEvent)
     }
 }
-
 

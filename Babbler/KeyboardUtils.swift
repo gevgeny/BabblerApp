@@ -38,6 +38,20 @@ let keyboardDelay = UInt64(50_000_000)
         deleteUp?.post(tap: loc)
     }
     
+    private static func deleteTypedText(_ src: CGEventSource?, _ loc: CGEventTapLocation, _ record: [(withShift: Bool, code: UInt16)]) {
+        let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
+        let loc = CGEventTapLocation.cghidEventTap
+
+        // Delete last typed text
+        for _ in 1...record.count {
+            let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
+            let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
+
+            eventDown?.post(tap: loc)
+            eventUp?.post(tap: loc)
+        }
+    }
+    
     private static func typeRecordedText(
         _ record: [(withShift: Bool, code: UInt16)],
         _ src: CGEventSource?,
@@ -64,7 +78,7 @@ let keyboardDelay = UInt64(50_000_000)
         let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
         let loc = CGEventTapLocation.cghidEventTap
                 
-        deleteLastTypedWord(src, loc)
+        deleteTypedText(src, loc, record)
         
         try? await Task.sleep(nanoseconds: keyboardDelay)
         
@@ -101,16 +115,21 @@ let keyboardDelay = UInt64(50_000_000)
     }
     
     static func translateText(_ text: String) -> String {
-        let tranlatedText = text.map{char -> String in
-            if (ruEnDictionary[String(char)] != nil) {
-                return ruEnDictionary[String(char)]!
-            } else if (enRuDictionary[String(char)] != nil){
-                return enRuDictionary[String(char)]!
+        // Decide mapping direction based on the current (target) input source
+        // If current input source is Russian, we convert from EN -> RU
+        // Otherwise, convert from RU -> EN
+        let targetIsRussian = LanguageUtils.isRussian(LanguageUtils.getCurrentInputSource())
+        let mapper = targetIsRussian ? enRuDictionary : ruEnDictionary
+
+        let translated = text.map { ch -> String in
+            let s = String(ch)
+            if let mapped = mapper[s] {
+                return mapped
             } else {
-                return String(char);
+                return s
             }
         }
-        return tranlatedText.joined();
+        return translated.joined()
     }
 
     static func typeText(_ text: String) {
@@ -127,3 +146,4 @@ let keyboardDelay = UInt64(50_000_000)
         event2?.post(tap: .cghidEventTap)
     }
 }
+

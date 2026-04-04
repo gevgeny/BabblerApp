@@ -13,10 +13,30 @@ class StatusItemController: NSObject {
         NSApp.setActivationPolicy(.accessory)
         statusItem.menu = NSMenu()
         statusItem.menu?.autoenablesItems = false
+        
+        
+        
+        let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") ?? "unknown";
+        let appVersionItem = NSMenuItem(
+            title: "",
+            action: nil,
+            keyEquivalent: ""
+        );
+        appVersionItem.attributedTitle = NSAttributedString(
+            string: "Babbler v\(appVersion)",
+            attributes: [NSAttributedString.Key.foregroundColor: NSColor.gray]
+        );
+        appVersionItem.isEnabled = false;
+        statusItem.menu!.addItem(appVersionItem)
+        
+        statusItem.menu!.addItem(NSMenuItem.separator())
+            
         messageMenuItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         messageMenuItem!.isHidden = true;
         statusItem.menu!.addItem(messageMenuItem!)
+        
         statusItem.menu!.addItem(NSMenuItem.separator())
+        
         addInputSourceMenuItems(statusItem.menu!)
         let openSettingsMenuItem = NSMenuItem(
             title: "Open Settings",

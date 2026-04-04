@@ -7,6 +7,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItemController: StatusItemController?;
     
     var isWaitingForSwitch = false
+    var didFinishAppSetup = false
+    var permissionCheckTimer: Timer?
 
     
     var isSecurityInput = false {
@@ -30,8 +32,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     
     func hasPrivileges() -> Bool {
-      return AXIsProcessTrustedWithOptions(
-        [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
+        AXIsProcessTrusted()
     }
 
     func showError(_ title: String, _ message: String) {
@@ -42,6 +43,103 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.addButton(withTitle: "OK")
         alert.runModal()
         NSApplication.shared.terminate(self)
+    }
+
+    func openAccessibilitySettings() {
+        guard let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else {
+            return
+        }
+
+        NSWorkspace.shared.open(settingsURL)
+    }
+
+    func startPermissionPolling() {
+        permissionCheckTimer?.invalidate()
+        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            guard let self else {
+                timer.invalidate()
+                return
+            }
+
+            if self.hasPrivileges() {
+                timer.invalidate()
+                self.permissionCheckTimer = nil
+                self.finishApplicationSetup()
+            }
+        }
+    }
+
+    func requestAccessibilityPermissions() {
+        let alert = NSAlert()
+        alert.messageText = "Accessibility Access Required"
+        alert.informativeText = "Babbler needs Accessibility access to monitor keyboard shortcuts and replace typed text. Click Open System Settings, enable Babbler in Accessibility, and return to the app."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Open System Settings")
+        alert.addButton(withTitle: "Quit")
+
+        NSApp.activate(ignoringOtherApps: true)
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            openAccessibilitySettings()
+            startPermissionPolling()
+            return
+        }
+
+        NSApplication.shared.terminate(self)
+    }
+
+    func finishApplicationSetup() {
+        if didFinishAppSetup {
+            return
+        }
+        didFinishAppSetup = true
+
+        let error = LanguageUtils.initInputSources();
+        
+        if error != nil {
+            showError(error!, "")
+            return
+        }
+           
+        LanguageUtils.onLanguageChange {
+            self.currentLang = LanguageUtils.getCurrentInputSource()
+           
+            if (!self.isWaitingForSwitch) { return }
+        
+                
+            // If the last word need to be translated
+            if (self.record.count > 0) {
+                // Replace typed text with delay in order to wait till the lang is changed.
+                Task {
+                    try? await Task.sleep(nanoseconds: keyboardDelay)
+                    await KeyboardUtils.replaceTypedText(self.record)
+                }
+            }
+            // If the record is empty, it makes sense to try check if selected text need to be translated
+            else {
+                KeyboardUtils.fetchSelectedText {text in
+                    if (text.count == 0) { return }
+                    
+                    KeyboardUtils.typeText(text);
+                }
+            }
+            
+            self.isWaitingForSwitch = false
+        }
+        
+        WorkspaceUtils.onActiveAppChanged { app in
+            if let appId = app.bundleIdentifier {
+                let inputSource = preferenceStore.getInputSource(appId)
+                if (inputSource != nil) {
+                    LanguageUtils.switchLang(inputSource![0])
+                }
+            }
+        }
+        
+        statusItemController = StatusItemController();
+        currentLang = LanguageUtils.getCurrentInputSource()
+        KeyboardUtils.addGlobalEventListener(handleEvent)
     }
     
     func handleEvent(_ event: NSEvent) {
@@ -93,6 +191,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+
         SecurityInputUtils.listenForSecurityInput {
             self.securityApp = $1
             if self.isSecurityInput != $0 {
@@ -102,56 +201,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         
         if !hasPrivileges() {
-            showError(
-                "Accessibility privileges are not granted",
-                "Go to System Prefences -> Security & Privacy -> Accessibility, and add the app into the list.\nThen restart the app.\n\n ⚠️ By adding the app into the list you allow it to read your keyboard!"
-            )
-        }
-        let error = LanguageUtils.initInputSources();
-        
-        if error != nil {
-            showError(error!, "")
+            requestAccessibilityPermissions()
             return
         }
-           
-        LanguageUtils.onLanguageChange {
-            self.currentLang = LanguageUtils.getCurrentInputSource()
-           
-            if (!self.isWaitingForSwitch) { return }
         
-                
-            // If the last word need to be translated
-            if (self.record.count > 0) {
-                // Replace typed text with delay in order to wait till the lang is changed.
-                Task {
-                    try? await Task.sleep(nanoseconds: keyboardDelay)
-                    await KeyboardUtils.replaceTypedText(self.record)
-                }
-            }
-            // If the record is empty, it makes sense to try check if selected text need to be translated
-            else {
-                KeyboardUtils.fetchSelectedText {text in
-                    if (text.count == 0) { return }
-                    
-                    KeyboardUtils.typeText(text);
-                }
-            }
-            
-            self.isWaitingForSwitch = false
-        }
-        
-        WorkspaceUtils.onActiveAppChanged { app in
-            if let appId = app.bundleIdentifier {
-                let inputSource = preferenceStore.getInputSource(appId)
-                if (inputSource != nil) {
-                    LanguageUtils.switchLang(inputSource![0])
-                }
-            }
-        }
-        
-        statusItemController = StatusItemController();
-        currentLang = LanguageUtils.getCurrentInputSource()
-        KeyboardUtils.addGlobalEventListener(handleEvent)
+        finishApplicationSetup()
     }
 }
-

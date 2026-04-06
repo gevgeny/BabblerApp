@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="24765" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24765"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -44,7 +44,7 @@
             <objects>
                 <viewController storyboardIdentifier="preferencesView" id="0te-Gu-auG" customClass="SettingsViewController" customModule="Babbler" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="14d-Iq-6Qf">
-                        <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
+                        <rect key="frame" x="0.0" y="0.0" width="480" height="306"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <scrollView fixedFrame="YES" autohidesScrollers="YES" horizontalLineScroll="40" horizontalPageScroll="10" verticalLineScroll="40" verticalPageScroll="10" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0jF-wF-8ja">
@@ -82,7 +82,7 @@
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="NSActionTemplate" id="Zd2-uR-GTO"/>
                                                                 </imageView>
-                                                                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsExpansionToolTips="YES" translatesAutoresizingMaskIntoConstraints="NO" id="g5n-hU-ka8">
+                                                                <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsExpansionToolTips="YES" translatesAutoresizingMaskIntoConstraints="NO" id="g5n-hU-ka8">
                                                                     <rect key="frame" x="33" y="12" width="253" height="17"/>
                                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                                     <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="gbA-hq-S9V">
@@ -118,9 +118,9 @@
                                                                 <popUpButton fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="afd-08-lMf">
                                                                     <rect key="frame" x="0.0" y="9" width="125" height="25"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
-                                                                    <popUpButtonCell key="cell" type="check" bezelStyle="regularSquare" imagePosition="left" lineBreakMode="truncatingTail" inset="2" id="LPH-F4-05u">
+                                                                    <popUpButtonCell key="cell" type="bevel" bezelStyle="regularSquare" imagePosition="left" lineBreakMode="truncatingTail" inset="2" id="LPH-F4-05u">
                                                                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                                        <font key="font" metaFont="menu"/>
+                                                                        <font key="font" metaFont="message"/>
                                                                         <menu key="menu" id="kSm-EQ-Yxt"/>
                                                                     </popUpButtonCell>
                                                                 </popUpButton>
@@ -148,8 +148,8 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                 </scroller>
                             </scrollView>
-                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bul-Tx-xOP">
-                                <rect key="frame" x="18" y="234" width="261" height="16"/>
+                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bul-Tx-xOP">
+                                <rect key="frame" x="18" y="270" width="261" height="16"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Set default keyboard input for apps below:" id="N2d-vE-G17">
                                     <font key="font" usesAppearanceFont="YES"/>
@@ -182,6 +182,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="NSActionTemplate" width="15" height="15"/>
+        <image name="NSActionTemplate" width="20" height="20"/>
     </resources>
 </document>

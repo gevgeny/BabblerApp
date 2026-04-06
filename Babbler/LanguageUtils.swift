@@ -10,8 +10,8 @@ import Carbon
     
     static var ruInputSource: TISInputSource?
     
-    static func getCurrentInputSource() -> TISInputSource {
-        return TISCopyCurrentKeyboardInputSource().takeUnretainedValue()
+    static func getCurrentInputSource() -> TISInputSource? {
+        return TISCopyCurrentKeyboardInputSource()?.takeUnretainedValue()
     }
     
     static func isEnglish(_ inputSource: TISInputSource?) -> Bool {
@@ -25,7 +25,7 @@ import Carbon
     }
     
     static func swapLang() {
-        let lang = TISCopyCurrentKeyboardInputSource().takeUnretainedValue()
+        guard let lang = TISCopyCurrentKeyboardInputSource()?.takeUnretainedValue() else { return }
         var err: OSStatus
         
         if isRussian(lang) {

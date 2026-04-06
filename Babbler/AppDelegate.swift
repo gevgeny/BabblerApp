@@ -95,6 +95,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         didFinishAppSetup = true
 
+        KeyboardUtils.loadActionKeyFromPreferences()
         let error = LanguageUtils.initInputSources();
         
         if error != nil {
@@ -149,6 +150,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let withOption = flags == .option
         let withCommand = flags == .command
         let withShift = flags == .shift
+        let withActionModifier = flags == KeyboardUtils.actionKeyFlag
         let isLeftMouseDown = event.type == .leftMouseDown
         let code = isLeftMouseDown ? 0 : event.keyCode
         let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
@@ -162,7 +164,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         // Erase record and skip event word is break or shorcut is started
-        if isRecordCanceled || (withOption && code != Key.option) || withCommand {
+        if isRecordCanceled || (withOption && code != Key.option) || withCommand || (withActionModifier && code != KeyboardUtils.actionKeyCode) {
             record = []
             text = ""
             return

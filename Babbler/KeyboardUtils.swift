@@ -4,11 +4,28 @@ import Cocoa
 let keyboardDelay = UInt64(50_000_000)
 
 @objc class KeyboardUtils: NSObject {
-    static private var actionKeyCode = CGKeyCode(58);
+    static private(set) var actionKeyCode = CGKeyCode(58);
     
-    static private var actionKeyFlag: NSEvent.ModifierFlags = .option;
+    static private(set) var actionKeyFlag: NSEvent.ModifierFlags = .option;
     
     static private var isActionKeyPressed = false;
+    
+    static func setActionKey(code: UInt16) {
+        actionKeyCode = CGKeyCode(code)
+        switch code {
+        case Key.option, Key.rightOption:
+            actionKeyFlag = .option
+        case Key.control, Key.rightControl:
+            actionKeyFlag = .control
+        default:
+            actionKeyFlag = .option
+        }
+    }
+    
+    static func loadActionKeyFromPreferences() {
+        let code = preferenceStore.getSwitchKeyCode()
+        setActionKey(code: code)
+    }
     
     static func addGlobalEventListener(_ callback: @escaping (NSEvent) -> Void) -> Void {
         NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp, .leftMouseDown, .flagsChanged]) {
@@ -110,7 +127,11 @@ let keyboardDelay = UInt64(50_000_000)
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(clipboardText, forType: .string);
             
-            callback(newClipboardText);
+            // Dispatch to main thread — downstream code calls Carbon TIS APIs
+            // which are not thread-safe
+            await MainActor.run {
+                callback(newClipboardText)
+            }
         }
     }
     
@@ -118,7 +139,8 @@ let keyboardDelay = UInt64(50_000_000)
         // Decide mapping direction based on the current (target) input source
         // If current input source is Russian, we convert from EN -> RU
         // Otherwise, convert from RU -> EN
-        let targetIsRussian = LanguageUtils.isRussian(LanguageUtils.getCurrentInputSource())
+        guard let currentSource = LanguageUtils.getCurrentInputSource() else { return text }
+        let targetIsRussian = LanguageUtils.isRussian(currentSource)
         let mapper = targetIsRussian ? enRuDictionary : ruEnDictionary
 
         let translated = text.map { ch -> String in

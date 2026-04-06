@@ -9,6 +9,7 @@
 import Foundation
 
 let appInputSourcesKey = "appInputSources"
+let langSwitchKeyCodeKey = "langSwitchKeyCode"
 
 class PreferenceStore {
     private var appInputSources: [String: [String]]
@@ -38,6 +39,18 @@ class PreferenceStore {
     func resetInputSource(_ appId: String) {
         self.appInputSources[appId] = nil
         UserDefaults.standard.set(self.appInputSources, forKey: appInputSourcesKey)
+    }
+    
+    func getSwitchKeyCode() -> UInt16 {
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: langSwitchKeyCodeKey) != nil {
+            return UInt16(defaults.integer(forKey: langSwitchKeyCodeKey))
+        }
+        return Key.option
+    }
+    
+    func setSwitchKeyCode(_ code: UInt16) {
+        UserDefaults.standard.set(Int(code), forKey: langSwitchKeyCodeKey)
     }
 }
 

@@ -1,12 +1,13 @@
 import Cocoa
 import Carbon
+import SwiftUI
 
 class StatusItemController: NSObject {
     let statusItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     
     var messageMenuItem: NSMenuItem?
     
-    var settingsViewController: SettingsViewController?
+    var settingsWindowController: NSWindowController?
     
     override init() {
         super.init()
@@ -66,14 +67,12 @@ class StatusItemController: NSObject {
     }
     
     @objc func openSettings() {
-        var myWindow: NSWindow? = nil
-        let storyboard = NSStoryboard(name: NSStoryboard.Name("Main"),bundle: nil)
-        settingsViewController = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier("preferencesView")) as? SettingsViewController
-        myWindow = NSWindow(contentViewController: settingsViewController!)
+        let hostingController = NSHostingController(rootView: SettingsView())
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "Settings"
+        settingsWindowController = NSWindowController(window: window)
         NSApp.activate(ignoringOtherApps: true)
-        myWindow?.makeKeyAndOrderFront(self)
-        let vc = NSWindowController(window: myWindow)
-        vc.showWindow(self)
+        settingsWindowController?.showWindow(self)
     }
     
     func updateMenuBarIcon(_ lang: TISInputSource?, _ isSecurityInput: Bool) {

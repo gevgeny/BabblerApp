@@ -17,7 +17,6 @@
 		7A765D9325E2D7170076B974 /* ImageUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9225E2D7170076B974 /* ImageUtils.swift */; };
 		7A765D9C25E7ABCE0076B974 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9A25E7ABCE0076B974 /* SettingsViewController.swift */; };
 		7A765D9D25E7ABCE0076B974 /* SettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */; };
-		7A765DA025EBAED70076B974 /* InputSourceCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9F25EBAED70076B974 /* InputSourceCellView.swift */; };
 		7A906C5925F3F95A00913B56 /* PreferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A906C5825F3F95A00913B56 /* PreferenceStore.swift */; };
 		7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130723A68C9A00FA3F07 /* Assets.xcassets */; };
 		7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130923A68C9A00FA3F07 /* Main.storyboard */; };
@@ -36,7 +35,6 @@
 		7A765D9225E2D7170076B974 /* ImageUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUtils.swift; sourceTree = "<group>"; };
 		7A765D9A25E7ABCE0076B974 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SettingsViewController.xib; sourceTree = "<group>"; };
-		7A765D9F25EBAED70076B974 /* InputSourceCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSourceCellView.swift; sourceTree = "<group>"; };
 		7A906C5825F3F95A00913B56 /* PreferenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferenceStore.swift; sourceTree = "<group>"; };
 		7AC0130023A68C9700FA3F07 /* Babbler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Babbler.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7AC0130323A68C9700FA3F07 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -95,7 +93,6 @@
 				7A765D9225E2D7170076B974 /* ImageUtils.swift */,
 				7A765D9A25E7ABCE0076B974 /* SettingsViewController.swift */,
 				7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */,
-				7A765D9F25EBAED70076B974 /* InputSourceCellView.swift */,
 				7A906C5825F3F95A00913B56 /* PreferenceStore.swift */,
 				2892A62728679F340026FC99 /* LanguageImages.swift */,
 			);
@@ -174,7 +171,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A906C5925F3F95A00913B56 /* PreferenceStore.swift in Sources */,
-				7A765DA025EBAED70076B974 /* InputSourceCellView.swift in Sources */,
 				7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */,
 				7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */,
 				285B522A29BDD87600D50A2D /* AppDelegate.swift in Sources */,
@@ -335,8 +331,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.1.3;
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = eugene.Babbler;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -358,8 +354,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.1.3;
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = eugene.Babbler;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

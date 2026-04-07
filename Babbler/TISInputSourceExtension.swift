@@ -49,4 +49,9 @@ extension TISInputSource {
     var iconRef: IconRef? {
         return OpaquePointer(TISGetInputSourceProperty(self, kTISPropertyIconRef)) as IconRef?
     }
+
+    var iconImageURL: URL? {
+        guard let urlRef = getProperty(kTISPropertyIconImageURL) as? String else { return nil }
+        return URL(fileURLWithPath: urlRef)
+    }
 }

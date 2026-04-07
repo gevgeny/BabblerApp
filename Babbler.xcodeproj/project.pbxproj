@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		282D00FC2F857DAC005467AC /* CrashLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 282D00FB2F857DAC005467AC /* CrashLogger.swift */; };
 		285B522A29BDD87600D50A2D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130323A68C9700FA3F07 /* AppDelegate.swift */; };
 		2892A62828679F340026FC99 /* LanguageImages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2892A62728679F340026FC99 /* LanguageImages.swift */; };
 		7A765D5F25D916460076B974 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D5E25D916460076B974 /* Key.swift */; };
@@ -26,6 +27,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		282D00FB2F857DAC005467AC /* CrashLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashLogger.swift; sourceTree = "<group>"; };
 		2892A62728679F340026FC99 /* LanguageImages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageImages.swift; sourceTree = "<group>"; };
 		7A765D5E25D916460076B974 /* Key.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Key.swift; sourceTree = "<group>"; };
 		7A765D6125D91EB60076B974 /* KeyboardUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardUtils.swift; sourceTree = "<group>"; };
@@ -95,6 +97,7 @@
 				7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */,
 				7A906C5825F3F95A00913B56 /* PreferenceStore.swift */,
 				2892A62728679F340026FC99 /* LanguageImages.swift */,
+				282D00FB2F857DAC005467AC /* CrashLogger.swift */,
 			);
 			path = Babbler;
 			sourceTree = "<group>";
@@ -181,6 +184,7 @@
 				2892A62828679F340026FC99 /* LanguageImages.swift in Sources */,
 				7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */,
 				7AC0131C23AE10D600FA3F07 /* LanguageUtils.swift in Sources */,
+				282D00FC2F857DAC005467AC /* CrashLogger.swift in Sources */,
 				7A765D6525D98B170076B974 /* WorkspaceUtils.swift in Sources */,
 				7A765D9325E2D7170076B974 /* ImageUtils.swift in Sources */,
 			);
@@ -332,7 +336,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.4;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = eugene.Babbler;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -355,7 +359,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.4;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = eugene.Babbler;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

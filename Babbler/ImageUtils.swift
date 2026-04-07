@@ -27,7 +27,12 @@ import Carbon
     }
     
     static private func generateLangImage(_ inputSource: TISInputSource, _ isSecurityInput: Bool) -> NSImage {
-        let image = NSImage(iconRef: inputSource.iconRef!);
+        let image: NSImage
+        if let iconURL = inputSource.iconImageURL {
+            image = NSImage(contentsOf: iconURL) ?? NSImage()
+        } else {
+            image = NSImage()
+        }
         image.size = NSMakeSize(16.0, 16.0)
         return isSecurityInput ? generateSecurityInputLangImage(image) : image;
     }

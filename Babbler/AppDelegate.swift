@@ -193,7 +193,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-
+        CrashLogger.install()
+        
         SecurityInputUtils.listenForSecurityInput {
             self.securityApp = $1
             if self.isSecurityInput != $0 {

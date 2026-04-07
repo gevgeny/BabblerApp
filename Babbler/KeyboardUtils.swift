@@ -28,9 +28,13 @@ let keyboardDelay = UInt64(50_000_000)
     }
     
     static func addGlobalEventListener(_ callback: @escaping (NSEvent) -> Void) -> Void {
-        NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp, .leftMouseDown, .flagsChanged]) {
-            callback($0);
-        };
+        // NSEvent.addGlobalMonitorForEvents delivers on a background thread.
+        // Dispatch to main so that handleEvent can safely call Carbon TIS APIs
+        // (which assert they run on the main queue) and mutate AppDelegate state
+        // without data races.
+        NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp, .leftMouseDown, .flagsChanged]) { event in
+            DispatchQueue.main.async { callback(event) }
+        }
     }
   
     static func checkActionKeyPress(_ code: UInt16, _ flags: NSEvent.ModifierFlags) -> Bool {
@@ -120,16 +124,17 @@ let keyboardDelay = UInt64(50_000_000)
         Task {
             // Wait till text copied
             try? await Task.sleep(nanoseconds: keyboardDelay)
-            
-            let newClipboardText = NSPasteboard.general.string(forType: .string) ?? ""
-            
-            // Put old text into clipboard
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(clipboardText, forType: .string);
-            
-            // Dispatch to main thread — downstream code calls Carbon TIS APIs
-            // which are not thread-safe
+
+            // All NSPasteboard access and the callback must run on the main thread.
+            // NSPasteboard (like all AppKit objects) is not thread-safe, and the
+            // downstream callback calls Carbon TIS APIs which also require the main thread.
             await MainActor.run {
+                let newClipboardText = NSPasteboard.general.string(forType: .string) ?? ""
+
+                // Restore old clipboard contents
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(clipboardText, forType: .string)
+
                 callback(newClipboardText)
             }
         }

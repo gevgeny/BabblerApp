@@ -11,6 +11,7 @@ class StatusItemController: NSObject {
     
     override init() {
         super.init()
+        NSApp.mainMenu = nil
         NSApp.setActivationPolicy(.accessory)
         statusItem.menu = NSMenu()
         statusItem.menu?.autoenablesItems = false
@@ -67,16 +68,21 @@ class StatusItemController: NSObject {
     }
     
     @objc func openSettings() {
+        if let existing = settingsWindowController?.window, existing.isVisible {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
         let hostingController = NSHostingController(rootView: SettingsView())
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Settings"
+        window.level = .floating
         settingsWindowController = NSWindowController(window: window)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindowController?.showWindow(self)
     }
     
     func updateMenuBarIcon(_ lang: TISInputSource?, _ isSecurityInput: Bool) {
-        let inputSource = LanguageUtils.getCurrentInputSource()
         statusItem.button!.attributedTitle = NSAttributedString(
             string: LanguageImages[lang!.id] ?? lang!.name,
             attributes: [NSAttributedString.Key.baselineOffset: -0.7])
@@ -98,8 +104,11 @@ class StatusItemController: NSObject {
             )
             item.target = self;
             item.identifier = NSUserInterfaceItemIdentifier(rawValue: inputSource.id)
-            item.image = NSImage(iconRef: inputSource.iconRef!)
-            item.image!.size = NSMakeSize(16.0, 16.0)
+            if let iconURL = inputSource.iconImageURL,
+               let image = NSImage(contentsOf: iconURL) {
+                image.size = NSMakeSize(16.0, 16.0)
+                item.image = image
+            }
             item.representedObject = inputSource.id
             menu.addItem(item)
         }

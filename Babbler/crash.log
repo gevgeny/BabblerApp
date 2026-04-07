@@ -1,0 +1,386 @@
+выпал с ошибкой наш бабблер
+-------------------------------------
+Translated Report (Full Report Below)
+-------------------------------------
+Process:             Babbler [33520]
+Path:                /Applications/Babbler.app/Contents/MacOS/Babbler
+Identifier:          eugene.Babbler
+Version:             0.1.3 (1)
+Code Type:           ARM-64 (Native)
+Role:                Background
+Parent Process:      launchd [1]
+Coalition:           eugene.Babbler [9772]
+User ID:             502
+
+Date/Time:           2026-04-07 11:02:02.9371 +0200
+Launch Time:         2026-04-06 13:20:07.2586 +0200
+Hardware Model:      MacBookPro18,3
+OS Version:          macOS 26.4 (25E246)
+Release Type:        User
+
+Crash Reporter Key:  B3E5FA08-CFFF-73F4-DFFE-70591D6A2AE4
+Incident Identifier: 90054D15-92FA-48E6-9E20-0BFD86859EBC
+
+Sleep/Wake UUID:       D8F1863D-7EC5-40DC-A077-8647F21A2846
+
+Time Awake Since Boot: 45000 seconds
+Time Since Wake:       3139 seconds
+
+System Integrity Protection: enabled
+
+Triggered by Thread: 3, Dispatch Queue: com.apple.root.user-initiated-qos.cooperative
+
+Exception Type:    EXC_BREAKPOINT (SIGTRAP)
+Exception Codes:   0x0000000000000001, 0x000000018e82e4fc
+
+Termination Reason:  Namespace SIGNAL, Code 5, Trace/BPT trap: 5
+Terminating Process: exc handler [33520]
+
+
+Thread 0::  Dispatch queue: com.apple.main-thread
+0   libsystem_kernel.dylib                0x18e96fc34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib                0x18e982574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib                0x18e9789c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib                0x18e96ffc0 mach_msg + 24
+4   CoreFoundation                        0x18ea70d68 __CFRunLoopServiceMachPort + 160
+5   CoreFoundation                        0x18ea6f654 __CFRunLoopRun + 1188
+6   CoreFoundation                        0x18eb41be0 _CFRunLoopRunSpecificWithOptions + 532
+7   HIToolbox                             0x19b844560 RunCurrentEventLoopInMode + 320
+8   HIToolbox                             0x19b8478bc ReceiveNextEventCommon + 488
+9   HIToolbox                             0x19b9d113c _BlockUntilNextEventMatchingListInMode + 48
+10  AppKit                                0x1935471a4 _DPSBlockUntilNextEventMatchingListInMode + 228
+11  AppKit                                0x192e9b084 _DPSNextEvent + 576
+12  AppKit                                0x193a3069c -[NSApplication(NSEventRouting) _nextEventMatchingEventMask:untilDate:inMode:dequeue:] + 688
+13  AppKit                                0x193a303a8 -[NSApplication(NSEventRouting) nextEventMatchingMask:untilDate:inMode:dequeue:] + 72
+14  AppKit                                0x192e8e13c -[NSApplication run] + 368
+15  AppKit                                0x192e667b0 NSApplicationMain + 880
+16  Babbler                               0x104ea61e8 0x104ea0000 + 25064
+17  dyld                                  0x18e5f7da4 start + 6992
+
+Thread 1:: com.apple.NSEventThread
+0   libsystem_kernel.dylib                0x18e96fc34 mach_msg2_trap + 8
+1   libsystem_kernel.dylib                0x18e982574 mach_msg2_internal + 76
+2   libsystem_kernel.dylib                0x18e9789c0 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib                0x18e96ffc0 mach_msg + 24
+4   CoreFoundation                        0x18ea70d68 __CFRunLoopServiceMachPort + 160
+5   CoreFoundation                        0x18ea6f654 __CFRunLoopRun + 1188
+6   CoreFoundation                        0x18eb41be0 _CFRunLoopRunSpecificWithOptions + 532
+7   AppKit                                0x192fbcc64 _NSEventThread + 184
+8   libsystem_pthread.dylib               0x18e9b3c58 _pthread_start + 136
+9   libsystem_pthread.dylib               0x18e9aec1c thread_start + 8
+
+Thread 2:
+Thread 3 Crashed::  Dispatch queue: com.apple.root.user-initiated-qos.cooperative
+0   libdispatch.dylib                     0x18e82e4fc _dispatch_assert_queue_fail + 120
+1   libdispatch.dylib                     0x18e82ef68 dispatch_assert_queue$V2.cold.1 + 116
+2   libdispatch.dylib                     0x18e7fc114 dispatch_assert_queue + 108
+3   HIToolbox                             0x19b85f3bc islGetInputSourceListWithAdditions + 160
+4   HIToolbox                             0x19b9d6c4c isValidateInputSourceRef + 88
+5   HIToolbox                             0x19b9d6cc8 TSMGetInputSourceProperty + 36
+6   HIToolbox                             0x19b85bb5c CreateInputSourceDescription + 48
+7   HIToolbox                             0x19b85e44c __TSMInputSourceCopyDebugDesc + 32
+8   CoreFoundation                        0x18ea2f23c CFCopyDescription + 488
+9   CoreFoundation                        0x18ea6c7e8 -[__NSCFType description] + 16
+10  Foundation                            0x190c0addc protocol witness for CustomDebugStringConvertible.debugDescription.getter in conformance NSObject + 28
+11  libswiftCore.dylib                    0x1a2067ed8 _debugPrint_unlocked<A, B>(_:_:) + 360
+12  libswiftCore.dylib                    0x1a23071e8 specialized _debugPrint<A>(_:separator:terminator:to:) + 1668
+13  libswiftCore.dylib                    0x1a22fd6fc Optional.debugDescription.getter + 392
+14  libswiftCore.dylib                    0x1a205ded4 String.init<A>(describing:) + 500
+15  Babbler                               0x104ea45dc 0x104ea0000 + 17884
+16  Babbler                               0x104ea4884 0x104ea0000 + 18564
+17  Babbler                               0x104ea3e84 0x104ea0000 + 16004
+18  Babbler                               0x104ea453d 0x104ea0000 + 17725
+19  Babbler                               0x104ea62f1 0x104ea0000 + 25329
+20  Babbler                               0x104ea67c5 0x104ea0000 + 26565
+21  libswift_Concurrency.dylib            0x292a82ec5 completeTaskWithClosure(swift::AsyncContext*, swift::SwiftError*) + 1
+
+Thread 4:
+
+
+Thread 3 crashed with ARM Thread State (64-bit):
+    x0: 0x0000100000000000   x1: 0xffffffffb0000000   x2: 0x0000000000000060   x3: 0xfffff0007fc00000
+    x4: 0x0000000a54001b00   x5: 0x0000000000000000   x6: 0x0068637461707369   x7: 0x0000000a54001a80
+    x8: 0x00000001f7d2a000   x9: 0x000000007fbd5657  x10: 0x0000000000000000  x11: 0x0000000000000000
+   x12: 0x022541298042a9a8  x13: 0x022532640042a1b0  x14: 0x000000000002a800  x15: 0x000000000000002b
+   x16: 0x952d000a54001a80  x17: 0x00000002532641b0  x18: 0x0000000000000000  x19: 0x0000000a54001780
+   x20: 0x0000000732c23680  x21: 0x0000000000000000  x22: 0x00000001fa88b000  x23: 0x00000001fa8e7160
+   x24: 0x00000001fa8e7188  x25: 0x000000016b0728c0  x26: 0x000000016b0728a0  x27: 0x00000001fa88b000
+   x28: 0x00000001a2056f98   fp: 0x000000016b072600   lr: 0x000000018e82e4f4
+    sp: 0x000000016b0725c0   pc: 0x000000018e82e4fc cpsr: 0x00001000
+   far: 0x0000000000000000  esr: 0xf2000001 (Breakpoint) brk 1
+   Binary Images:
+       0x104ea0000 -        0x104eb3fff eugene.Babbler (0.1.3) <0ff1e34f-99ee-3edd-977f-23e055877846> /Applications/Babbler.app/Contents/MacOS/Babbler
+       0x105120000 -        0x10512bfff libobjc-trampolines.dylib (*) <a4dd56f1-375a-3540-844b-5e397f0b78b3> /usr/lib/libobjc-trampolines.dylib
+       0x118d78000 -        0x119503fff com.apple.AGXMetalG13X (350.38) <95c14223-fa99-3e3d-9570-8e7862d86a54> /System/Library/Extensions/AGXMetalG13X.bundle/Contents/MacOS/AGXMetalG13X
+       0x18e96f000 -        0x18e9ac28f libsystem_kernel.dylib (*) <51565b39-f595-3e96-a217-fef29815057a> /usr/lib/system/libsystem_kernel.dylib
+       0x18e9f3000 -        0x18ef50c5f com.apple.CoreFoundation (6.9) <04941709-2330-3bf8-9213-6d33964db448> /System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+       0x19b787000 -        0x19ba8205f com.apple.HIToolbox (2.1.1) <bcb81496-c81f-3d3e-a617-ccca047989e0> /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/HIToolbox
+       0x192e62000 -        0x194584abf com.apple.AppKit (6.9) <59e23bd5-d01e-305a-b96f-a5790356049a> /System/Library/Frameworks/AppKit.framework/Versions/C/AppKit
+       0x18e5d8000 -        0x18e67dec7 dyld (*) <9f682dcf-340c-3bfa-bcdd-dd702f30313e> /usr/lib/dyld
+               0x0 - 0xffffffffffffffff ??? (*) <00000000-0000-0000-0000-000000000000> ???
+       0x18e9ad000 -        0x18e9b9b3b libsystem_pthread.dylib (*) <e7a73008-0c09-31e3-9dd9-0c61652f0e85> /usr/lib/system/libsystem_pthread.dylib
+       0x18e7f7000 -        0x18e83e23f libdispatch.dylib (*) <e17aa23f-db2a-3302-b14c-f6b08c540fcf> /usr/lib/system/libdispatch.dylib
+       0x19025f000 -        0x1912411df com.apple.Foundation (6.9) <8e9a5c62-7e95-3047-81e7-735ae1aee5f8> /System/Library/Frameworks/Foundation.framework/Versions/C/Foundation
+       0x1a203f000 -        0x1a25e093f libswiftCore.dylib (*) <fb6ad37d-0f92-3774-ab61-0323db22c111> /usr/lib/swift/libswiftCore.dylib
+       0x292a76000 -        0x292b01095 libswift_Concurrency.dylib (*) <02634765-cb69-3c2b-9cce-10103cbea22a> /usr/lib/swift/libswift_Concurrency.dylib
+
+External Modification Summary:
+  Calls made by other processes targeting this process:
+    task_for_pid: 0
+    thread_create: 0
+    thread_set_state: 0
+  Calls made by this process:
+    task_for_pid: 0
+    thread_create: 0
+    thread_set_state: 0
+  Calls made by all processes on this machine:
+    task_for_pid: 0
+    thread_create: 0
+    thread_set_state: 0
+
+-----------
+Full Report
+-----------
+{"app_name":"Babbler","timestamp":"2026-04-07 11:02:30.00 +0200","app_version":"0.1.3","slice_uuid":"0ff1e34f-99ee-3edd-977f-23e055877846","build_version":"1","platform":1,"bundleID":"eugene.Babbler","share_with_app_devs":1,"is_first_party":0,"bug_type":"309","os_version":"macOS 26.4 (25E246)","roots_installed":0,"name":"Babbler","incident_id":"90054D15-92FA-48E6-9E20-0BFD86859EBC"}
+{
+  "uptime" : 45000,
+  "procRole" : "Background",
+  "version" : 2,
+  "userID" : 502,
+  "deployVersion" : 210,
+  "modelCode" : "MacBookPro18,3",
+  "coalitionID" : 9772,
+  "osVersion" : {
+    "train" : "macOS 26.4",
+    "build" : "25E246",
+    "releaseType" : "User"
+  },
+  "captureTime" : "2026-04-07 11:02:02.9371 +0200",
+  "codeSigningMonitor" : 2,
+  "incident" : "90054D15-92FA-48E6-9E20-0BFD86859EBC",
+  "pid" : 33520,
+  "translated" : false,
+  "cpuType" : "ARM-64",
+  "procLaunch" : "2026-04-06 13:20:07.2586 +0200",
+  "procStartAbsTime" : 878551072935,
+  "procExitAbsTime" : 1080718537337,
+  "procName" : "Babbler",
+  "procPath" : "\/Applications\/Babbler.app\/Contents\/MacOS\/Babbler",
+  "bundleInfo" : {"CFBundleShortVersionString":"0.1.3","CFBundleVersion":"1","CFBundleIdentifier":"eugene.Babbler"},
+  "storeInfo" : {"deviceIdentifierForVendor":"FA09215B-EBE7-541F-B5CA-36111020B97C","thirdParty":true},
+  "parentProc" : "launchd",
+  "parentPid" : 1,
+  "coalitionName" : "eugene.Babbler",
+  "crashReporterKey" : "B3E5FA08-CFFF-73F4-DFFE-70591D6A2AE4",
+  "appleIntelligenceStatus" : {"state":"unavailable","reasons":["selectedLanguageDoesNotMatchSelectedSiriLanguageInfo(system: en-GB, siri: ru)","selectedSiriLanguageIneligible","selectedSiriLanguageIneligibleInfo(ru)","selectedLanguageDoesNotMatchSelectedSiriLanguage"]},
+  "developerMode" : 1,
+  "codeSigningID" : "eugene.Babbler",
+  "codeSigningTeamID" : "S6G53UGWX8",
+  "codeSigningFlags" : 1644245777,
+  "codeSigningValidationCategory" : 3,
+  "codeSigningTrustLevel" : 4294967295,
+  "codeSigningAuxiliaryInfo" : 0,
+  "instructionByteStream" : {"beforePC":"IaARkaBjANGCGQCUs4Ne+PMDAPlAAADQAEwTkTn6\/5fopzSQEyEF+Q==","atPC":"IAAg1H8jA9X\/AwHR9E8Cqf17A6n9wwCRCCRA+UkAAJAp+S+RHwEA8Q=="},
+  "bootSessionUUID" : "4F8D39FB-8DD6-4B7F-8E30-2EB12E9E5567",
+  "wakeTime" : 3139,
+  "sleepWakeUUID" : "D8F1863D-7EC5-40DC-A077-8647F21A2846",
+  "sip" : "enabled",
+  "exception" : {"codes":"0x0000000000000001, 0x000000018e82e4fc","rawCodes":[1,6685910268],"type":"EXC_BREAKPOINT","signal":"SIGTRAP"},
+  "termination" : {"flags":0,"code":5,"namespace":"SIGNAL","indicator":"Trace\/BPT trap: 5","byProc":"exc handler","byPid":33520},
+  "os_fault" : {"process":"Babbler"},
+  "extMods" : {"caller":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"system":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"targeted":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"warnings":0},
+  "faultingThread" : 3,
+  "threads" : [{"id":1008861,"threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":37396280246272},{"value":0},{"value":37396280246272},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":8707},{"value":206708186070016},{"value":18446744073709551569},{"value":8520689200},{"value":0},{"value":4294967295},{"value":2},{"value":37396280246272},{"value":0},{"value":37396280246272},{"value":21592279046},{"value":6089465528},{"value":8589934592},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6687303028},"cpsr":{"value":4096},"fp":{"value":6089465376},"sp":{"value":6089465296},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6687226932},"far":{"value":0}},"queue":"com.apple.main-thread","frames":[{"imageOffset":3124,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":3},{"imageOffset":79220,"symbol":"mach_msg2_internal","symbolLocation":76,"imageIndex":3},{"imageOffset":39360,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":3},{"imageOffset":4032,"symbol":"mach_msg","symbolLocation":24,"imageIndex":3},{"imageOffset":515432,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":160,"imageIndex":4},{"imageOffset":509524,"symbol":"__CFRunLoopRun","symbolLocation":1188,"imageIndex":4},{"imageOffset":1371104,"symbol":"_CFRunLoopRunSpecificWithOptions","symbolLocation":532,"imageIndex":4},{"imageOffset":775520,"symbol":"RunCurrentEventLoopInMode","symbolLocation":320,"imageIndex":5},{"imageOffset":788668,"symbol":"ReceiveNextEventCommon","symbolLocation":488,"imageIndex":5},{"imageOffset":2400572,"symbol":"_BlockUntilNextEventMatchingListInMode","symbolLocation":48,"imageIndex":5},{"imageOffset":7229860,"symbol":"_DPSBlockUntilNextEventMatchingListInMode","symbolLocation":228,"imageIndex":6},{"imageOffset":233604,"symbol":"_DPSNextEvent","symbolLocation":576,"imageIndex":6},{"imageOffset":12379804,"symbol":"-[NSApplication(NSEventRouting) _nextEventMatchingEventMask:untilDate:inMode:dequeue:]","symbolLocation":688,"imageIndex":6},{"imageOffset":12379048,"symbol":"-[NSApplication(NSEventRouting) nextEventMatchingMask:untilDate:inMode:dequeue:]","symbolLocation":72,"imageIndex":6},{"imageOffset":180540,"symbol":"-[NSApplication
+  run]","symbolLocation":368,"imageIndex":6},{"imageOffset":18352,"symbol":"NSApplicationMain","symbolLocation":880,"imageIndex":6},{"imageOffset":25064,"imageIndex":0},{"imageOffset":130468,"symbol":"start","symbolLocation":6992,"imageIndex":7}]},{"id":1008871,"name":"com.apple.NSEventThread","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592},{"value":130854768607232},{"value":0},{"value":130854768607232},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":30467},{"value":0},{"value":18446744073709551569},{"value":8520689200},{"value":0},{"value":4294967295},{"value":2},{"value":130854768607232},{"value":0},{"value":130854768607232},{"value":21592279046},{"value":6091743368},{"value":8589934592},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6687303028},"cpsr":{"value":4096},"fp":{"value":6091743216},"sp":{"value":6091743136},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6687226932},"far":{"value":0}},"frames":[{"imageOffset":3124,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":3},{"imageOffset":79220,"symbol":"mach_msg2_internal","symbolLocation":76,"imageIndex":3},{"imageOffset":39360,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":3},{"imageOffset":4032,"symbol":"mach_msg","symbolLocation":24,"imageIndex":3},{"imageOffset":515432,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":160,"imageIndex":4},{"imageOffset":509524,"symbol":"__CFRunLoopRun","symbolLocation":1188,"imageIndex":4},{"imageOffset":1371104,"symbol":"_CFRunLoopRunSpecificWithOptions","symbolLocation":532,"imageIndex":4},{"imageOffset":1420388,"symbol":"_NSEventThread","symbolLocation":184,"imageIndex":6},{"imageOffset":27736,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":9},{"imageOffset":7196,"symbol":"thread_start","symbolLocation":8,"imageIndex":9}]},{"id":1262333,"frames":[],"threadState":{"x":[{"value":6090027008},{"value":11227},{"value":6089490432},{"value":0},{"value":409603},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6090027008},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6687484936},"far":{"value":0}}},{"triggered":true,"id":1263159,"threadState":{"x":[{"value":17592186044416},{"value":18446744072367374336},{"value":96},{"value":18446726483666796544},{"value":44358966016},{"value":0},{"value":29382749080023913},{"value":44358965888},{"value":8452743168,"symbolLocation":8,"symbol":"_OBJC_PROTOCOL_$_OS_dispatch_source_memorypressure"},{"value":2143114839},{"value":0},{"value":0},{"value":154601408715467176},{"value":154585167296635312},{"value":174080},{"value":43},{"value":10749247929962207872},{"value":9984950704},{"value":0},{"value":44358965120},{"value":30916359808},{"value":0},{"value":8498229248,"symbolLocation":40,"symbol":"_MergedGlobals"},{"value":8498606432,"symbolLocation":47600,"symbol":"InitialAllocationPool"},{"value":8498606472,"symbolLocation":47640,"symbol":"InitialAllocationPool"},{"value":6090598592},{"value":6090598560},{"value":8498229248,"symbolLocation":40,"symbol":"_MergedGlobals"},{"value":7013232536,"symbolLocation":0,"symbol":"swift::metadataimpl::ValueWitnesses<swift::metadataimpl::OpaqueExistentialBox<0u>>::initializeWithCopy(swift::OpaqueValue*, swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*)"}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6685910260},"cpsr":{"value":4096},"fp":{"value":6090597888},"sp":{"value":6090597824},"esr":{"value":4060086273,"description":"(Breakpoint) brk
+  1"},"pc":{"value":6685910268,"matchesCrashFrame":1},"far":{"value":0}},"queue":"com.apple.root.user-initiated-qos.cooperative","frames":[{"imageOffset":226556,"symbol":"_dispatch_assert_queue_fail","symbolLocation":120,"imageIndex":10},{"imageOffset":229224,"symbol":"dispatch_assert_queue$V2.cold.1","symbolLocation":116,"imageIndex":10},{"imageOffset":20756,"symbol":"dispatch_assert_queue","symbolLocation":108,"imageIndex":10},{"imageOffset":885692,"symbol":"islGetInputSourceListWithAdditions","symbolLocation":160,"imageIndex":5},{"imageOffset":2423884,"symbol":"isValidateInputSourceRef","symbolLocation":88,"imageIndex":5},{"imageOffset":2424008,"symbol":"TSMGetInputSourceProperty","symbolLocation":36,"imageIndex":5},{"imageOffset":871260,"symbol":"CreateInputSourceDescription","symbolLocation":48,"imageIndex":5},{"imageOffset":881740,"symbol":"__TSMInputSourceCopyDebugDesc","symbolLocation":32,"imageIndex":5},{"imageOffset":246332,"symbol":"CFCopyDescription","symbolLocation":488,"imageIndex":4},{"imageOffset":497640,"symbol":"-[__NSCFType description]","symbolLocation":16,"imageIndex":4},{"imageOffset":10141148,"symbol":"protocol witness for CustomDebugStringConvertible.debugDescription.getter in conformance NSObject","symbolLocation":28,"imageIndex":11},{"imageOffset":167640,"symbol":"_debugPrint_unlocked<A, B>(_:_:)","symbolLocation":360,"imageIndex":12},{"imageOffset":2916840,"symbol":"specialized _debugPrint<A>(_:separator:terminator:to:)","symbolLocation":1668,"imageIndex":12},{"imageOffset":2877180,"symbol":"Optional.debugDescription.getter","symbolLocation":392,"imageIndex":12},{"imageOffset":126676,"symbol":"String.init<A>(describing:)","symbolLocation":500,"imageIndex":12},{"imageOffset":17884,"imageIndex":0},{"imageOffset":18564,"imageIndex":0},{"imageOffset":16004,"imageIndex":0},{"imageOffset":17725,"imageIndex":0},{"imageOffset":25329,"imageIndex":0},{"imageOffset":26565,"imageIndex":0},{"imageOffset":52933,"symbol":"completeTaskWithClosure(swift::AsyncContext*, swift::SwiftError*)","symbolLocation":1,"imageIndex":13}]},{"id":1263483,"frames":[],"threadState":{"x":[{"value":6091173888},{"value":52627},{"value":6090637312},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6091173888},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6687484936},"far":{"value":0}}}],
+  "usedImages" : [
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4377411584,
+    "CFBundleShortVersionString" : "0.1.3",
+    "CFBundleIdentifier" : "eugene.Babbler",
+    "size" : 81920,
+    "uuid" : "0ff1e34f-99ee-3edd-977f-23e055877846",
+    "path" : "\/Applications\/Babbler.app\/Contents\/MacOS\/Babbler",
+    "name" : "Babbler",
+    "CFBundleVersion" : "1"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 4380033024,
+    "size" : 49152,
+    "uuid" : "a4dd56f1-375a-3540-844b-5e397f0b78b3",
+    "path" : "\/usr\/lib\/libobjc-trampolines.dylib",
+    "name" : "libobjc-trampolines.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 4711743488,
+    "CFBundleShortVersionString" : "350.38",
+    "CFBundleIdentifier" : "com.apple.AGXMetalG13X",
+    "size" : 7913472,
+    "uuid" : "95c14223-fa99-3e3d-9570-8e7862d86a54",
+    "path" : "\/System\/Library\/Extensions\/AGXMetalG13X.bundle\/Contents\/MacOS\/AGXMetalG13X",
+    "name" : "AGXMetalG13X",
+    "CFBundleVersion" : "350.38"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6687223808,
+    "size" : 250512,
+    "uuid" : "51565b39-f595-3e96-a217-fef29815057a",
+    "path" : "\/usr\/lib\/system\/libsystem_kernel.dylib",
+    "name" : "libsystem_kernel.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6687764480,
+    "CFBundleShortVersionString" : "6.9",
+    "CFBundleIdentifier" : "com.apple.CoreFoundation",
+    "size" : 5626976,
+    "uuid" : "04941709-2330-3bf8-9213-6d33964db448",
+    "path" : "\/System\/Library\/Frameworks\/CoreFoundation.framework\/Versions\/A\/CoreFoundation",
+    "name" : "CoreFoundation",
+    "CFBundleVersion" : "4424.1.402"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6903328768,
+    "CFBundleShortVersionString" : "2.1.1",
+    "CFBundleIdentifier" : "com.apple.HIToolbox",
+    "size" : 3125344,
+    "uuid" : "bcb81496-c81f-3d3e-a617-ccca047989e0",
+    "path" : "\/System\/Library\/Frameworks\/Carbon.framework\/Versions\/A\/Frameworks\/HIToolbox.framework\/Versions\/A\/HIToolbox",
+    "name" : "HIToolbox"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6759522304,
+    "CFBundleShortVersionString" : "6.9",
+    "CFBundleIdentifier" : "com.apple.AppKit",
+    "size" : 24259264,
+    "uuid" : "59e23bd5-d01e-305a-b96f-a5790356049a",
+    "path" : "\/System\/Library\/Frameworks\/AppKit.framework\/Versions\/C\/AppKit",
+    "name" : "AppKit",
+    "CFBundleVersion" : "2685.50.120"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6683459584,
+    "size" : 679624,
+    "uuid" : "9f682dcf-340c-3bfa-bcdd-dd702f30313e",
+    "path" : "\/usr\/lib\/dyld",
+    "name" : "dyld"
+  },
+  {
+    "size" : 0,
+    "source" : "A",
+    "base" : 0,
+    "uuid" : "00000000-0000-0000-0000-000000000000"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6687477760,
+    "size" : 52028,
+    "uuid" : "e7a73008-0c09-31e3-9dd9-0c61652f0e85",
+    "path" : "\/usr\/lib\/system\/libsystem_pthread.dylib",
+    "name" : "libsystem_pthread.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6685683712,
+    "size" : 291392,
+    "uuid" : "e17aa23f-db2a-3302-b14c-f6b08c540fcf",
+    "path" : "\/usr\/lib\/system\/libdispatch.dylib",
+    "name" : "libdispatch.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6713372672,
+    "CFBundleShortVersionString" : "6.9",
+    "CFBundleIdentifier" : "com.apple.Foundation",
+    "size" : 16654816,
+    "uuid" : "8e9a5c62-7e95-3047-81e7-735ae1aee5f8",
+    "path" : "\/System\/Library\/Frameworks\/Foundation.framework\/Versions\/C\/Foundation",
+    "name" : "Foundation",
+    "CFBundleVersion" : "4424.1.402"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 7013134336,
+    "size" : 5904704,
+    "uuid" : "fb6ad37d-0f92-3774-ab61-0323db22c111",
+    "path" : "\/usr\/lib\/swift\/libswiftCore.dylib",
+    "name" : "libswiftCore.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 11050377216,
+    "size" : 569494,
+    "uuid" : "02634765-cb69-3c2b-9cce-10103cbea22a",
+    "path" : "\/usr\/lib\/swift\/libswift_Concurrency.dylib",
+    "name" : "libswift_Concurrency.dylib"
+  }
+],
+  "sharedCache" : {
+  "base" : 6682329088,
+  "size" : 5978570752,
+  "uuid" : "7d4906c9-9ca2-3f56-8242-3ec2c1e3245b"
+},
+  "legacyInfo" : {
+  "threadTriggered" : {
+    "queue" : "com.apple.root.user-initiated-qos.cooperative"
+  }
+},
+  "logWritingSignature" : "5d0df55f08176de33dbcbfb6c2ee982cff6f3967",
+  "bug_type" : "309",
+  "roots_installed" : 0,
+  "trmStatus" : 1,
+  "voucherInfos" : [{"proximateName":"distnoted","thread_id":1263159}],
+  "trialInfo" : {
+  "rollouts" : [
+    {
+      "rolloutId" : "6761d0c9df60af01adb250fb",
+      "factorPackIds" : [
+
+      ],
+      "deploymentId" : 240000009
+    },
+    {
+      "rolloutId" : "642da32dea3b2418c750f848",
+      "factorPackIds" : [
+        "66d8b2f77cd4b62688efd2cf"
+      ],
+      "deploymentId" : 240000011
+    }
+  ],
+  "experiments" : [
+
+  ]
+}
+}
+Model: MacBookPro18,3, BootROM 18000.101.7, proc 10:8:2:0 processors, 32 GB, SMC
+Graphics: Apple M1 Pro, Apple M1 Pro, Built-In
+Display: Color LCD, 3024 x 1964 Retina, Main, MirrorOff, Online
+Memory Module: LPDDR5, Hynix
+AirPort: spairport_wireless_card_type_wifi (0x14E4, 0x4387), wl0: Jan 20 2026 17:44:15 version 20.140.13.0.8.7.224 FWID 01-b2a3fd0d
+IO80211_driverkit-1555.23 "IO80211_driverkit-1555.23" Mar  5 2026 21:45:55
+AirPort:
+Bluetooth: Version (null), 0 services, 0 devices, 0 incoming serial ports
+Network Service: Wi-Fi, AirPort, en0
+Thunderbolt Bus: MacBook Pro, Apple Inc.
+Thunderbolt Bus: MacBook Pro, Apple Inc.
+Thunderbolt Bus: MacBook Pro, Apple Inc.

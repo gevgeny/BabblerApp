@@ -92,7 +92,12 @@ class StatusItemController: NSObject {
         let hostingController = NSHostingController(rootView: SettingsView())
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Settings"
+        window.titlebarAppearsTransparent = false
+        window.titleVisibility = .visible
+        window.styleMask = [.titled, .closable]
+        window.isMovableByWindowBackground = true
         window.level = .floating
+        window.center()
         settingsWindowController = NSWindowController(window: window)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindowController?.showWindow(self)

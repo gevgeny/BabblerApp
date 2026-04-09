@@ -35,30 +35,36 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Lang switch key:")
-                Picker("", selection: $selectedSwitchKeyCode) {
-                    ForEach(switchKeyOptions) { option in
-                        Text(option.label).tag(option.code)
+        Form {
+            Section("General") {
+                VStack(alignment: .leading, spacing: 3) {
+                    Picker("Action key", selection: $selectedSwitchKeyCode) {
+                        ForEach(switchKeyOptions) { option in
+                            Text(option.label).tag(option.code)
+                        }
                     }
+                    Text("Press the action key to convert the last typed word or selected text to the other keyboard layout.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .labelsHidden()
-                .fixedSize()
+                Toggle("Use system input indicator", isOn: $useSystemInputIndicator)
             }
             
-            Toggle("Use system input source indicator", isOn: $useSystemInputIndicator)
-
-            Divider()
-
-            Text("Set default keyboard input for apps below:")
-
-            List(appList) { app in
-                AppInputSourceRow(app: app)
+            Section {
+                List(appList) { app in
+                    AppInputSourceRow(app: app)
+                }
+            } header: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Default Input Source")
+                    Text("Keyboard input automatically switches when the app is activated.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .padding()
-        .frame(width: 480, height: 350)
+        .formStyle(.grouped)
+        .frame(width: 500, height: 420)
         .onChange(of: selectedSwitchKeyCode) { _, newValue in
             preferenceStore.setSwitchKeyCode(newValue)
             KeyboardUtils.setActionKey(code: newValue)

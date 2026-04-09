@@ -8,6 +8,7 @@
 //
 import Foundation
 import Carbon
+import AppKit
 
 extension TISInputSource {
     enum Category {
@@ -53,5 +54,31 @@ extension TISInputSource {
     var iconImageURL: URL? {
         guard let urlRef = getProperty(kTISPropertyIconImageURL) as? String else { return nil }
         return URL(fileURLWithPath: urlRef)
+    }
+    
+    var iconImage: NSImage? {
+        if let iconURL = iconImageURL,
+           let image = NSImage(contentsOf: iconURL) {
+            return image
+        }
+        guard let iconRef = iconRef else { return nil }
+        let size: CGFloat = 36
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        guard let ctx = CGContext(
+            data: nil, width: Int(size), height: Int(size),
+            bitsPerComponent: 8, bytesPerRow: 0, space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
+        ) else { return nil }
+        var rect = CGRect(x: 0, y: 0, width: size, height: size)
+        PlotIconRefInContext(
+            ctx, &rect,
+            IconAlignmentType(kAlignAbsoluteCenter),
+            IconTransformType(kTransformNone),
+            nil,
+            PlotIconRefFlags(kPlotIconRefNormalFlags),
+            iconRef
+        )
+        guard let cgImage = ctx.makeImage() else { return nil }
+        return NSImage(cgImage: cgImage, size: NSSize(width: size, height: size))
     }
 }

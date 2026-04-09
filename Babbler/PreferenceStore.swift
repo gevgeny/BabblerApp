@@ -10,6 +10,7 @@ import Foundation
 
 let appInputSourcesKey = "appInputSources"
 let langSwitchKeyCodeKey = "langSwitchKeyCode"
+let useSystemInputIndicatorKey = "useSystemInputIndicator"
 
 class PreferenceStore {
     private var appInputSources: [String: [String]]
@@ -51,6 +52,14 @@ class PreferenceStore {
     
     func setSwitchKeyCode(_ code: UInt16) {
         UserDefaults.standard.set(Int(code), forKey: langSwitchKeyCodeKey)
+    }
+    
+    func getUseSystemInputIndicator() -> Bool {
+        return UserDefaults.standard.bool(forKey: useSystemInputIndicatorKey)
+    }
+    
+    func setUseSystemInputIndicator(_ value: Bool) {
+        UserDefaults.standard.set(value, forKey: useSystemInputIndicatorKey)
     }
 }
 

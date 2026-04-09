@@ -9,12 +9,22 @@ class StatusItemController: NSObject {
     
     var settingsWindowController: NSWindowController?
     
+    private var currentLang: TISInputSource?
+    private var currentIsSecurityInput: Bool = false
+    
     override init() {
         super.init()
         NSApp.mainMenu = nil
         NSApp.setActivationPolicy(.accessory)
         statusItem.menu = NSMenu()
         statusItem.menu?.autoenablesItems = false
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(onIndicatorStyleChanged),
+            name: .statusBarIndicatorStyleChanged,
+            object: nil
+        )
         
         
         
@@ -63,6 +73,12 @@ class StatusItemController: NSObject {
     }
     
     
+    @objc func onIndicatorStyleChanged() {
+        if let lang = currentLang {
+            updateMenuBarIcon(lang, currentIsSecurityInput)
+        }
+    }
+    
     @objc func quit() {
         NSApplication.shared.terminate(self)
     }
@@ -83,9 +99,18 @@ class StatusItemController: NSObject {
     }
     
     func updateMenuBarIcon(_ lang: TISInputSource?, _ isSecurityInput: Bool) {
-        statusItem.button!.attributedTitle = NSAttributedString(
-            string: LanguageImages[lang!.id] ?? lang!.name,
-            attributes: [NSAttributedString.Key.baselineOffset: -0.7])
+        currentLang = lang
+        currentIsSecurityInput = isSecurityInput
+        
+        if preferenceStore.getUseSystemInputIndicator() {
+            statusItem.button!.attributedTitle = NSAttributedString(string: "")
+            statusItem.button!.image = makeInputSourceIcon(for: lang!)
+        } else {
+            statusItem.button!.image = nil
+            statusItem.button!.attributedTitle = NSAttributedString(
+                string: LanguageImages[lang!.id] ?? lang!.name,
+                attributes: [NSAttributedString.Key.baselineOffset: -0.7])
+        }
         
         for menuItem in statusItem.menu!.items {
             menuItem.state = NSControl.StateValue.off

@@ -1,6 +1,10 @@
 import SwiftUI
 import Carbon
 
+extension Notification.Name {
+    static let statusBarIndicatorStyleChanged = Notification.Name("statusBarIndicatorStyleChanged")
+}
+
 struct SwitchKeyOption: Identifiable {
     let label: String
     let code: UInt16
@@ -22,10 +26,12 @@ struct AppListItem: Identifiable {
 
 struct SettingsView: View {
     @State private var selectedSwitchKeyCode: UInt16
+    @State private var useSystemInputIndicator: Bool
     @State private var appList: [AppListItem] = []
 
     init() {
         _selectedSwitchKeyCode = State(initialValue: preferenceStore.getSwitchKeyCode())
+        _useSystemInputIndicator = State(initialValue: preferenceStore.getUseSystemInputIndicator())
     }
 
     var body: some View {
@@ -40,6 +46,8 @@ struct SettingsView: View {
                 .labelsHidden()
                 .fixedSize()
             }
+            
+            Toggle("Use system input source indicator", isOn: $useSystemInputIndicator)
 
             Divider()
 
@@ -54,6 +62,10 @@ struct SettingsView: View {
         .onChange(of: selectedSwitchKeyCode) { _, newValue in
             preferenceStore.setSwitchKeyCode(newValue)
             KeyboardUtils.setActionKey(code: newValue)
+        }
+        .onChange(of: useSystemInputIndicator) { _, newValue in
+            preferenceStore.setUseSystemInputIndicator(newValue)
+            NotificationCenter.default.post(name: .statusBarIndicatorStyleChanged, object: nil)
         }
         .onAppear {
             WorkspaceUtils.listAllApps { apps in

@@ -1,8 +1,14 @@
-# Babbler
+# 🗣️ Babbler
 
 A lightweight macOS menu bar app for fast switching between English and Russian keyboard layouts. If you accidentally typed in the wrong layout, Babbler fixes it instantly — no need to retype.
 
-## How it works
+## ⚡ Quick Start
+
+Download the latest app archive from the [bin](./bin) folder and launch `Babbler.app`.
+
+Babbler is a small macOS menu bar utility that helps you instantly fix text typed in the wrong keyboard layout and optionally switch input sources automatically per app.
+
+## ⚙️ How It Works
 
 **Typed text** — press the action key (Option by default) and Babbler deletes what you just typed and retypes it in the other layout:
 
@@ -13,7 +19,7 @@ Ghbdtn -> Option -> Привет
 
 **Selected text** — select text and press the action key. Babbler translates the selection in place.
 
-## Features
+## ✨ Features
 
 - Runs in the menu bar, shows the current input language
 - Translates last typed word or selected text on action key press
@@ -22,25 +28,25 @@ Ghbdtn -> Option -> Привет
 - Detects secure input mode and shows a warning
 - Writes local crash logs for uncaught exceptions and fatal signals
 
-## Requirements
+## 📋 Requirements
 
 - macOS
 - Both English and Russian input sources must be enabled in System Settings
 - Accessibility permission (the app prompts on first launch)
 
-## Download
+## 📦 Download
 
 Prebuilt app archives are published in the [bin](./bin) folder.
 
-## Build
+## 🛠️ Build
 
-### Xcode
+### 🧰 Xcode
 
 1. Open `Babbler.xcodeproj` in Xcode
 2. Build the `Babbler` scheme
 3. Run the app
 
-### Package a zip
+### 🗜️ Package a Zip
 
 Use the packaging script to build a release archive and create `bin/Babbler vX.Y.Z.zip`:
 
@@ -54,14 +60,14 @@ If your system is not using the full Xcode app as the active developer directory
 DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer" ./scripts/package_app.sh
 ```
 
-## Setup
+## 🚀 Setup
 
 1. Build Babbler in Xcode or package it with `./scripts/package_app.sh`
 2. Launch Babbler — it appears in the menu bar
 3. Grant Accessibility access when prompted
 4. (Optional) Open Settings from the menu bar icon to configure the action key and per-app input languages
 
-## Crash Logging
+## 🧯 Crash Logging
 
 Babbler installs local crash logging on launch.
 

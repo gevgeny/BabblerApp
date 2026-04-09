@@ -28,6 +28,12 @@
 
 /* Begin PBXFileReference section */
 		282D00FB2F857DAC005467AC /* CrashLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashLogger.swift; sourceTree = "<group>"; };
+		282D00FD2F883EE6005467AC /* Babbler.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Babbler.xcodeproj; sourceTree = "<group>"; };
+		282D00FE2F883EE6005467AC /* Babbler v0.3.3.zip */ = {isa = PBXFileReference; lastKnownFileType = archive.zip; path = "Babbler v0.3.3.zip"; sourceTree = "<group>"; };
+		282D01002F883EE6005467AC /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
+		282D01012F883EE6005467AC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		282D01022F883EE6005467AC /* package_app.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package_app.sh; sourceTree = "<group>"; };
+		282D01062F883F70005467AC /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		2892A62728679F340026FC99 /* LanguageImages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageImages.swift; sourceTree = "<group>"; };
 		7A765D5E25D916460076B974 /* Key.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Key.swift; sourceTree = "<group>"; };
 		7A765D6125D91EB60076B974 /* KeyboardUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardUtils.swift; sourceTree = "<group>"; };
@@ -60,9 +66,36 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		282D00FF2F883EE6005467AC /* bin */ = {
+			isa = PBXGroup;
+			children = (
+				282D00FE2F883EE6005467AC /* Babbler v0.3.3.zip */,
+			);
+			path = bin;
+			sourceTree = "<group>";
+		};
+		282D01032F883EE6005467AC /* scripts */ = {
+			isa = PBXGroup;
+			children = (
+				282D01022F883EE6005467AC /* package_app.sh */,
+			);
+			path = scripts;
+			sourceTree = "<group>";
+		};
+		282D01042F883EE6005467AC /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
 		7AC012F723A68C9600FA3F07 = {
 			isa = PBXGroup;
 			children = (
+				282D01062F883F70005467AC /* .gitignore */,
+				282D00FD2F883EE6005467AC /* Babbler.xcodeproj */,
+				282D00FF2F883EE6005467AC /* bin */,
+				282D01002F883EE6005467AC /* CLAUDE.md */,
+				282D01012F883EE6005467AC /* README.md */,
+				282D01032F883EE6005467AC /* scripts */,
 				7AC0130223A68C9700FA3F07 /* Babbler */,
 				7AC0130123A68C9700FA3F07 /* Products */,
 			);
@@ -148,6 +181,12 @@
 			mainGroup = 7AC012F723A68C9600FA3F07;
 			productRefGroup = 7AC0130123A68C9700FA3F07 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 282D01042F883EE6005467AC /* Products */;
+					ProjectRef = 282D00FD2F883EE6005467AC /* Babbler.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				7AC012FF23A68C9700FA3F07 /* Babbler */,

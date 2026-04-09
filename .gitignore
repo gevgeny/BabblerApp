@@ -1,0 +1,13 @@
+.DS_Store
+
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+
+DerivedData/
+build/
+Babbler/Products/
+
+

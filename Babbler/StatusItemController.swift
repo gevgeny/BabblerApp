@@ -91,6 +91,8 @@ class StatusItemController: NSObject {
         }
         let hostingController = NSHostingController(rootView: SettingsView())
         let window = NSWindow(contentViewController: hostingController)
+        let fittingSize = hostingController.view.fittingSize
+        window.setContentSize(fittingSize)
         window.title = "Settings"
         window.titlebarAppearsTransparent = false
         window.titleVisibility = .visible

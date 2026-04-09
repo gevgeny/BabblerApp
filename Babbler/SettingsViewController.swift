@@ -24,6 +24,31 @@ struct AppListItem: Identifiable {
     let icon: NSImage
 }
 
+struct ScrollBounceDisabler: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        configureScrollViews(from: view)
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        configureScrollViews(from: nsView)
+    }
+
+    private func configureScrollViews(from view: NSView) {
+        DispatchQueue.main.async {
+            var currentView: NSView? = view
+            while let candidate = currentView {
+                if let scrollView = candidate as? NSScrollView {
+                    scrollView.verticalScrollElasticity = .none
+                    scrollView.horizontalScrollElasticity = .none
+                }
+                currentView = candidate.superview
+            }
+        }
+    }
+}
+
 struct SettingsView: View {
     @State private var selectedSwitchKeyCode: UInt16
     @State private var useSystemInputIndicator: Bool
@@ -51,9 +76,16 @@ struct SettingsView: View {
             }
             
             Section {
-                List(appList) { app in
-                    AppInputSourceRow(app: app)
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(appList) { app in
+                            AppInputSourceRow(app: app)
+                                .padding(.vertical, 6)
+                        }
+                    }
                 }
+                .frame(height: 240)
+                .background(ScrollBounceDisabler())
             } header: {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Default Input Source")
@@ -64,7 +96,8 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 500, height: 420)
+        .frame(width: 500)
+        .background(ScrollBounceDisabler())
         .onChange(of: selectedSwitchKeyCode) { _, newValue in
             preferenceStore.setSwitchKeyCode(newValue)
             KeyboardUtils.setActionKey(code: newValue)

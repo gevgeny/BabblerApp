@@ -1,5 +1,6 @@
 import SwiftUI
 import Carbon
+import UniformTypeIdentifiers
 
 extension Notification.Name {
     static let statusBarIndicatorStyleChanged = Notification.Name("statusBarIndicatorStyleChanged")
@@ -24,35 +25,10 @@ struct AppListItem: Identifiable {
     let icon: NSImage
 }
 
-struct ScrollBounceDisabler: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        configureScrollViews(from: view)
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        configureScrollViews(from: nsView)
-    }
-
-    private func configureScrollViews(from view: NSView) {
-        DispatchQueue.main.async {
-            var currentView: NSView? = view
-            while let candidate = currentView {
-                if let scrollView = candidate as? NSScrollView {
-                    scrollView.verticalScrollElasticity = .none
-                    scrollView.horizontalScrollElasticity = .none
-                }
-                currentView = candidate.superview
-            }
-        }
-    }
-}
-
 struct SettingsView: View {
     @State private var selectedSwitchKeyCode: UInt16
     @State private var useSystemInputIndicator: Bool
-    @State private var appList: [AppListItem] = []
+    @State private var configuredApps: [AppListItem] = []
 
     init() {
         _selectedSwitchKeyCode = State(initialValue: preferenceStore.getSwitchKeyCode())
@@ -77,15 +53,26 @@ struct SettingsView: View {
             
             Section {
                 ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(appList) { app in
-                            AppInputSourceRow(app: app)
-                                .padding(.vertical, 6)
+                    if configuredApps.isEmpty {
+                        Text("No apps configured.")
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                    } else {
+                        LazyVStack(spacing: 0) {
+                            ForEach(configuredApps) { app in
+                                AppInputSourceRow(app: app, onRemove: { removeApp(app) })
+                                    .padding(.vertical, 6)
+                            }
                         }
                     }
                 }
-                .frame(height: 240)
-                .background(ScrollBounceDisabler())
+                .frame(maxHeight: 200)
+                Button {
+                    addApp()
+                } label: {
+                    Label("Add App", systemImage: "plus")
+                }
             } header: {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Default Input Source")
@@ -96,8 +83,9 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollDisabled(true)
         .frame(width: 500)
-        .background(ScrollBounceDisabler())
+        .fixedSize(horizontal: false, vertical: true)
         .onChange(of: selectedSwitchKeyCode) { _, newValue in
             preferenceStore.setSwitchKeyCode(newValue)
             KeyboardUtils.setActionKey(code: newValue)
@@ -107,19 +95,68 @@ struct SettingsView: View {
             NotificationCenter.default.post(name: .statusBarIndicatorStyleChanged, object: nil)
         }
         .onAppear {
-            WorkspaceUtils.listAllApps { apps in
-                appList = apps.map { AppListItem(name: $0.name, id: $0.id, icon: $0.icon) }
-            }
+            loadConfiguredApps()
         }
+    }
+    
+    private func loadConfiguredApps() {
+        let saved = preferenceStore.getAllConfiguredApps()
+        configuredApps = saved.compactMap { (bundleId, values) -> AppListItem? in
+            guard values.count >= 2 else { return nil }
+            let name: String
+            let icon: NSImage
+            if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
+                name = FileManager.default.displayName(atPath: appURL.path)
+                    .replacingOccurrences(of: ".app", with: "")
+                icon = NSWorkspace.shared.icon(forFile: appURL.path)
+            } else {
+                name = bundleId
+                icon = NSWorkspace.shared.icon(for: .application)
+            }
+            return AppListItem(name: name, id: bundleId, icon: icon)
+        }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+    
+    private func addApp() {
+        let panel = NSOpenPanel()
+        panel.title = "Select Application"
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let bundle = Bundle(url: url),
+              let bundleId = bundle.bundleIdentifier else { return }
+        
+        // Skip if already configured
+        if configuredApps.contains(where: { $0.id == bundleId }) { return }
+        
+        // Save with the first available input source
+        guard let firstSource = LanguageUtils.inputSources?.first else { return }
+        preferenceStore.setInputSource(bundleId, firstSource.id, firstSource.name)
+        
+        let name = FileManager.default.displayName(atPath: url.path)
+            .replacingOccurrences(of: ".app", with: "")
+        let icon = NSWorkspace.shared.icon(forFile: url.path)
+        let item = AppListItem(name: name, id: bundleId, icon: icon)
+        configuredApps.append(item)
+        configuredApps.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+    
+    private func removeApp(_ app: AppListItem) {
+        preferenceStore.resetInputSource(app.id)
+        configuredApps.removeAll { $0.id == app.id }
     }
 }
 
 struct AppInputSourceRow: View {
     let app: AppListItem
+    let onRemove: () -> Void
     @State private var selectedInputSourceId: String
 
-    init(app: AppListItem) {
+    init(app: AppListItem, onRemove: @escaping () -> Void) {
         self.app = app
+        self.onRemove = onRemove
         let saved = preferenceStore.getInputSource(app.id)
         _selectedInputSourceId = State(initialValue: saved?[0] ?? "")
     }
@@ -132,8 +169,6 @@ struct AppInputSourceRow: View {
             Text(app.name)
             Spacer()
             Picker("", selection: $selectedInputSourceId) {
-                Text("(not set)")
-                    .tag("")
                 if let sources = LanguageUtils.inputSources {
                     ForEach(sources, id: \.id) { source in
                         Text(source.name).tag(source.id)
@@ -142,11 +177,14 @@ struct AppInputSourceRow: View {
             }
             .labelsHidden()
             .frame(width: 150)
+            Button(action: onRemove) {
+                Image(systemName: "minus.circle")
+                    .foregroundStyle(.red)
+            }
+            .buttonStyle(.plain)
         }
         .onChange(of: selectedInputSourceId) { _, newValue in
-            if newValue.isEmpty {
-                preferenceStore.resetInputSource(app.id)
-            } else if let source = LanguageUtils.inputSources?.first(where: { $0.id == newValue }) {
+            if let source = LanguageUtils.inputSources?.first(where: { $0.id == newValue }) {
                 preferenceStore.setInputSource(app.id, newValue, source.name)
             }
         }

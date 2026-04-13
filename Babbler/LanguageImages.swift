@@ -47,7 +47,7 @@ func makeInputSourceIcon(for source: TISInputSource) -> NSImage? {
         let textSize = (text as NSString).size(withAttributes: attrs)
         let textPoint = CGPoint(
             x: (drawRect.width - textSize.width) / 2,
-            y: (drawRect.height - textSize.height) / 2
+            y: (drawRect.height - textSize.height) / 2 - 0.5
         )
         (text as NSString).draw(at: textPoint, withAttributes: attrs)
         

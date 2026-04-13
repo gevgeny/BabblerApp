@@ -145,6 +145,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func handleEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
+        if isSecurityInput { return }
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let withOption = flags == .option
@@ -194,6 +195,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         CrashLogger.install()
+        
+        let bundleID = Bundle.main.bundleIdentifier!
+        let running = NSWorkspace.shared.runningApplications.filter { $0.bundleIdentifier == bundleID }
+        if running.count > 1 {
+            NSApplication.shared.terminate(self)
+            return
+        }
         
         SecurityInputUtils.listenForSecurityInput {
             self.securityApp = $1

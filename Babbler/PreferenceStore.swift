@@ -42,6 +42,10 @@ class PreferenceStore {
         UserDefaults.standard.set(self.appInputSources, forKey: appInputSourcesKey)
     }
     
+    func getAllConfiguredApps() -> [String: [String]] {
+        return appInputSources
+    }
+    
     func getSwitchKeyCode() -> UInt16 {
         let defaults = UserDefaults.standard
         if defaults.object(forKey: langSwitchKeyCodeKey) != nil {

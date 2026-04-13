@@ -16,7 +16,7 @@ import Carbon
     
     static func isEnglish(_ inputSource: TISInputSource?) -> Bool {
         let str = String(describing: inputSource)
-        return str.contains("U.S.") || str.contains("British")
+        return str.contains("U.S.") || str.contains("British") || str.contains("ABC")
     }
     
     static func isRussian(_ inputSource: TISInputSource?) -> Bool {
@@ -41,8 +41,8 @@ import Carbon
     }
 
     static func switchLang(_ langId: String) {
-        let inputSource = inputSources!.first { $0.id == langId }
-        TISSelectInputSource(inputSource!)
+        guard let inputSource = inputSources?.first(where: { $0.id == langId }) else { return }
+        TISSelectInputSource(inputSource)
     }
     
     static func initInputSources() -> String? {
@@ -52,6 +52,14 @@ import Carbon
             $0.category == TISInputSource.Category.keyboardInputSource && $0.isSelectable
         }
         
+        // Remove app bindings for input sources that no longer exist
+        let availableIds = Set(inputSources!.map { $0.id })
+        for (appId, values) in preferenceStore.getAllConfiguredApps() {
+            if values.count >= 2 && !availableIds.contains(values[0]) {
+                preferenceStore.resetInputSource(appId)
+            }
+        }
+
         guard let en = inputSources!.first(where: isEnglish) else {
             return "English input source not found"
         }

@@ -101,8 +101,14 @@ struct SettingsView: View {
     
     private func loadConfiguredApps() {
         let saved = preferenceStore.getAllConfiguredApps()
+        let availableSourceIds = Set(LanguageUtils.inputSources?.map { $0.id } ?? [])
         configuredApps = saved.compactMap { (bundleId, values) -> AppListItem? in
             guard values.count >= 2 else { return nil }
+            // Remove entries whose input source is no longer available
+            if !availableSourceIds.contains(values[0]) {
+                preferenceStore.resetInputSource(bundleId)
+                return nil
+            }
             let name: String
             let icon: NSImage
             if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {

@@ -140,35 +140,37 @@ let keyboardDelay = UInt64(50_000_000)
         }
     }
     
-    static func translateText(_ text: String) -> String {
-        // Decide mapping direction based on the current (target) input source
-        // If current input source is Russian, we convert from EN -> RU
-        // Otherwise, convert from RU -> EN
-        guard let currentSource = LanguageUtils.getCurrentInputSource() else { return text }
-        let targetIsRussian = LanguageUtils.isRussian(currentSource)
-        let mapper = targetIsRussian ? enRuDictionary : ruEnDictionary
+    // sourceId: the layout ID that was active when the text was originally typed/selected.
+    // Required to pick the right Cyrillic↔Latin dictionary when converting away from Cyrillic.
+    static func translateText(_ text: String, sourceId: String?) -> String {
+        guard let targetSource = LanguageUtils.getCurrentInputSource() else { return text }
 
-        let translated = text.map { ch -> String in
-            let s = String(ch)
-            if let mapped = mapper[s] {
-                return mapped
-            } else {
-                return s
-            }
+        let mapper: [String: String]
+        if LanguageUtils.isCyrillic(targetSource) {
+            // Switching TO Cyrillic — map Latin → Cyrillic using the target layout's dict
+            mapper = latinToCyrillicDict(for: targetSource.id)
+        } else {
+            // Switching TO Latin — map Cyrillic → Latin using the source layout's dict
+            let srcId = sourceId ?? LanguageUtils.cyrillicInputSource?.id ?? ""
+            mapper = cyrillicToLatinDict(for: srcId)
         }
-        return translated.joined()
+
+        return text.map { ch -> String in
+            let s = String(ch)
+            return mapper[s] ?? s
+        }.joined()
     }
 
-    static func typeText(_ text: String) {
-        let tranlatedText = translateText(text)
-        
-        let utf16Chars = Array(tranlatedText.utf16)
-        let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true);
+    static func typeText(_ text: String, sourceId: String? = nil) {
+        let translatedText = translateText(text, sourceId: sourceId)
+
+        let utf16Chars = Array(translatedText.utf16)
+        let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true)
         event1?.flags = .maskNonCoalesced
         event1?.keyboardSetUnicodeString(stringLength: utf16Chars.count, unicodeString: utf16Chars)
         event1?.post(tap: .cghidEventTap)
 
-        let event2 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: false);
+        let event2 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: false)
         event2?.flags = .maskNonCoalesced
         event2?.post(tap: .cghidEventTap)
     }

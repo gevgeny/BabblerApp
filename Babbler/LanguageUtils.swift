@@ -6,34 +6,34 @@ import Carbon
     
     static var inputSources: [TISInputSource]?
     
-    static var enInputSource: TISInputSource?
-    
-    static var ruInputSource: TISInputSource?
+    static var latinInputSource: TISInputSource?
+
+    static var cyrillicInputSource: TISInputSource?
     
     static func getCurrentInputSource() -> TISInputSource? {
         return TISCopyCurrentKeyboardInputSource()?.takeUnretainedValue()
     }
     
-    static func isEnglish(_ inputSource: TISInputSource?) -> Bool {
-        let str = String(describing: inputSource)
-        return str.contains("U.S.") || str.contains("British") || str.contains("ABC")
+    static func isLatin(_ inputSource: TISInputSource?) -> Bool {
+        guard let id = inputSource?.id else { return false }
+        return latinLayoutIDs.contains(id)
     }
-    
-    static func isRussian(_ inputSource: TISInputSource?) -> Bool {
-        let str = String(describing: inputSource)
-        return str.contains("Russian")
+
+    static func isCyrillic(_ inputSource: TISInputSource?) -> Bool {
+        guard let id = inputSource?.id else { return false }
+        return cyrillicLayoutIDs.contains(id)
     }
     
     static func swapLang() {
         guard let lang = TISCopyCurrentKeyboardInputSource()?.takeUnretainedValue() else { return }
         var err: OSStatus
-        
-        if isRussian(lang) {
-            print("current ru, set en")
-            err = TISSelectInputSource(LanguageUtils.enInputSource)
+
+        if isCyrillic(lang) {
+            print("current cyrillic, set latin")
+            err = TISSelectInputSource(LanguageUtils.latinInputSource)
         } else {
-            print("current en, set ru")
-            err = TISSelectInputSource(LanguageUtils.ruInputSource)
+            print("current latin, set cyrillic")
+            err = TISSelectInputSource(LanguageUtils.cyrillicInputSource)
         }
         if (err != 0) {
             print("TISSelectInputSource error")
@@ -60,15 +60,15 @@ import Carbon
             }
         }
 
-        guard let en = inputSources!.first(where: isEnglish) else {
-            return "English input source not found"
+        guard let latin = inputSources!.first(where: isLatin) else {
+            return "No Latin keyboard layout found"
         }
-        enInputSource = en
-        
-        guard let ru = inputSources!.first(where: isRussian) else {
-            return "Russian input source not found"
+        latinInputSource = latin
+
+        guard let cyrillic = inputSources!.first(where: isCyrillic) else {
+            return "No Cyrillic keyboard layout found"
         }
-        ruInputSource = ru
+        cyrillicInputSource = cyrillic
         
         return nil
     }

@@ -27,9 +27,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
      
     var record: [(withShift: Bool, code: UInt16)] = []
-    
+
     var text: String = ""
-    
+
+    // Layout ID that was active when the action key was pressed (i.e. the source of the text).
+    // Passed to typeText so it can pick the right Cyrillic↔Latin dictionary for selected text.
+    var recordSourceId: String?
+
     
     func hasPrivileges() -> Bool {
         AXIsProcessTrusted()
@@ -119,10 +123,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             // If the record is empty, it makes sense to try check if selected text need to be translated
             else {
-                KeyboardUtils.fetchSelectedText {text in
+                let sourceId = self.recordSourceId
+                KeyboardUtils.fetchSelectedText { text in
                     if (text.count == 0) { return }
-                    
-                    KeyboardUtils.typeText(text);
+                    KeyboardUtils.typeText(text, sourceId: sourceId)
                 }
             }
             
@@ -161,6 +165,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
        
         if KeyboardUtils.checkActionKeyPress(code, flags) {
             self.isWaitingForSwitch = true
+            self.recordSourceId = LanguageUtils.getCurrentInputSource()?.id
             LanguageUtils.swapLang()
             return
         }

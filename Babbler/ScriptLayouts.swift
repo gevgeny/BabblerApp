@@ -1,0 +1,90 @@
+// Known Apple keyboard layout IDs by script family.
+// Third-party layouts (non com.apple.keylayout.*) are not covered here.
+
+let cyrillicLayoutIDs: Set<String> = [
+    "com.apple.keylayout.Russian",
+    "com.apple.keylayout.RussianWin",
+    "com.apple.keylayout.Russian-Phonetic",
+    "com.apple.keylayout.Ukrainian",
+    "com.apple.keylayout.Ukrainian-PC",
+    "com.apple.keylayout.Bulgarian",
+    "com.apple.keylayout.Bulgarian-Phonetic",
+    "com.apple.keylayout.Serbian",         // Cyrillic variant; Serbian-Latin is in latinLayoutIDs
+    "com.apple.keylayout.Byelorussian",
+    "com.apple.keylayout.Macedonian",
+    "com.apple.keylayout.Mongolian",
+    "com.apple.keylayout.Kazakh",
+]
+
+let latinLayoutIDs: Set<String> = [
+    // English / generic
+    "com.apple.keylayout.US",
+    "com.apple.keylayout.ABC",
+    "com.apple.keylayout.ABC-QWERTY",
+    "com.apple.keylayout.USInternational-PC",
+    "com.apple.keylayout.British",
+    "com.apple.keylayout.British-PC",
+    // Alternative English layouts
+    "com.apple.keylayout.Colemak",
+    "com.apple.keylayout.Dvorak",
+    "com.apple.keylayout.DVORAK-QWERTYCMD",
+    "com.apple.keylayout.Dvorak-Left",
+    "com.apple.keylayout.Dvorak-Right",
+    // Western Europe
+    "com.apple.keylayout.German",
+    "com.apple.keylayout.German-DIN-2137",
+    "com.apple.keylayout.French",
+    "com.apple.keylayout.French-PC",
+    "com.apple.keylayout.FrenchNumerical",
+    "com.apple.keylayout.Belgian",
+    "com.apple.keylayout.Dutch",
+    "com.apple.keylayout.Italian",
+    "com.apple.keylayout.Italian-Pro",
+    "com.apple.keylayout.Spanish",
+    "com.apple.keylayout.Spanish-ISO",
+    "com.apple.keylayout.Catalan",
+    "com.apple.keylayout.Portuguese",
+    "com.apple.keylayout.PortuguesePro",
+    // Nordic
+    "com.apple.keylayout.Swedish",
+    "com.apple.keylayout.Swedish-Pro",
+    "com.apple.keylayout.Swedish-Sami-PC",
+    "com.apple.keylayout.Norwegian",
+    "com.apple.keylayout.NorwegianExtended",
+    "com.apple.keylayout.NorwegianSami-PC",
+    "com.apple.keylayout.Danish",
+    "com.apple.keylayout.Finnish",
+    "com.apple.keylayout.Finnish-Sami-PC",
+    "com.apple.keylayout.Icelandic",
+    "com.apple.keylayout.Faroese",
+    "com.apple.keylayout.Sami-PC",
+    // Central / Eastern Europe (Latin)
+    "com.apple.keylayout.Polish",
+    "com.apple.keylayout.Polish-Pro",
+    "com.apple.keylayout.Czech",
+    "com.apple.keylayout.Czech-QWERTY",
+    "com.apple.keylayout.Slovak",
+    "com.apple.keylayout.Slovak-QWERTY",
+    "com.apple.keylayout.Hungarian",
+    "com.apple.keylayout.Hungarian-iOS",
+    "com.apple.keylayout.Romanian",
+    "com.apple.keylayout.Romanian-Standard",
+    "com.apple.keylayout.Croatian",
+    "com.apple.keylayout.Slovenian",
+    "com.apple.keylayout.Albanian",
+    "com.apple.keylayout.Serbian-Latin",   // Latin variant; Serbian (Cyrillic) is in cyrillicLayoutIDs
+    // Baltic
+    "com.apple.keylayout.Latvian",
+    "com.apple.keylayout.Lithuanian",
+    "com.apple.keylayout.Lithuanian-IBM",
+    "com.apple.keylayout.Estonian",
+    // Other
+    "com.apple.keylayout.Turkish",
+    "com.apple.keylayout.Turkish-QWERTY-PC",
+    "com.apple.keylayout.Vietnamese",
+    "com.apple.keylayout.Maltese",
+    "com.apple.keylayout.Welsh",
+    "com.apple.keylayout.Irish",
+    "com.apple.keylayout.Hawaiian",
+    "com.apple.keylayout.Maori",
+]

@@ -24,6 +24,7 @@
 		7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */; };
 		7AC0131C23AE10D600FA3F07 /* LanguageUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131B23AE10D600FA3F07 /* LanguageUtils.swift */; };
 		7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */; };
+		688BD35F895C46D3A84E31ED /* ScriptLayouts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 695CC450A5FE4DAAA8C7C7FA /* ScriptLayouts.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +54,7 @@
 		7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityInputUtils.swift; sourceTree = "<group>"; };
 		7AC0131B23AE10D600FA3F07 /* LanguageUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageUtils.swift; sourceTree = "<group>"; };
 		7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TISInputSourceExtension.swift; sourceTree = "<group>"; };
+		695CC450A5FE4DAAA8C7C7FA /* ScriptLayouts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptLayouts.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,6 +133,7 @@
 				7A906C5825F3F95A00913B56 /* PreferenceStore.swift */,
 				2892A62728679F340026FC99 /* LanguageImages.swift */,
 				282D00FB2F857DAC005467AC /* CrashLogger.swift */,
+				695CC450A5FE4DAAA8C7C7FA /* ScriptLayouts.swift */,
 			);
 			path = Babbler;
 			sourceTree = "<group>";
@@ -225,6 +228,7 @@
 				7AC0131C23AE10D600FA3F07 /* LanguageUtils.swift in Sources */,
 				282D00FC2F857DAC005467AC /* CrashLogger.swift in Sources */,
 				7A765D6525D98B170076B974 /* WorkspaceUtils.swift in Sources */,
+				688BD35F895C46D3A84E31ED /* ScriptLayouts.swift in Sources */,
 				7A765D9325E2D7170076B974 /* ImageUtils.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

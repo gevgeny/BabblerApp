@@ -7,12 +7,25 @@
 //
 
 let LanguageImages: [String: String] = [
+    // Latin
     "com.apple.keylayout.US":                          "🇺🇸",
     "com.apple.keylayout.USInternational-PC":          "🇺🇸",
     "com.apple.keylayout.British-PC":                  "🇬🇧",
     "com.apple.keylayout.British":                     "🇬🇧",
+    // Cyrillic
     "com.apple.keylayout.Russian":                     "🇷🇺",
     "com.apple.keylayout.RussianWin":                  "🇷🇺",
+    "com.apple.keylayout.Russian-Phonetic":            "🇷🇺",
+    "com.apple.keylayout.Ukrainian":                   "🇺🇦",
+    "com.apple.keylayout.Ukrainian-PC":                "🇺🇦",
+    "com.apple.keylayout.Bulgarian":                   "🇧🇬",
+    "com.apple.keylayout.Bulgarian-Phonetic":          "🇧🇬",
+    "com.apple.keylayout.Serbian":                     "🇷🇸",
+    "com.apple.keylayout.Serbian-Latin":               "🇷🇸",
+    "com.apple.keylayout.Byelorussian":                "🇧🇾",
+    "com.apple.keylayout.Macedonian":                  "🇲🇰",
+    "com.apple.keylayout.Mongolian":                   "🇲🇳",
+    "com.apple.keylayout.Kazakh":                      "🇰🇿",
 ]
 
 // Override labels for specific layouts where the ISO 639-1 code isn't ideal.

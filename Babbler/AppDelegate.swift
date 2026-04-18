@@ -10,7 +10,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var didFinishAppSetup = false
     var permissionCheckTimer: Timer?
 
-    
     var isSecurityInput = false {
         didSet {
             statusItemController!.updateSecurityInputMessage(securityApp, isSecurityInput)
@@ -96,15 +95,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         didFinishAppSetup = true
 
         KeyboardUtils.loadActionKeyFromPreferences()
-        let error = LanguageUtils.initInputSources();
+        let error = InputSourceUtils.initInputSources();
         
         if error != nil {
             showError(error!, "")
             return
         }
            
-        LanguageUtils.onLanguageChange {
-            self.currentLang = LanguageUtils.getCurrentInputSource()
+        InputSourceUtils.onKeyboardInputSourceChanged {
+            self.currentLang = InputSourceUtils.getCurrentInputSource()
            
             if (!self.isWaitingForSwitch) { return }
         
@@ -133,17 +132,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if let appId = app.bundleIdentifier {
                 let inputSource = preferenceStore.getInputSource(appId)
                 if (inputSource != nil) {
-                    LanguageUtils.switchLang(inputSource![0])
+                    InputSourceUtils.switchLang(inputSource![0])
                 }
             }
         }
         
         statusItemController = StatusItemController();
-        currentLang = LanguageUtils.getCurrentInputSource()
-        KeyboardUtils.addGlobalEventListener(handleEvent)
+        currentLang = InputSourceUtils.getCurrentInputSource()
+        KeyboardUtils.addGlobalEventListener(handleGlobalSystemEvent)
     }
     
-    func handleEvent(_ event: NSEvent) {
+    func handleGlobalSystemEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
         if isSecurityInput { return }
 
@@ -161,7 +160,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
        
         if KeyboardUtils.checkActionKeyPress(code, flags) {
             self.isWaitingForSwitch = true
-            LanguageUtils.swapLang()
+            InputSourceUtils.swapLang()
             return
         }
         // Erase record and skip event word is break or shorcut is started

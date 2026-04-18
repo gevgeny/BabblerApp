@@ -22,7 +22,7 @@
 		7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130723A68C9A00FA3F07 /* Assets.xcassets */; };
 		7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130923A68C9A00FA3F07 /* Main.storyboard */; };
 		7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */; };
-		7AC0131C23AE10D600FA3F07 /* LanguageUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131B23AE10D600FA3F07 /* LanguageUtils.swift */; };
+		7AC0131C23AE10D600FA3F07 /* InputSourceUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131B23AE10D600FA3F07 /* InputSourceUtils.swift */; };
 		7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */; };
 /* End PBXBuildFile section */
 
@@ -51,7 +51,7 @@
 		7AC0130C23A68C9A00FA3F07 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7AC0130D23A68C9A00FA3F07 /* Babbler.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Babbler.entitlements; sourceTree = "<group>"; };
 		7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityInputUtils.swift; sourceTree = "<group>"; };
-		7AC0131B23AE10D600FA3F07 /* LanguageUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageUtils.swift; sourceTree = "<group>"; };
+		7AC0131B23AE10D600FA3F07 /* InputSourceUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSourceUtils.swift; sourceTree = "<group>"; };
 		7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TISInputSourceExtension.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -118,7 +118,7 @@
 				7AC0130C23A68C9A00FA3F07 /* Info.plist */,
 				7AC0130D23A68C9A00FA3F07 /* Babbler.entitlements */,
 				7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */,
-				7AC0131B23AE10D600FA3F07 /* LanguageUtils.swift */,
+				7AC0131B23AE10D600FA3F07 /* InputSourceUtils.swift */,
 				7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */,
 				7A765D5E25D916460076B974 /* Key.swift */,
 				7A765D6125D91EB60076B974 /* KeyboardUtils.swift */,
@@ -222,7 +222,7 @@
 				7A765D5F25D916460076B974 /* Key.swift in Sources */,
 				2892A62828679F340026FC99 /* LanguageImages.swift in Sources */,
 				7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */,
-				7AC0131C23AE10D600FA3F07 /* LanguageUtils.swift in Sources */,
+				7AC0131C23AE10D600FA3F07 /* InputSourceUtils.swift in Sources */,
 				282D00FC2F857DAC005467AC /* CrashLogger.swift in Sources */,
 				7A765D6525D98B170076B974 /* WorkspaceUtils.swift in Sources */,
 				7A765D9325E2D7170076B974 /* ImageUtils.swift in Sources */,

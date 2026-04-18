@@ -144,8 +144,8 @@ let keyboardDelay = UInt64(50_000_000)
         // Decide mapping direction based on the current (target) input source
         // If current input source is Russian, we convert from EN -> RU
         // Otherwise, convert from RU -> EN
-        guard let currentSource = LanguageUtils.getCurrentInputSource() else { return text }
-        let targetIsRussian = LanguageUtils.isRussian(currentSource)
+        guard let currentSource = InputSourceUtils.getCurrentInputSource() else { return text }
+        let targetIsRussian = InputSourceUtils.isRussian(currentSource)
         let mapper = targetIsRussian ? enRuDictionary : ruEnDictionary
 
         let translated = text.map { ch -> String in

@@ -69,7 +69,7 @@ class StatusItemController: NSObject {
     }
     
     @objc func onLanguageItemSelect(_ targetMenuItem: NSMenuItem) {
-        LanguageUtils.switchLang(targetMenuItem.representedObject as! String)
+        InputSourceUtils.switchLang(targetMenuItem.representedObject as! String)
     }
     
     
@@ -128,7 +128,7 @@ class StatusItemController: NSObject {
     
     func addInputSourceMenuItems(_ menu: NSMenu) -> Void {
         menu.addItem(NSMenuItem.separator())
-        for inputSource in LanguageUtils.inputSources! {
+        for inputSource in InputSourceUtils.inputSources! {
             let item = NSMenuItem(
                 title: inputSource.name,
                 action: #selector(onLanguageItemSelect),

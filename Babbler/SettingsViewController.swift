@@ -101,7 +101,7 @@ struct SettingsView: View {
     
     private func loadConfiguredApps() {
         let saved = preferenceStore.getAllConfiguredApps()
-        let availableSourceIds = Set(LanguageUtils.inputSources?.map { $0.id } ?? [])
+        let availableSourceIds = Set(InputSourceUtils.inputSources?.map { $0.id } ?? [])
         configuredApps = saved.compactMap { (bundleId, values) -> AppListItem? in
             guard values.count >= 2 else { return nil }
             // Remove entries whose input source is no longer available
@@ -138,7 +138,7 @@ struct SettingsView: View {
         if configuredApps.contains(where: { $0.id == bundleId }) { return }
         
         // Save with the first available input source
-        guard let firstSource = LanguageUtils.inputSources?.first else { return }
+        guard let firstSource = InputSourceUtils.inputSources?.first else { return }
         preferenceStore.setInputSource(bundleId, firstSource.id, firstSource.name)
         
         let name = FileManager.default.displayName(atPath: url.path)
@@ -175,7 +175,7 @@ struct AppInputSourceRow: View {
             Text(app.name)
             Spacer()
             Picker("", selection: $selectedInputSourceId) {
-                if let sources = LanguageUtils.inputSources {
+                if let sources = InputSourceUtils.inputSources {
                     ForEach(sources, id: \.id) { source in
                         Text(source.name).tag(source.id)
                     }
@@ -190,7 +190,7 @@ struct AppInputSourceRow: View {
             .buttonStyle(.plain)
         }
         .onChange(of: selectedInputSourceId) { _, newValue in
-            if let source = LanguageUtils.inputSources?.first(where: { $0.id == newValue }) {
+            if let source = InputSourceUtils.inputSources?.first(where: { $0.id == newValue }) {
                 preferenceStore.setInputSource(app.id, newValue, source.name)
             }
         }

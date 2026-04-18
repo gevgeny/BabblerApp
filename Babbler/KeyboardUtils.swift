@@ -8,8 +8,15 @@ let keyboardDelay = UInt64(50_000_000)
     
     static private(set) var actionKeyFlag: NSEvent.ModifierFlags = .option;
     
-    static private var isActionKeyPressed = false;
-    
+    enum ActionKeyResult {
+        case none
+        case action        // plain Action key → switch last typed word
+        case lineAction    // Shift + Action   → switch last typed line
+    }
+
+    static private var isActionKeyPressed = false
+    static private var isShiftHeldWithAction = false
+
     static func setActionKey(code: UInt16) {
         actionKeyCode = CGKeyCode(code)
         switch code {
@@ -37,15 +44,41 @@ let keyboardDelay = UInt64(50_000_000)
         }
     }
   
-    static func checkActionKeyPress(_ code: UInt16, _ flags: NSEvent.ModifierFlags) -> Bool {
-        if (flags == actionKeyFlag && code == actionKeyCode) {
-            isActionKeyPressed = true;
-            return false
-        } else if (code == actionKeyCode && isActionKeyPressed) {
+    static func checkActionKeyPress(_ code: UInt16, _ flags: NSEvent.ModifierFlags) -> ActionKeyResult {
+        if flags.contains(actionKeyFlag) && code == actionKeyCode {
+            // Action key pressed — record whether Shift is also held
+            isActionKeyPressed = true
+            isShiftHeldWithAction = flags.contains(.shift)
+            return .none
+        } else if code == actionKeyCode && isActionKeyPressed {
+            // Action key released — fire result
+            let withShift = isShiftHeldWithAction
             isActionKeyPressed = false
+            isShiftHeldWithAction = false
+            return withShift ? .lineAction : .action
+        } else if isActionKeyPressed && flags.contains(actionKeyFlag) {
+            if isModifierKey(code) {
+                // A modifier (e.g. Shift) toggled while action key is held — update shift state
+                isShiftHeldWithAction = flags.contains(.shift)
+            } else {
+                // A regular key (e.g. arrow, click) was pressed while action held — cancel
+                isActionKeyPressed = false
+                isShiftHeldWithAction = false
+            }
+            return .none
+        } else {
+            isActionKeyPressed = false
+            isShiftHeldWithAction = false
+            return .none
+        }
+    }
+
+    private static func isModifierKey(_ code: UInt16) -> Bool {
+        switch code {
+        case Key.shift, Key.rightShift, Key.option, Key.rightOption,
+             Key.control, Key.rightControl, Key.command, Key.capsLock, Key.function:
             return true
-        } else {				        
-            isActionKeyPressed = false
+        default:
             return false
         }
     }

@@ -34,11 +34,30 @@ private func handleSignal(_ sig: Int32) {
 }
 
 enum CrashLogger {
-    
+
     static let crashDirectory: URL = {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         return appSupport.appendingPathComponent("Babbler/Crashes", isDirectory: true)
     }()
+
+    static let errorLogURL: URL = {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return appSupport.appendingPathComponent("Babbler/error.log")
+    }()
+
+    /// Write a timestamped error message to the persistent error log.
+    /// Use this for real errors only — debug output should use print() instead.
+    static func log(_ message: String) {
+        let line = "[\(ISO8601DateFormatter().string(from: Date()))] \(message)\n"
+        guard let data = line.data(using: .utf8) else { return }
+        if let handle = try? FileHandle(forWritingTo: errorLogURL) {
+            handle.seekToEndOfFile()
+            handle.write(data)
+            try? handle.close()
+        } else {
+            try? data.write(to: errorLogURL, options: .atomic)
+        }
+    }
     
     static func install() {
         try? FileManager.default.createDirectory(at: crashDirectory, withIntermediateDirectories: true)

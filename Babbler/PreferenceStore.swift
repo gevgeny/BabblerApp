@@ -11,6 +11,7 @@ import Foundation
 let appInputSourcesKey = "appInputSources"
 let langSwitchKeyCodeKey = "langSwitchKeyCode"
 let useSystemInputIndicatorKey = "useSystemInputIndicator"
+let isTextReplaceEnabledKey = "isTextReplaceEnabled"
 
 class PreferenceStore {
     private var appInputSources: [String: [String]]
@@ -64,6 +65,17 @@ class PreferenceStore {
     
     func setUseSystemInputIndicator(_ value: Bool) {
         UserDefaults.standard.set(value, forKey: useSystemInputIndicatorKey)
+    }
+
+    func getIsTextReplaceEnabled() -> Bool {
+        let defaults = UserDefaults.standard
+        // Default to true if never set
+        if defaults.object(forKey: isTextReplaceEnabledKey) == nil { return true }
+        return defaults.bool(forKey: isTextReplaceEnabledKey)
+    }
+
+    func setIsTextReplaceEnabled(_ value: Bool) {
+        UserDefaults.standard.set(value, forKey: isTextReplaceEnabledKey)
     }
 }
 

@@ -2,15 +2,19 @@ import Cocoa
 import Carbon
 import SwiftUI
 
-class StatusItemController: NSObject {
+class StatusItemController: NSObject, NSMenuDelegate {
     let statusItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-    
+
     var messageMenuItem: NSMenuItem?
-    
     var settingsWindowController: NSWindowController?
-    
+
     private var currentLang: TISInputSource?
     private var currentIsSecurityInput: Bool = false
+    private var enableToggle: NSSwitch?
+    private var wordHintItem: NSMenuItem?
+    private var lineHintItem: NSMenuItem?
+    private var wordHintField: NSTextField?
+    private var lineHintField: NSTextField?
     
     override init() {
         super.init()
@@ -18,6 +22,7 @@ class StatusItemController: NSObject {
         NSApp.setActivationPolicy(.accessory)
         statusItem.menu = NSMenu()
         statusItem.menu?.autoenablesItems = false
+        statusItem.menu?.delegate = self
         
         NotificationCenter.default.addObserver(
             self,
@@ -28,19 +33,14 @@ class StatusItemController: NSObject {
         
         
         
-        let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") ?? "unknown";
-        let appVersionItem = NSMenuItem(
-            title: "",
-            action: nil,
-            keyEquivalent: ""
-        );
-        appVersionItem.attributedTitle = NSAttributedString(
-            string: "Babbler v\(appVersion)",
-            attributes: [NSAttributedString.Key.foregroundColor: NSColor.gray]
-        );
-        appVersionItem.isEnabled = false;
-        statusItem.menu!.addItem(appVersionItem)
-        
+        statusItem.menu!.addItem(makeEnableToggleItem())
+        wordHintItem = makeShortcutHintItem(label: "Switch last word:")
+        lineHintItem = makeShortcutHintItem(label: "Switch last line:")
+        wordHintField = wordHintItem!.view?.subviews.compactMap { $0 as? NSTextField }.first
+        lineHintField = lineHintItem!.view?.subviews.compactMap { $0 as? NSTextField }.first
+        statusItem.menu!.addItem(wordHintItem!)
+        statusItem.menu!.addItem(lineHintItem!)
+
         statusItem.menu!.addItem(NSMenuItem.separator())
             
         messageMenuItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -68,6 +68,63 @@ class StatusItemController: NSObject {
         
     }
     
+    private func makeEnableToggleItem() -> NSMenuItem {
+        let item = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 30))
+
+        let label = NSTextField(labelWithString: "Replace typed text")
+        label.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        label.textColor = NSColor.labelColor
+        label.frame = NSRect(x: 14, y: 6, width: 140, height: 18)
+
+        let toggle = NSSwitch()
+        toggle.target = self
+        toggle.action = #selector(onEnableToggle)
+        toggle.frame = NSRect(x: view.frame.width - 54, y: 3, width: 44, height: 24)
+        enableToggle = toggle
+
+        view.addSubview(label)
+        view.addSubview(toggle)
+        item.view = view
+        return item
+    }
+
+    private func makeShortcutHintItem(label: String) -> NSMenuItem {
+        let item = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 20))
+
+        let textField = NSTextField(labelWithString: label)
+        textField.font = NSFont.systemFont(ofSize: 11)
+        textField.textColor = NSColor.secondaryLabelColor
+        textField.frame = NSRect(x: 14, y: 1, width: 200, height: 18)
+
+        view.addSubview(textField)
+        item.view = view
+        return item
+    }
+
+    private func actionKeySymbol() -> String {
+        return KeyboardUtils.actionKeyFlag == .control ? "⌃" : "⌥"
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        let enabled = preferenceStore.getIsTextReplaceEnabled()
+        enableToggle?.state = enabled ? .on : .off
+        wordHintItem?.isHidden = !enabled
+        lineHintItem?.isHidden = !enabled
+
+        let key = actionKeySymbol()
+        wordHintField?.stringValue = "Replace last word: \(key)"
+        lineHintField?.stringValue = "Replace last line: ⇧\(key)"
+    }
+
+    @objc func onEnableToggle(_ sender: NSSwitch) {
+        let enabled = sender.state == .on
+        preferenceStore.setIsTextReplaceEnabled(enabled)
+        wordHintItem?.isHidden = !enabled
+        lineHintItem?.isHidden = !enabled
+    }
+
     @objc func onLanguageItemSelect(_ targetMenuItem: NSMenuItem) {
         InputSourceUtils.switchLang(targetMenuItem.representedObject as! String)
     }

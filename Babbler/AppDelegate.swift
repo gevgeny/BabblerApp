@@ -16,7 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             statusItemController!.updateMenuBarIcon(currentLang, isSecurityInput)
         }
     }
-    
+
     var securityApp: String?
     
     var currentLang: TISInputSource? {
@@ -25,8 +25,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
      
-    var record: [(withShift: Bool, code: UInt16)] = []
-    
+    // Keycodes of the current word; resets on word break (space → new char) or cancel.
+    var wordRecord: [(withShift: Bool, code: UInt16)] = []
+    // Keycodes since the last hard cancel (escape, enter, arrow, click, app change); spans multiple words.
+    var lineRecord: [(withShift: Bool, code: UInt16)] = []
+    // Snapshot of whichever record the current action fired on; consumed by onKeyboardInputSourceChanged.
+    var pendingRecord: [(withShift: Bool, code: UInt16)] = []
+
     var text: String = ""
     
     
@@ -108,12 +113,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if (!self.isWaitingForSwitch) { return }
         
                 
-            // If the last word need to be translated
-            if (self.record.count > 0) {
+            // If the last word/line need to be translated
+            if self.pendingRecord.count > 0 {
                 // Replace typed text with delay in order to wait till the lang is changed.
                 Task {
                     try? await Task.sleep(nanoseconds: keyboardDelay)
-                    await KeyboardUtils.replaceTypedText(self.record)
+                    await KeyboardUtils.replaceTypedText(self.pendingRecord)
                 }
             }
             // If the record is empty, it makes sense to try check if selected text need to be translated
@@ -157,38 +162,60 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isEnter = code == Key.enter || code == Key.returnKey
         let isDelete = code == Key.delete
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
-       
-        if KeyboardUtils.checkActionKeyPress(code, flags) {
-            self.isWaitingForSwitch = true
+        switch KeyboardUtils.checkActionKeyPress(code, flags) {
+        case .action:
+            if preferenceStore.getIsTextReplaceEnabled() {
+                self.pendingRecord = self.wordRecord
+                self.isWaitingForSwitch = true
+            }
             InputSourceUtils.swapLang()
             return
+        case .lineAction:
+            if preferenceStore.getIsTextReplaceEnabled() {
+                self.pendingRecord = self.lineRecord
+                self.isWaitingForSwitch = true
+            }
+            InputSourceUtils.swapLang()
+            return
+        case .none:
+            break
         }
-        // Erase record and skip event word is break or shorcut is started
+      
+        // Erase both records on cancel or when a shortcut modifier is active
         if isRecordCanceled || (withOption && code != Key.option) || withCommand || (withActionModifier && code != KeyboardUtils.actionKeyCode) {
-            record = []
+            wordRecord = []
+            lineRecord = []
             text = ""
             return
         }
-         
-        // Delete last symbol if delete was pressed
-        if isDelete && record.count > 0 {
-            record.removeLast()
+
+        // Delete last symbol from both records
+        if isDelete && wordRecord.count > 0 {
+            wordRecord.removeLast()
             text = String(text.dropLast())
         }
-        
+        if isDelete && lineRecord.count > 0 {
+            lineRecord.removeLast()
+        }
+
         if code == Key.delete || event.type != .keyDown || event.isARepeat {
             return
         }
-        let isWordBreak = record.last?.code == Key.space && event.keyCode != Key.space
+        let isWordBreak = wordRecord.last?.code == Key.space && event.keyCode != Key.space
         let appDidChange = WorkspaceUtils.checkCurrentApp()
-        if (isWordBreak || appDidChange) {
-            record = []
+        if isWordBreak || appDidChange {
+            // Word break: reset word record only; lineRecord keeps accumulating
+            wordRecord = []
             text = ""
+            if appDidChange {
+                lineRecord = []
+            }
         }
-        
-        // Save pressed key
+
+        // Save pressed key to both records
         let entry = (withShift: withShift, code: event.keyCode)
-        record.append(entry)
+        wordRecord.append(entry)
+        lineRecord.append(entry)
         text += event.characters!
     }
     

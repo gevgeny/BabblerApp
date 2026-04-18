@@ -1,7 +1,7 @@
 import Cocoa
 import Carbon
 
-@objc class LanguageUtils: NSObject {
+@objc class InputSourceUtils: NSObject {
     static var changeCallback: (() -> Void)?
     
     static var inputSources: [TISInputSource]?
@@ -30,10 +30,10 @@ import Carbon
         
         if isRussian(lang) {
             print("current ru, set en")
-            err = TISSelectInputSource(LanguageUtils.enInputSource)
+            err = TISSelectInputSource(InputSourceUtils.enInputSource)
         } else {
             print("current en, set ru")
-            err = TISSelectInputSource(LanguageUtils.ruInputSource)
+            err = TISSelectInputSource(InputSourceUtils.ruInputSource)
         }
         if (err != 0) {
             print("TISSelectInputSource error")
@@ -74,16 +74,16 @@ import Carbon
     }
 
     @objc static func change() {
-        if LanguageUtils.changeCallback != nil {
-            LanguageUtils.changeCallback!()
+        if InputSourceUtils.changeCallback != nil {
+            InputSourceUtils.changeCallback!()
         }
     }
     
-    static func onLanguageChange(_ callback: @escaping () -> Void) -> Void {
-        LanguageUtils.changeCallback = callback
+    static func onKeyboardInputSourceChanged(_ callback: @escaping () -> Void) -> Void {
+        InputSourceUtils.changeCallback = callback
         DistributedNotificationCenter.default().addObserver(
             self,
-            selector: #selector(LanguageUtils.change),
+            selector: #selector(InputSourceUtils.change),
             name: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
             object: nil,
             suspensionBehavior: .deliverImmediately

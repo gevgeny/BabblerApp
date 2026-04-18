@@ -1,30 +1,21 @@
 import Cocoa
 import Carbon
 
-@NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate {
-    
-    var statusItemController: StatusItemController?;
-    
+class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+
+    @Published var currentLang: TISInputSource? = InputSourceUtils.getCurrentInputSource()
+    @Published var isSecurityInput = false
+    @Published var securityApp: String?
+
+    var menuBarTitle: String {
+        guard let lang = currentLang else { return "??" }
+        return LanguageImages[lang.id] ?? lang.name
+    }
+
     var isWaitingForSwitch = false
     var didFinishAppSetup = false
     var permissionCheckTimer: Timer?
 
-    var isSecurityInput = false {
-        didSet {
-            statusItemController!.updateSecurityInputMessage(securityApp, isSecurityInput)
-            statusItemController!.updateMenuBarIcon(currentLang, isSecurityInput)
-        }
-    }
-
-    var securityApp: String?
-    
-    var currentLang: TISInputSource? {
-        didSet {
-            statusItemController!.updateMenuBarIcon(currentLang, isSecurityInput)
-        }
-    }
-     
     // Keycodes of the current word; resets on word break (space → new char) or cancel.
     var wordRecord: [(withShift: Bool, code: UInt16)] = []
     // Keycodes since the last hard cancel (escape, enter, arrow, click, app change); spans multiple words.
@@ -33,8 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var pendingRecord: [(withShift: Bool, code: UInt16)] = []
 
     var text: String = ""
-    
-    
+
     func hasPrivileges() -> Bool {
         AXIsProcessTrusted()
     }
@@ -53,7 +43,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else {
             return
         }
-
         NSWorkspace.shared.open(settingsURL)
     }
 
@@ -64,7 +53,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 timer.invalidate()
                 return
             }
-
             if self.hasPrivileges() {
                 timer.invalidate()
                 self.permissionCheckTimer = nil
@@ -94,59 +82,51 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func finishApplicationSetup() {
-        if didFinishAppSetup {
-            return
-        }
+        if didFinishAppSetup { return }
         didFinishAppSetup = true
 
         KeyboardUtils.loadActionKeyFromPreferences()
-        let error = InputSourceUtils.initInputSources();
-        
+        let error = InputSourceUtils.initInputSources()
+
         if error != nil {
             showError(error!, "")
             return
         }
-           
+
         InputSourceUtils.onKeyboardInputSourceChanged {
             self.currentLang = InputSourceUtils.getCurrentInputSource()
-           
-            if (!self.isWaitingForSwitch) { return }
-        
-                
-            // If the last word/line need to be translated
+
+            if !self.isWaitingForSwitch { return }
+
             if self.pendingRecord.count > 0 {
-                // Replace typed text with delay in order to wait till the lang is changed.
                 Task {
                     try? await Task.sleep(nanoseconds: keyboardDelay)
                     await KeyboardUtils.replaceTypedText(self.pendingRecord)
                 }
-            }
-            // If the record is empty, it makes sense to try check if selected text need to be translated
-            else {
-                KeyboardUtils.fetchSelectedText {text in
-                    if (text.count == 0) { return }
-                    
-                    KeyboardUtils.typeText(text);
+            } else {
+                KeyboardUtils.fetchSelectedText { text in
+                    if text.count == 0 { return }
+                    KeyboardUtils.typeText(text)
                 }
             }
-            
+
             self.isWaitingForSwitch = false
         }
-        
+
         WorkspaceUtils.onActiveAppChanged { app in
             if let appId = app.bundleIdentifier {
                 let inputSource = preferenceStore.getInputSource(appId)
-                if (inputSource != nil) {
+                if inputSource != nil {
                     InputSourceUtils.switchLang(inputSource![0])
                 }
             }
         }
-        
-        statusItemController = StatusItemController();
+
         currentLang = InputSourceUtils.getCurrentInputSource()
         KeyboardUtils.addGlobalEventListener(handleGlobalSystemEvent)
+        NSApp.setActivationPolicy(.accessory)
     }
-    
+
     func handleGlobalSystemEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
         if isSecurityInput { return }
@@ -162,6 +142,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let isEnter = code == Key.enter || code == Key.returnKey
         let isDelete = code == Key.delete
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
+
         switch KeyboardUtils.checkActionKeyPress(code, flags) {
         case .action:
             if preferenceStore.getIsTextReplaceEnabled() {
@@ -180,7 +161,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         case .none:
             break
         }
-      
+
         // Erase both records on cancel or when a shortcut modifier is active
         if isRecordCanceled || (withOption && code != Key.option) || withCommand || (withActionModifier && code != KeyboardUtils.actionKeyCode) {
             wordRecord = []
@@ -201,10 +182,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if code == Key.delete || event.type != .keyDown || event.isARepeat {
             return
         }
+
         let isWordBreak = wordRecord.last?.code == Key.space && event.keyCode != Key.space
         let appDidChange = WorkspaceUtils.checkCurrentApp()
         if isWordBreak || appDidChange {
-            // Word break: reset word record only; lineRecord keeps accumulating
             wordRecord = []
             text = ""
             if appDidChange {
@@ -218,25 +199,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         lineRecord.append(entry)
         text += event.characters!
     }
-    
+
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         CrashLogger.install()
-        
+        currentLang = InputSourceUtils.getCurrentInputSource()
+
         let bundleID = Bundle.main.bundleIdentifier!
         let running = NSWorkspace.shared.runningApplications.filter { $0.bundleIdentifier == bundleID }
         if running.count > 1 {
             NSApplication.shared.terminate(self)
             return
         }
-        
-        SecurityInputUtils.listenForSecurityInput {
-            self.securityApp = $1
-            if self.isSecurityInput != $0 {
-                self.isSecurityInput = $0
-            }
+
+        SecurityInputUtils.listenForSecurityInput { [weak self] isEnabled, appName in
+            guard let self else { return }
+            if self.isSecurityInput != isEnabled { self.isSecurityInput = isEnabled }
+            if self.securityApp != appName { self.securityApp = appName }
         }
+
         NSApp.setActivationPolicy(.regular)
-        
+
         if !hasPrivileges() {
             requestAccessibilityPermissions()
             return

@@ -11,6 +11,7 @@ let LanguageImages: [String: String] = [
     "com.apple.keylayout.USInternational-PC":          "🇺🇸",
     "com.apple.keylayout.British-PC":                  "🇬🇧",
     "com.apple.keylayout.British":                     "🇬🇧",
+    "com.apple.keylayout.ABC":                         "🇬🇧",
     "com.apple.keylayout.Russian":                     "🇷🇺",
     "com.apple.keylayout.RussianWin":                  "🇷🇺",
 ]

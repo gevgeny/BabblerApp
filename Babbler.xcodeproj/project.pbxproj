@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		282D00FC2F857DAC005467AC /* CrashLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 282D00FB2F857DAC005467AC /* CrashLogger.swift */; };
 		285B522A29BDD87600D50A2D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130323A68C9700FA3F07 /* AppDelegate.swift */; };
+		286A658A2F94003B00D25CBC /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286A65892F94003B00D25CBC /* MenuView.swift */; };
+		286A658B2F94003B00D25CBC /* BabblerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286A65882F94003B00D25CBC /* BabblerApp.swift */; };
 		2892A62828679F340026FC99 /* LanguageImages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2892A62728679F340026FC99 /* LanguageImages.swift */; };
 		7A765D5F25D916460076B974 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D5E25D916460076B974 /* Key.swift */; };
 		7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6125D91EB60076B974 /* KeyboardUtils.swift */; };
@@ -16,7 +18,7 @@
 		7A765D6D25DC56B50076B974 /* KeyDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6C25DC56B50076B974 /* KeyDictionary.swift */; };
 		7A765D8E25DF09F50076B974 /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D8D25DF09F50076B974 /* StatusItemController.swift */; };
 		7A765D9325E2D7170076B974 /* ImageUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9225E2D7170076B974 /* ImageUtils.swift */; };
-		7A765D9C25E7ABCE0076B974 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9A25E7ABCE0076B974 /* SettingsViewController.swift */; };
+		7A765D9C25E7ABCE0076B974 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D9A25E7ABCE0076B974 /* SettingsView.swift */; };
 		7A765D9D25E7ABCE0076B974 /* SettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */; };
 		7A906C5925F3F95A00913B56 /* PreferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A906C5825F3F95A00913B56 /* PreferenceStore.swift */; };
 		7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130723A68C9A00FA3F07 /* Assets.xcassets */; };
@@ -34,6 +36,8 @@
 		282D01012F883EE6005467AC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		282D01022F883EE6005467AC /* package_app.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package_app.sh; sourceTree = "<group>"; };
 		282D01062F883F70005467AC /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		286A65882F94003B00D25CBC /* BabblerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BabblerApp.swift; sourceTree = "<group>"; };
+		286A65892F94003B00D25CBC /* MenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuView.swift; sourceTree = "<group>"; };
 		2892A62728679F340026FC99 /* LanguageImages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageImages.swift; sourceTree = "<group>"; };
 		7A765D5E25D916460076B974 /* Key.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Key.swift; sourceTree = "<group>"; };
 		7A765D6125D91EB60076B974 /* KeyboardUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardUtils.swift; sourceTree = "<group>"; };
@@ -41,7 +45,7 @@
 		7A765D6C25DC56B50076B974 /* KeyDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyDictionary.swift; sourceTree = "<group>"; };
 		7A765D8D25DF09F50076B974 /* StatusItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
 		7A765D9225E2D7170076B974 /* ImageUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUtils.swift; sourceTree = "<group>"; };
-		7A765D9A25E7ABCE0076B974 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		7A765D9A25E7ABCE0076B974 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SettingsViewController.xib; sourceTree = "<group>"; };
 		7A906C5825F3F95A00913B56 /* PreferenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferenceStore.swift; sourceTree = "<group>"; };
 		7AC0130023A68C9700FA3F07 /* Babbler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Babbler.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,6 +91,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		286A658C2F94233000D25CBC /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				286A65892F94003B00D25CBC /* MenuView.swift */,
+				7A765D9A25E7ABCE0076B974 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 		7AC012F723A68C9600FA3F07 = {
 			isa = PBXGroup;
 			children = (
@@ -112,6 +125,8 @@
 		7AC0130223A68C9700FA3F07 /* Babbler */ = {
 			isa = PBXGroup;
 			children = (
+				286A658C2F94233000D25CBC /* Views */,
+				286A65882F94003B00D25CBC /* BabblerApp.swift */,
 				7AC0130323A68C9700FA3F07 /* AppDelegate.swift */,
 				7AC0130723A68C9A00FA3F07 /* Assets.xcassets */,
 				7AC0130923A68C9A00FA3F07 /* Main.storyboard */,
@@ -126,7 +141,6 @@
 				7A765D6C25DC56B50076B974 /* KeyDictionary.swift */,
 				7A765D8D25DF09F50076B974 /* StatusItemController.swift */,
 				7A765D9225E2D7170076B974 /* ImageUtils.swift */,
-				7A765D9A25E7ABCE0076B974 /* SettingsViewController.swift */,
 				7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */,
 				7A906C5825F3F95A00913B56 /* PreferenceStore.swift */,
 				2892A62728679F340026FC99 /* LanguageImages.swift */,
@@ -216,11 +230,13 @@
 				7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */,
 				7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */,
 				285B522A29BDD87600D50A2D /* AppDelegate.swift in Sources */,
-				7A765D9C25E7ABCE0076B974 /* SettingsViewController.swift in Sources */,
+				7A765D9C25E7ABCE0076B974 /* SettingsView.swift in Sources */,
 				7A765D8E25DF09F50076B974 /* StatusItemController.swift in Sources */,
 				7A765D6D25DC56B50076B974 /* KeyDictionary.swift in Sources */,
 				7A765D5F25D916460076B974 /* Key.swift in Sources */,
 				2892A62828679F340026FC99 /* LanguageImages.swift in Sources */,
+				286A658A2F94003B00D25CBC /* MenuView.swift in Sources */,
+				286A658B2F94003B00D25CBC /* BabblerApp.swift in Sources */,
 				7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */,
 				7AC0131C23AE10D600FA3F07 /* InputSourceUtils.swift in Sources */,
 				282D00FC2F857DAC005467AC /* CrashLogger.swift in Sources */,

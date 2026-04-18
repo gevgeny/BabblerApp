@@ -52,11 +52,16 @@ class SecurityInputUtils: NSObject {
     static func listenForSecurityInput(
         _ callback: @escaping (_ isSecureInputEnabled: Bool, _ appName: String?) -> Void
     ) -> Void {
-        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            let isSecureInputEnabled = IsSecureEventInputEnabled();
-            let securityInputEnablerApp = isSecureInputEnabled ? self.getSecurityInputEnablerApp() : nil
-            
-            callback(isSecureInputEnabled, securityInputEnablerApp)
+        // Run on a background thread so the ioreg shell command never blocks the main thread.
+        // Dispatch results back to main before touching any @Published properties.
+        Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in
+            DispatchQueue.global(qos: .utility).async {
+                let isSecureInputEnabled = self.getSecurityInputEnablerPid() != nil
+                let securityInputEnablerApp = isSecureInputEnabled ? self.getSecurityInputEnablerApp() : nil
+                DispatchQueue.main.async {
+                    callback(isSecureInputEnabled, securityInputEnablerApp)
+                }
+            }
         }
     }
 }

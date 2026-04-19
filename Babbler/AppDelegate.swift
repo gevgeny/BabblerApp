@@ -153,14 +153,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             return
         case .lineAction:
             if preferenceStore.getIsTextReplaceEnabled() {
-                self.pendingRecord = self.lineRecord
-                self.isWaitingForSwitch = true
+              print("lineRecord:", self.lineRecord,
+                    "pending record:", self.isWaitingForSwitch,
+                    "word record: ", self.wordRecord,
+                    "text: ", self.text
+              );
+              self.pendingRecord = self.lineRecord
+              self.isWaitingForSwitch = true
             }
             InputSourceUtils.swapLang()
             return
         case .none:
             break
         }
+
+        // flagsChanged events (modifier key presses/releases) are fully handled by
+        // checkActionKeyPress above. If we let them fall through, releasing Shift while
+        // Option is still held would look like "Option + non-Option key" and wipe the records.
+        if event.type == .flagsChanged { return }
 
         // Erase both records on cancel or when a shortcut modifier is active
         if isRecordCanceled || (withOption && code != Key.option) || withCommand || (withActionModifier && code != KeyboardUtils.actionKeyCode) {

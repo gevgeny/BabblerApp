@@ -58,8 +58,13 @@ let keyboardDelay = UInt64(50_000_000)
             return withShift ? .lineAction : .action
         } else if isActionKeyPressed && flags.contains(actionKeyFlag) {
             if isModifierKey(code) {
-                // A modifier (e.g. Shift) toggled while action key is held — update shift state
-                isShiftHeldWithAction = flags.contains(.shift)
+                // A modifier toggled while action key is held.
+                // Only ever turn isShiftHeldWithAction ON — never clear it here.
+                // Clearing it when Shift releases before Option would wrongly downgrade
+                // the pending lineAction to a plain action.
+                if flags.contains(.shift) {
+                    isShiftHeldWithAction = true
+                }
             } else {
                 // A regular key (e.g. arrow, click) was pressed while action held — cancel
                 isActionKeyPressed = false

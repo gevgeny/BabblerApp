@@ -29,10 +29,8 @@ import Carbon
         var err: OSStatus
         
         if isRussian(lang) {
-            print("current ru, set en")
             err = TISSelectInputSource(InputSourceUtils.enInputSource)
         } else {
-            print("current en, set ru")
             err = TISSelectInputSource(InputSourceUtils.ruInputSource)
         }
         if (err != 0) {

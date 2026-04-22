@@ -11,6 +11,7 @@
 		285B522A29BDD87600D50A2D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0130323A68C9700FA3F07 /* AppDelegate.swift */; };
 		286A658A2F94003B00D25CBC /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286A65892F94003B00D25CBC /* MenuView.swift */; };
 		286A658B2F94003B00D25CBC /* BabblerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286A65882F94003B00D25CBC /* BabblerApp.swift */; };
+		286A658F2F99604500D25CBC /* ClipboardHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286A658E2F99604500D25CBC /* ClipboardHistory.swift */; };
 		7A765D5F25D916460076B974 /* Key.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D5E25D916460076B974 /* Key.swift */; };
 		7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6125D91EB60076B974 /* KeyboardUtils.swift */; };
 		7A765D6525D98B170076B974 /* WorkspaceUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A765D6425D98B170076B974 /* WorkspaceUtils.swift */; };
@@ -37,6 +38,7 @@
 		282D01062F883F70005467AC /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		286A65882F94003B00D25CBC /* BabblerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BabblerApp.swift; sourceTree = "<group>"; };
 		286A65892F94003B00D25CBC /* MenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuView.swift; sourceTree = "<group>"; };
+		286A658E2F99604500D25CBC /* ClipboardHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistory.swift; sourceTree = "<group>"; };
 		7A765D5E25D916460076B974 /* Key.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Key.swift; sourceTree = "<group>"; };
 		7A765D6125D91EB60076B974 /* KeyboardUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardUtils.swift; sourceTree = "<group>"; };
 		7A765D6425D98B170076B974 /* WorkspaceUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceUtils.swift; sourceTree = "<group>"; };
@@ -123,6 +125,7 @@
 		7AC0130223A68C9700FA3F07 /* Babbler */ = {
 			isa = PBXGroup;
 			children = (
+				286A658E2F99604500D25CBC /* ClipboardHistory.swift */,
 				286A658C2F94233000D25CBC /* Views */,
 				286A65882F94003B00D25CBC /* BabblerApp.swift */,
 				7AC0130323A68C9700FA3F07 /* AppDelegate.swift */,
@@ -226,6 +229,7 @@
 				7A906C5925F3F95A00913B56 /* PreferenceStore.swift in Sources */,
 				7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */,
 				7A765D6225D91EB60076B974 /* KeyboardUtils.swift in Sources */,
+				286A658F2F99604500D25CBC /* ClipboardHistory.swift in Sources */,
 				285B522A29BDD87600D50A2D /* AppDelegate.swift in Sources */,
 				7A765D9C25E7ABCE0076B974 /* SettingsView.swift in Sources */,
 				7A765D8E25DF09F50076B974 /* StatusItemController.swift in Sources */,

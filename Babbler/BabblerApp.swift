@@ -12,6 +12,7 @@ struct BabblerApp: App {
         MenuBarExtra {
             MenuView()
                 .environmentObject(appDelegate)
+                .environmentObject(appDelegate.clipboardHistory)
         } label: {
             MenuBarLabel()
                 .environmentObject(appDelegate)

@@ -22,6 +22,7 @@ struct MenuBarLabel: View {
 
 struct MenuView: View {
     @EnvironmentObject var appDelegate: AppDelegate
+    @EnvironmentObject var clipboardHistory: ClipboardHistory
     @Environment(\.openSettings) var openSettings
     @Environment(\.dismiss) var dismiss
     @AppStorage(isTextReplaceEnabledKey) var isTextReplaceEnabled: Bool = true
@@ -86,12 +87,20 @@ struct MenuView: View {
                             Text(source.name)
                             Spacer()
                             if source.id == appDelegate.currentLang?.id {
-                                Image(systemName: "checkmark")
+                                Image(systemName: "circle.fill")
+                                    .font(.system(size: 7))
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
                     .buttonStyle(MenuItemButtonStyle())
                 }
+                Divider()
+            }
+
+            // Clipboard history
+            if !clipboardHistory.items.isEmpty {
+                ClipboardHistoryRow()
                 Divider()
             }
 
@@ -132,6 +141,50 @@ struct MenuView: View {
 
     private func actionKeySymbol() -> String {
         KeyboardUtils.actionKeyFlag == .control ? "⌃" : "⌥"
+    }
+}
+
+// Clipboard history — click to expand/collapse, styled like Wi-Fi "Other Networks"
+private struct ClipboardHistoryRow: View {
+    @EnvironmentObject var clipboardHistory: ClipboardHistory
+    @Environment(\.dismiss) var dismiss
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Section header — click toggles the list
+            Button {
+                isExpanded.toggle()
+            } label: {
+                HStack {
+                    Text("Clipboard History")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Image(systemName: "arrowtriangle.right.fill")
+                        .font(.system(size: 8))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        .animation(.easeInOut(duration: 0.15), value: isExpanded)
+                }
+            }
+            .buttonStyle(MenuItemButtonStyle())
+
+            if isExpanded {
+                ForEach(Array(clipboardHistory.items.enumerated()), id: \.offset) { index, item in
+                    Button {
+                        dismiss()
+                        clipboardHistory.select(at: index)
+                    } label: {
+                        Text(item.count > 36 ? String(item.prefix(36)) + "…" : item)
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(MenuItemButtonStyle())
+                }
+            }
+        }
+        .onDisappear { isExpanded = false }
     }
 }
 

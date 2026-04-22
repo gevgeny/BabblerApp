@@ -9,6 +9,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     var isWaitingForSwitch = false
     var didFinishAppSetup = false
+    let clipboardHistory = ClipboardHistory()
     var permissionCheckTimer: Timer?
 
     // Keycodes of the current word; resets on word break (space → new char) or cancel.
@@ -119,6 +120,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         currentLang = InputSourceUtils.getCurrentInputSource()
         KeyboardUtils.addGlobalEventListener(handleGlobalSystemEvent)
+        clipboardHistory.start()
         NSApp.setActivationPolicy(.accessory)
     }
 

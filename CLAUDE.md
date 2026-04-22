@@ -27,3 +27,8 @@ Carbon TIS APIs (`TISCopyCurrentKeyboardInputSource`, `TISSelectInputSource`, `S
 ## Build
 
 Xcode project, no SPM dependencies. Requires Accessibility permission at runtime.
+
+## Code style
+
+- Indent with **2 spaces**, not tabs
+- Follow the existing style of each file when editing

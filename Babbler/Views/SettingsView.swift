@@ -2,9 +2,6 @@ import SwiftUI
 import Carbon
 import UniformTypeIdentifiers
 
-extension Notification.Name {
-    static let statusBarIndicatorStyleChanged = Notification.Name("statusBarIndicatorStyleChanged")
-}
 
 struct SwitchKeyOption: Identifiable {
     let label: String
@@ -26,20 +23,25 @@ struct AppListItem: Identifiable {
 }
 
 struct SettingsView: View {
-    @State private var selectedSwitchKeyCode: UInt16
-    @State private var useSystemInputIndicator: Bool
+    // @AppStorage keeps these live — no init() needed, always in sync with UserDefaults
+    // and with the same keys read by MenuBarLabel and AppDelegate.
+    @AppStorage(langSwitchKeyCodeKey) private var selectedSwitchKeyCodeRaw: Int = Int(Key.option)
+    @AppStorage(useSystemInputIndicatorKey) private var useSystemInputIndicator: Bool = false
     @State private var configuredApps: [AppListItem] = []
 
-    init() {
-        _selectedSwitchKeyCode = State(initialValue: preferenceStore.getSwitchKeyCode())
-        _useSystemInputIndicator = State(initialValue: preferenceStore.getUseSystemInputIndicator())
+    // Binding that bridges Int (AppStorage) ↔ UInt16 (Picker tags)
+    private var switchKeyCodeBinding: Binding<UInt16> {
+        Binding(
+            get: { UInt16(selectedSwitchKeyCodeRaw) },
+            set: { selectedSwitchKeyCodeRaw = Int($0) }
+        )
     }
 
     var body: some View {
         Form {
             Section("General") {
                 VStack(alignment: .leading, spacing: 3) {
-                    Picker("Action key", selection: $selectedSwitchKeyCode) {
+                    Picker("Action key", selection: switchKeyCodeBinding) {
                         ForEach(switchKeyOptions) { option in
                             Text(option.label).tag(option.code)
                         }
@@ -48,7 +50,7 @@ struct SettingsView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-                Toggle("Use system input indicator", isOn: $useSystemInputIndicator)
+                Toggle("Use contrast input indicator", isOn: $useSystemInputIndicator)
             }
             
             Section {
@@ -86,19 +88,27 @@ struct SettingsView: View {
         .scrollDisabled(true)
         .frame(width: 500)
         .fixedSize(horizontal: false, vertical: true)
-        .onChange(of: selectedSwitchKeyCode) { _, newValue in
-            preferenceStore.setSwitchKeyCode(newValue)
-            KeyboardUtils.setActionKey(code: newValue)
+        .overlay(alignment: .topTrailing) {
+            Text(appVersion)
+                .font(.system(size: 10))
+                .foregroundStyle(.tertiary)
+                .padding(.top, 14)
+                .padding(.trailing, 20)
         }
-        .onChange(of: useSystemInputIndicator) { _, newValue in
-            preferenceStore.setUseSystemInputIndicator(newValue)
-            NotificationCenter.default.post(name: .statusBarIndicatorStyleChanged, object: nil)
+        .onChange(of: selectedSwitchKeyCodeRaw) { _, newValue in
+            // @AppStorage already persisted the value; just update the in-memory action key
+            KeyboardUtils.setActionKey(code: UInt16(newValue))
         }
         .onAppear {
             loadConfiguredApps()
         }
     }
     
+    private var appVersion: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        return "v\(v)"
+    }
+
     private func loadConfiguredApps() {
         let saved = preferenceStore.getAllConfiguredApps()
         let availableSourceIds = Set(InputSourceUtils.inputSources?.map { $0.id } ?? [])

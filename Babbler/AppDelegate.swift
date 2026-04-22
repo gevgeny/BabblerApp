@@ -7,11 +7,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     @Published var isSecurityInput = false
     @Published var securityApp: String?
 
-    var menuBarTitle: String {
-        guard let lang = currentLang else { return "??" }
-        return LanguageImages[lang.id] ?? lang.name
-    }
-
     var isWaitingForSwitch = false
     var didFinishAppSetup = false
     var permissionCheckTimer: Timer?
@@ -153,11 +148,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             return
         case .lineAction:
             if preferenceStore.getIsTextReplaceEnabled() {
-              print("lineRecord:", self.lineRecord,
-                    "pending record:", self.isWaitingForSwitch,
-                    "word record: ", self.wordRecord,
-                    "text: ", self.text
-              );
+//              print("\n\nlineRecord:", self.lineRecord.map { $0.code},
+//                    "\npending record:", self.pendingRecord.map { $0.code},
+//                    "\nword record: ", self.wordRecord.map { $0.code},
+//                    "\ntext: ", self.text
+//              );
               self.pendingRecord = self.lineRecord
               self.isWaitingForSwitch = true
             }

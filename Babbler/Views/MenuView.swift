@@ -1,16 +1,20 @@
 import SwiftUI
 
 struct MenuBarLabel: View {
-    @EnvironmentObject var appDelegate: AppDelegate
+  @EnvironmentObject var appDelegate: AppDelegate
     @AppStorage(useSystemInputIndicatorKey) var useSystemInputIndicator: Bool = false
+  var menuBarTitle: String {
+    guard let lang = appDelegate.currentLang else { return "??" }
+    return ImageUtils.languageImages[lang.id] ?? ImageUtils.getLangCode(for: lang)
+  }
 
     var body: some View {
         if useSystemInputIndicator,
            let lang = appDelegate.currentLang,
-           let icon = makeInputSourceIcon(for: lang) {
+           let icon = ImageUtils.makeInputSourceIcon(for: lang) {
             Image(nsImage: icon)
         } else {
-            Text(appDelegate.menuBarTitle)
+            Text(menuBarTitle)
                 .baselineOffset(-1)
         }
     }
@@ -67,6 +71,12 @@ struct MenuView: View {
 
             // Language sources
             if let sources = InputSourceUtils.inputSources {
+                Text("Input Sources")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 14)
+                    .padding(.top, 6)
+                    .padding(.bottom, 2)
                 ForEach(sources, id: \.id) { source in
                     Button {
                         dismiss()
@@ -113,7 +123,7 @@ struct MenuView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(MenuItemButtonStyle())
-            .padding(.bottom, 4)
+            .padding(.bottom, 6)
         }
         .frame(width: 220)
         .animation(.easeInOut(duration: 0.2), value: isTextReplaceEnabled)
@@ -131,12 +141,14 @@ private struct MenuItemButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .padding(.horizontal, 14)
-            .padding(.vertical, 5)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(isHovered ? Color.accentColor : Color.clear)
-            .foregroundStyle(isHovered ? Color.white : Color.primary)
+            .background(isHovered ? Color.primary.opacity(0.1) : Color.clear)
+            .foregroundStyle(Color.primary)
             .cornerRadius(6)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 3)
             .onHover { isHovered = $0 }
     }
 }

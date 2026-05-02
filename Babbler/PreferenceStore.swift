@@ -12,6 +12,7 @@ let appInputSourcesKey = "appInputSources"
 let langSwitchKeyCodeKey = "langSwitchKeyCode"
 let useSystemInputIndicatorKey = "useSystemInputIndicator"
 let isTextReplaceEnabledKey = "isTextReplaceEnabled"
+let clipboardHistoryEnabledKey = "clipboardHistoryEnabled"
 
 class PreferenceStore {
     private var appInputSources: [String: [String]]

@@ -26,6 +26,7 @@ struct MenuView: View {
     @Environment(\.openSettings) var openSettings
     @Environment(\.dismiss) var dismiss
     @AppStorage(isTextReplaceEnabledKey) var isTextReplaceEnabled: Bool = true
+    @AppStorage(clipboardHistoryEnabledKey) var clipboardHistoryEnabled: Bool = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -86,11 +87,11 @@ struct MenuView: View {
                         HStack {
                             Text(source.name)
                             Spacer()
-                            if source.id == appDelegate.currentLang?.id {
-                                Image(systemName: "circle.fill")
-                                    .font(.system(size: 7))
-                                    .foregroundStyle(.secondary)
-                            }
+                            Image(systemName: "circle.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.secondary)
+                                .opacity(source.id == appDelegate.currentLang?.id ? 1 : 0)
+                                .frame(width: 16)
                         }
                     }
                     .buttonStyle(MenuItemButtonStyle())
@@ -98,8 +99,15 @@ struct MenuView: View {
                 Divider()
             }
 
-            // Clipboard history
-            if !clipboardHistory.items.isEmpty {
+            // Pinned clipboards
+            if clipboardHistoryEnabled && !clipboardHistory.pinnedItems.isEmpty {
+                PinnedClipboardsRow()
+                Divider()
+            }
+
+            // Clipboard history (unpinned)
+            let unpinnedItems = clipboardHistory.items.filter { !clipboardHistory.pinnedItems.contains($0) }
+            if clipboardHistoryEnabled && !unpinnedItems.isEmpty {
                 ClipboardHistoryRow()
                 Divider()
             }
@@ -144,47 +152,137 @@ struct MenuView: View {
     }
 }
 
-// Clipboard history — click to expand/collapse, styled like Wi-Fi "Other Networks"
-private struct ClipboardHistoryRow: View {
+// Reusable collapsible clipboard section header + item list
+private struct CollapsibleClipboardSection: View {
+    let title: String
+    let entries: [(index: Int, item: String)]  // (full-array index, text)
+    var showPinButton: Bool = true
     @EnvironmentObject var clipboardHistory: ClipboardHistory
     @Environment(\.dismiss) var dismiss
     @State private var isExpanded = false
 
     var body: some View {
         VStack(spacing: 0) {
-            // Section header — click toggles the list
             Button {
-                isExpanded.toggle()
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
             } label: {
                 HStack {
-                    Text("Clipboard History")
+                    Text(title)
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Image(systemName: "arrowtriangle.right.fill")
-                        .font(.system(size: 8))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                         .animation(.easeInOut(duration: 0.15), value: isExpanded)
+                        .frame(width: 16)
                 }
             }
             .buttonStyle(MenuItemButtonStyle())
 
             if isExpanded {
-                ForEach(Array(clipboardHistory.items.enumerated()), id: \.offset) { index, item in
-                    Button {
-                        dismiss()
-                        clipboardHistory.select(at: index)
-                    } label: {
-                        Text(item.count > 36 ? String(item.prefix(36)) + "…" : item)
-                            .lineLimit(1)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(spacing: 0) {
+                    ForEach(entries, id: \.index) { entry in
+                        ClipboardItemRow(
+                            item: entry.item,
+                            isPinned: clipboardHistory.pinnedItems.contains(entry.item),
+                            showPinButton: showPinButton
+                        ) {
+                            dismiss()
+                            clipboardHistory.select(at: entry.index)
+                        } onPin: {
+                            clipboardHistory.pin(at: entry.index)
+                        } onRemove: {
+                            clipboardHistory.remove(at: entry.index)
+                        }
                     }
-                    .buttonStyle(MenuItemButtonStyle())
                 }
+                .transition(.opacity)
             }
         }
+        .clipped()
         .onDisappear { isExpanded = false }
+    }
+}
+
+private struct PinnedClipboardsRow: View {
+    @EnvironmentObject var clipboardHistory: ClipboardHistory
+    var body: some View {
+        let entries = clipboardHistory.items
+            .enumerated()
+            .filter { clipboardHistory.pinnedItems.contains($0.element) }
+            .map { (index: $0.offset, item: $0.element) }
+        CollapsibleClipboardSection(title: "Pinned Clipboards", entries: entries, showPinButton: false)
+    }
+}
+
+private struct ClipboardHistoryRow: View {
+    @EnvironmentObject var clipboardHistory: ClipboardHistory
+    var body: some View {
+        let entries = clipboardHistory.items
+            .enumerated()
+            .filter { !clipboardHistory.pinnedItems.contains($0.element) }
+            .map { (index: $0.offset, item: $0.element) }
+        CollapsibleClipboardSection(title: "Clipboard History", entries: entries)
+    }
+}
+
+private struct ClipboardItemRow: View {
+    let item: String
+    let isPinned: Bool
+    var showPinButton: Bool = true
+    let onSelect: () -> Void
+    let onPin: () -> Void
+    let onRemove: () -> Void
+    @State private var isHovered = false
+    @State private var isPinHovered = false
+    @State private var isRemoveHovered = false
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 2) {
+                Text(item.count > 36 ? String(item.prefix(36)) + "…" : item)
+                    .lineLimit(1)
+                Spacer()
+                // Pin button
+                if showPinButton {
+                    Button(action: onPin) {
+                        Image(systemName: isPinned ? "pin.fill" : "pin")
+                            .font(.system(size: 10))
+                            .foregroundStyle(isPinned ? .primary : .secondary)
+                            .frame(width: 20, height: 20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 5)
+                                    .fill(Color.primary.opacity(isPinHovered ? 0.1 : 0))
+                            )
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .opacity(isHovered || isPinned ? 1 : 0)
+                    .onHover { isPinHovered = $0 }
+                }
+                // Remove button
+                Button(action: onRemove) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 20, height: 20)
+                        .background(
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(Color.primary.opacity(isRemoveHovered ? 0.1 : 0))
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .opacity(isHovered ? 1 : 0)
+                .onHover { isRemoveHovered = $0 }
+            }
+        }
+        .buttonStyle(MenuItemButtonStyle())
+        .onHover { isHovered = $0 }
     }
 }
 

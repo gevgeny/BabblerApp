@@ -120,7 +120,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         currentLang = InputSourceUtils.getCurrentInputSource()
         KeyboardUtils.addGlobalEventListener(handleGlobalSystemEvent)
-        clipboardHistory.start()
+        if UserDefaults.standard.object(forKey: clipboardHistoryEnabledKey) == nil || UserDefaults.standard.bool(forKey: clipboardHistoryEnabledKey) {
+            clipboardHistory.start()
+        }
         NSApp.setActivationPolicy(.accessory)
     }
 

@@ -4,8 +4,11 @@ import AppKit
 /// Polling interval is 0.5 s; only fires when NSPasteboard.changeCount actually increments.
 class ClipboardHistory: ObservableObject {
 
-  /// Ordered history — most recent item first.
+  /// Ordered history — most recent item first. Pinned items are sorted to the top.
   @Published private(set) var items: [String] = []
+
+  /// Texts that are pinned — they stay at the top and survive the maxItems cap.
+  @Published private(set) var pinnedItems: Set<String> = []
 
   var maxItems: Int
 
@@ -48,6 +51,26 @@ class ClipboardHistory: ObservableObject {
     lastChangeCount = NSPasteboard.general.changeCount
   }
 
+  /// Toggles the pin state of the item at `index`.
+  /// Pinned items are sorted to the front and are exempt from the maxItems cap.
+  func pin(at index: Int) {
+    guard items.indices.contains(index) else { return }
+    let text = items[index]
+    if pinnedItems.contains(text) {
+      pinnedItems.remove(text)
+    } else {
+      pinnedItems.insert(text)
+    }
+    reorder()
+  }
+
+  /// Removes the item at `index` from the history.
+  func remove(at index: Int) {
+    guard items.indices.contains(index) else { return }
+    pinnedItems.remove(items[index])
+    items.remove(at: index)
+  }
+
   // MARK: - Private
 
   private func poll() {
@@ -67,9 +90,16 @@ class ClipboardHistory: ObservableObject {
     items.removeAll { $0 == text }
     items.insert(text, at: 0)
 
-    // Enforce cap
-    if items.count > maxItems {
-      items.removeLast(items.count - maxItems)
+    reorder()
+  }
+
+  /// Sorts pinned items to the front, then trims unpinned overflow.
+  private func reorder() {
+    let pinned = items.filter { pinnedItems.contains($0) }
+    var unpinned = items.filter { !pinnedItems.contains($0) }
+    if unpinned.count > maxItems {
+      unpinned.removeLast(unpinned.count - maxItems)
     }
+    items = pinned + unpinned
   }
 }

@@ -27,6 +27,7 @@ struct SettingsView: View {
     // and with the same keys read by MenuBarLabel and AppDelegate.
     @AppStorage(langSwitchKeyCodeKey) private var selectedSwitchKeyCodeRaw: Int = Int(Key.option)
     @AppStorage(useSystemInputIndicatorKey) private var useSystemInputIndicator: Bool = false
+    @AppStorage(clipboardHistoryEnabledKey) private var clipboardHistoryEnabled: Bool = true
     @State private var configuredApps: [AppListItem] = []
 
     // Binding that bridges Int (AppStorage) ↔ UInt16 (Picker tags)
@@ -40,19 +41,37 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("General") {
-                VStack(alignment: .leading, spacing: 3) {
-                    Picker("Action key", selection: switchKeyCodeBinding) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Action key")
+                        Text("Press the action key to convert the last typed word or selected text to the other keyboard layout.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Picker("", selection: switchKeyCodeBinding) {
                         ForEach(switchKeyOptions) { option in
                             Text(option.label).tag(option.code)
                         }
                     }
-                    Text("Press the action key to convert the last typed word or selected text to the other keyboard layout.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    .labelsHidden()
+                    .fixedSize()
                 }
                 Toggle("Use contrast input indicator", isOn: $useSystemInputIndicator)
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Enable Clipboard History")
+                        Text("Tracks recently copied text so you can re-paste past items from the menu bar.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: $clipboardHistoryEnabled)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
             }
-            
+
             Section {
                 ScrollView {
                     if configuredApps.isEmpty {
@@ -111,11 +130,13 @@ struct SettingsView: View {
 
     private func loadConfiguredApps() {
         let saved = preferenceStore.getAllConfiguredApps()
-        let availableSourceIds = Set(InputSourceUtils.inputSources?.map { $0.id } ?? [])
+        let loadedSources = InputSourceUtils.inputSources
+        let availableSourceIds = Set(loadedSources?.map { $0.id } ?? [])
         configuredApps = saved.compactMap { (bundleId, values) -> AppListItem? in
             guard values.count >= 2 else { return nil }
-            // Remove entries whose input source is no longer available
-            if !availableSourceIds.contains(values[0]) {
+            // Only evict entries when inputSources is loaded — if it's nil the app
+            // hasn't finished setup yet and we must not delete valid saved data.
+            if loadedSources != nil && !availableSourceIds.contains(values[0]) {
                 preferenceStore.resetInputSource(bundleId)
                 return nil
             }

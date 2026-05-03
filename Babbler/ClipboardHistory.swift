@@ -17,6 +17,11 @@ class ClipboardHistory: ObservableObject {
 
   init(maxItems: Int = 20) {
     self.maxItems = maxItems
+    let pinned = preferenceStore.getPinnedClipboardItems()
+    self.pinnedItems = pinned
+    // Seed items with pinned texts so they're visible immediately on launch
+    // even before the polling loop has seen any clipboard activity.
+    self.items = Array(pinned)
   }
 
   // MARK: - Lifecycle
@@ -61,14 +66,16 @@ class ClipboardHistory: ObservableObject {
     } else {
       pinnedItems.insert(text)
     }
+    preferenceStore.setPinnedClipboardItems(pinnedItems)
     reorder()
   }
 
   /// Removes the item at `index` from the history.
   func remove(at index: Int) {
     guard items.indices.contains(index) else { return }
-    pinnedItems.remove(items[index])
+    let wasPin = pinnedItems.remove(items[index]) != nil
     items.remove(at: index)
+    if wasPin { preferenceStore.setPinnedClipboardItems(pinnedItems) }
   }
 
   // MARK: - Private

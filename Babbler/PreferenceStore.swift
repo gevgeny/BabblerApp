@@ -13,6 +13,7 @@ let langSwitchKeyCodeKey = "langSwitchKeyCode"
 let useSystemInputIndicatorKey = "useSystemInputIndicator"
 let isTextReplaceEnabledKey = "isTextReplaceEnabled"
 let clipboardHistoryEnabledKey = "clipboardHistoryEnabled"
+let pinnedClipboardItemsKey = "pinnedClipboardItems"
 
 class PreferenceStore {
     private var appInputSources: [String: [String]]
@@ -77,6 +78,15 @@ class PreferenceStore {
 
     func setIsTextReplaceEnabled(_ value: Bool) {
         UserDefaults.standard.set(value, forKey: isTextReplaceEnabledKey)
+    }
+
+    func getPinnedClipboardItems() -> Set<String> {
+        let array = UserDefaults.standard.stringArray(forKey: pinnedClipboardItemsKey) ?? []
+        return Set(array)
+    }
+
+    func setPinnedClipboardItems(_ items: Set<String>) {
+        UserDefaults.standard.set(Array(items), forKey: pinnedClipboardItemsKey)
     }
 }
 

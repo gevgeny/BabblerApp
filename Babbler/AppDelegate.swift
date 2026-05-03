@@ -13,13 +13,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var permissionCheckTimer: Timer?
 
     // Keycodes of the current word; resets on word break (space → new char) or cancel.
+    // Only .last?.code (word-break detection) and .count (delete count) are used.
     var wordRecord: [(withShift: Bool, code: UInt16)] = []
     // Keycodes since the last hard cancel (escape, enter, arrow, click, app change); spans multiple words.
     var lineRecord: [(withShift: Bool, code: UInt16)] = []
-    // Snapshot of whichever record the current action fired on; consumed by onKeyboardInputSourceChanged.
-    var pendingRecord: [(withShift: Bool, code: UInt16)] = []
 
+    // String mirrors of wordRecord / lineRecord — used for translation at swap time.
     var text: String = ""
+    var lineText: String = ""
+    // Captured at action-key press; consumed by onKeyboardInputSourceChanged.
+    var pendingText: String = ""
+    var pendingCount: Int = 0
 
     func hasPrivileges() -> Bool {
         AXIsProcessTrusted()
@@ -91,22 +95,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         InputSourceUtils.onKeyboardInputSourceChanged {
             self.currentLang = InputSourceUtils.getCurrentInputSource()
-
             if !self.isWaitingForSwitch { return }
-
-            if self.pendingRecord.count > 0 {
-                Task {
-                    try? await Task.sleep(nanoseconds: keyboardDelay)
-                    await KeyboardUtils.replaceTypedText(self.pendingRecord)
-                }
-            } else {
-                KeyboardUtils.fetchSelectedText { text in
-                    if text.count == 0 { return }
-                    KeyboardUtils.typeText(text)
-                }
-            }
-
-            self.isWaitingForSwitch = false
+            self.performPendingReplacement()
         }
 
         WorkspaceUtils.onActiveAppChanged { app in
@@ -126,9 +116,44 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         NSApp.setActivationPolicy(.accessory)
     }
 
+    /// Called on the main thread after the input source has switched.
+    /// Performs the pending typed-word or selected-text replacement.
+    func performPendingReplacement() {
+        if pendingCount > 0 {
+            // Translate on the main thread — TIS APIs required by translateText crash off main.
+            let translatedText = KeyboardUtils.translateText(pendingText)
+            let count = pendingCount
+            Task {
+                try? await Task.sleep(nanoseconds: keyboardDelay)
+                await KeyboardUtils.replaceTypedText(translatedText, count: count)
+                // Seed records with the replaced text so subsequent Alt presses can
+                // convert it back. wordRecord only needs the right .count for deletion.
+                // Must run on main thread — handleGlobalSystemEvent reads these properties.
+                await MainActor.run {
+                    let charCount = translatedText.count
+                    self.text = translatedText
+                    self.wordRecord = Array(repeating: (withShift: false, code: 0), count: charCount)
+                    let drop = min(count, self.lineRecord.count)
+                    self.lineText = String(self.lineText.dropLast(drop)) + translatedText
+                    self.lineRecord = Array(self.lineRecord.dropLast(drop))
+                        + Array(repeating: (withShift: false, code: 0), count: charCount)
+                    self.isWaitingForSwitch = false
+                }
+            }
+        } else {
+            KeyboardUtils.fetchSelectedText { text in
+                if text.count == 0 { return }
+                KeyboardUtils.typeText(text)
+            }
+            isWaitingForSwitch = false
+        }
+    }
+
     func handleGlobalSystemEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
         if isSecurityInput { return }
+        // Ignore events we synthesized ourselves (Delete + typeText Unicode inject)
+        if event.cgEvent?.getIntegerValueField(.eventSourceUserData) == KeyboardUtils.syntheticEventMarker { return }
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let withOption = flags == .option
@@ -145,20 +170,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         switch KeyboardUtils.checkActionKeyPress(code, flags) {
         case .action:
             if preferenceStore.getIsTextReplaceEnabled() {
-                self.pendingRecord = self.wordRecord
+                self.pendingText = self.text
+                self.pendingCount = self.wordRecord.count
                 self.isWaitingForSwitch = true
             }
             InputSourceUtils.swapLang()
             return
         case .lineAction:
             if preferenceStore.getIsTextReplaceEnabled() {
-//              print("\n\nlineRecord:", self.lineRecord.map { $0.code},
-//                    "\npending record:", self.pendingRecord.map { $0.code},
-//                    "\nword record: ", self.wordRecord.map { $0.code},
-//                    "\ntext: ", self.text
-//              );
-              self.pendingRecord = self.lineRecord
-              self.isWaitingForSwitch = true
+                self.pendingText = self.lineText
+                self.pendingCount = self.lineRecord.count
+                self.isWaitingForSwitch = true
             }
             InputSourceUtils.swapLang()
             return
@@ -176,6 +198,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             wordRecord = []
             lineRecord = []
             text = ""
+            lineText = ""
             return
         }
 
@@ -186,6 +209,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
         if isDelete && lineRecord.count > 0 {
             lineRecord.removeLast()
+            lineText = String(lineText.dropLast())
         }
 
         if code == Key.delete || event.type != .keyDown || event.isARepeat {
@@ -199,6 +223,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             text = ""
             if appDidChange {
                 lineRecord = []
+                lineText = ""
             }
         }
 
@@ -207,6 +232,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         wordRecord.append(entry)
         lineRecord.append(entry)
         text += event.characters!
+        lineText += event.characters!
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {

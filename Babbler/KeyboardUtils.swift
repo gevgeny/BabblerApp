@@ -17,6 +17,11 @@ let keyboardDelay = UInt64(50_000_000)
     static private var isActionKeyPressed = false
     static private var isShiftHeldWithAction = false
 
+    /// Stamped onto every CGEvent we synthesize so `handleGlobalSystemEvent`
+    /// can reject them regardless of timing — prevents synthetic keystrokes
+    /// from being recorded into wordRecord / text.
+    static let syntheticEventMarker: Int64 = 0x4241_424C_4552 // "BABBLER"
+
     static func setActionKey(code: UInt16) {
         actionKeyCode = CGKeyCode(code)
         switch code {
@@ -88,61 +93,26 @@ let keyboardDelay = UInt64(50_000_000)
         }
     }
 
-    private static func deleteLastTypedWord(_ src: CGEventSource?, _ loc: CGEventTapLocation) {
-        let deleteDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
-        let deleteUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
-        
-        deleteDown?.flags = CGEventFlags.maskAlternate;
-        deleteDown?.post(tap: loc)
-        deleteUp?.post(tap: loc)
-    }
-    
-    private static func deleteTypedText(_ src: CGEventSource?, _ loc: CGEventTapLocation, _ record: [(withShift: Bool, code: UInt16)]) {
+    static func replaceTypedText(_ text: String, count: Int) async {
         let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
         let loc = CGEventTapLocation.cghidEventTap
 
-        // Delete last typed text
-        for _ in 1...record.count {
+        // Delete the recorded characters one by one, stamped so the monitor ignores them
+        for _ in 0..<count {
             let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
             let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
-
+            eventDown?.setIntegerValueField(.eventSourceUserData, value: syntheticEventMarker)
+            eventUp?.setIntegerValueField(.eventSourceUserData, value: syntheticEventMarker)
             eventDown?.post(tap: loc)
             eventUp?.post(tap: loc)
         }
-    }
-    
-    private static func typeRecordedText(
-        _ record: [(withShift: Bool, code: UInt16)],
-        _ src: CGEventSource?,
-        _ loc: CGEventTapLocation
-    ) {
-        let actionUp = CGEvent(keyboardEventSource: src, virtualKey: actionKeyCode, keyDown: false)
-         
-        record.forEach { (withShift: Bool, code: UInt16) in
-            let eventDown = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true)
-            let eventUp = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)
-            
-            if withShift {
-                eventDown?.flags = CGEventFlags.maskShift;
-            }
-            actionUp?.post(tap: loc)
-            eventDown?.post(tap: loc)
-            eventUp?.post(tap: loc)
-        }
-    }
 
-    
-    
-    static func replaceTypedText(_ record: [(withShift: Bool, code: UInt16)]) async {
-        let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
-        let loc = CGEventTapLocation.cghidEventTap
-                
-        deleteTypedText(src, loc, record)
-        
         try? await Task.sleep(nanoseconds: keyboardDelay)
-        
-         
-        typeRecordedText(record, src, loc)
+
+        // Inject the pre-translated string as a single Unicode event.
+        // We do NOT call typeText/translateText here — those touch TIS APIs
+        // which require the main thread, and this function runs on the cooperative pool.
+        injectText(text)
     }
     
     static func fetchSelectedText(_ callback: @escaping (String) -> Void) -> Void {
@@ -197,17 +167,23 @@ let keyboardDelay = UInt64(50_000_000)
         return translated.joined()
     }
 
+    /// Translate `text` (requires main thread) then inject. Call only from main thread.
     static func typeText(_ text: String) {
-        let tranlatedText = translateText(text)
-        
-        let utf16Chars = Array(tranlatedText.utf16)
-        let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true);
+        injectText(translateText(text))
+    }
+
+    /// Inject `text` as a single Unicode keyboard event. Thread-safe — no TIS calls.
+    static func injectText(_ text: String) {
+        let utf16Chars = Array(text.utf16)
+        let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true)
         event1?.flags = .maskNonCoalesced
+        event1?.setIntegerValueField(.eventSourceUserData, value: syntheticEventMarker)
         event1?.keyboardSetUnicodeString(stringLength: utf16Chars.count, unicodeString: utf16Chars)
         event1?.post(tap: .cghidEventTap)
 
-        let event2 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: false);
+        let event2 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: false)
         event2?.flags = .maskNonCoalesced
+        event2?.setIntegerValueField(.eventSourceUserData, value: syntheticEventMarker)
         event2?.post(tap: .cghidEventTap)
     }
 }

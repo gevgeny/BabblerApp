@@ -1,4 +1,26 @@
 import SwiftUI
+import AppKit
+
+// MARK: - NSView tooltip bridge (.help() is unreliable in NSPanel / MenuBarExtra windows)
+private struct NativeTooltipModifier: ViewModifier {
+    let text: String
+
+    func body(content: Content) -> some View {
+        content.background(TooltipHost(text: text))
+    }
+
+    private struct TooltipHost: NSViewRepresentable {
+        let text: String
+        func makeNSView(context: Context) -> NSView { NSView() }
+        func updateNSView(_ nsView: NSView, context: Context) { nsView.toolTip = text }
+    }
+}
+
+private extension View {
+    func nativeTooltip(_ text: String) -> some View {
+        modifier(NativeTooltipModifier(text: text))
+    }
+}
 
 struct MenuBarLabel: View {
   @EnvironmentObject var appDelegate: AppDelegate
@@ -99,16 +121,13 @@ struct MenuView: View {
                 Divider()
             }
 
-            // Pinned clipboards
-            if clipboardHistoryEnabled && !clipboardHistory.pinnedItems.isEmpty {
-                PinnedClipboardsRow()
-                Divider()
-            }
-
-            // Clipboard history (unpinned)
+            // Pinned clipboards + history — no divider between them, one divider after
+            let hasPinned = clipboardHistoryEnabled && !clipboardHistory.pinnedItems.isEmpty
             let unpinnedItems = clipboardHistory.items.filter { !clipboardHistory.pinnedItems.contains($0) }
-            if clipboardHistoryEnabled && !unpinnedItems.isEmpty {
-                ClipboardHistoryRow()
+            let hasHistory = clipboardHistoryEnabled && !unpinnedItems.isEmpty
+            if hasPinned || hasHistory {
+                if hasPinned { PinnedClipboardsRow() }
+                if hasHistory { ClipboardHistoryRow() }
                 Divider()
             }
 
@@ -142,7 +161,7 @@ struct MenuView: View {
             .buttonStyle(MenuItemButtonStyle())
             .padding(.bottom, 6)
         }
-        .frame(width: 220)
+        .frame(width: 330)
         .animation(.easeInOut(duration: 0.2), value: isTextReplaceEnabled)
         .animation(.easeInOut(duration: 0.2), value: appDelegate.isSecurityInput)
     }
@@ -181,7 +200,7 @@ private struct CollapsibleClipboardSection: View {
                         .frame(width: 16)
                 }
             }
-            .buttonStyle(MenuItemButtonStyle())
+            .buttonStyle(MenuItemButtonStyle(compact: true))
 
             if isExpanded {
                 VStack(spacing: 0) {
@@ -244,7 +263,7 @@ private struct ClipboardItemRow: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: 2) {
-                Text(item.count > 36 ? String(item.prefix(36)) + "…" : item)
+                Text(item.count > 52 ? String(item.prefix(52)) + "…" : item)
                     .lineLimit(1)
                 Spacer()
                 // Pin button
@@ -281,13 +300,15 @@ private struct ClipboardItemRow: View {
                 .onHover { isRemoveHovered = $0 }
             }
         }
-        .buttonStyle(MenuItemButtonStyle())
+        .buttonStyle(MenuItemButtonStyle(compact: true))
         .onHover { isHovered = $0 }
+        .nativeTooltip(item)
     }
 }
 
 // Native menu-item look: plain style with subtle highlight on hover
 private struct MenuItemButtonStyle: ButtonStyle {
+    var compact: Bool = false
     @State private var isHovered = false
 
     func makeBody(configuration: Configuration) -> some View {
@@ -299,7 +320,7 @@ private struct MenuItemButtonStyle: ButtonStyle {
             .foregroundStyle(Color.primary)
             .cornerRadius(6)
             .padding(.horizontal, 5)
-            .padding(.vertical, 3)
+            .padding(.vertical, compact ? 0 : 3)
             .onHover { isHovered = $0 }
     }
 }

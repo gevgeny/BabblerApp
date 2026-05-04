@@ -1,13 +1,32 @@
-.DS_Store
+# macOS
+**/.DS_Store
+.AppleDouble
+.LSOverride
 
-xcuserdata/
-*.xcuserstate
-*.xccheckout
-*.xcscmblueprint
+# Xcode — user-specific files (never share these)
+**/xcuserdata/
+**/*.xcuserstate
+**/*.xccheckout
+**/*.xcscmblueprint
 *.moved-aside
 
+# Xcode workspace user settings (non-shared)
+# project.xcworkspace/xcshareddata/ IS committed (shared scheme settings, etc.)
+# project.xcworkspace/xcuserdata/  is NOT
+**/xcuserdata/
+
+# Build output
 DerivedData/
 build/
 Babbler/Products/
 
+# Release archives and zips created by the build script
+Babbler *.zip
+Babbler [0-9]*/
 
+# Swift Package Manager (not used here but just in case)
+.build/
+.swiftpm/
+
+# Credentials / environment
+*.env

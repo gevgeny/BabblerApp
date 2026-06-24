@@ -128,15 +128,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     func handleGlobalSystemEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
-        if isSecurityInput { return }
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let isLeftMouseDown = event.type == .leftMouseDown
+        let code = isLeftMouseDown ? 0 : event.keyCode
+
+        // Live secure-input check on action key so stale cached value never blocks a swap
+        if KeyboardUtils.checkActionKeyPress(code, flags) != .none {
+            let (secure, app) = SecurityInputUtils.checkSecureInput()
+            isSecurityInput = secure
+            securityApp = app
+        }
+
+        if isSecurityInput { return }
+
         let withOption = flags == .option
         let withCommand = flags == .command
         let withShift = flags == .shift
         let withActionModifier = flags == KeyboardUtils.actionKeyFlag
-        let isLeftMouseDown = event.type == .leftMouseDown
-        let code = isLeftMouseDown ? 0 : event.keyCode
         let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
         let isEnter = code == Key.enter || code == Key.returnKey
         let isDelete = code == Key.delete

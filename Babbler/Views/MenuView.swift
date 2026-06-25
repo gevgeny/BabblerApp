@@ -24,22 +24,23 @@ private extension View {
 
 struct MenuBarLabel: View {
   @EnvironmentObject var appDelegate: AppDelegate
-    @AppStorage(useSystemInputIndicatorKey) var useSystemInputIndicator: Bool = false
+  @AppStorage(useSystemInputIndicatorKey) var useSystemInputIndicator: Bool = false
+
   var menuBarTitle: String {
     guard let lang = appDelegate.currentLang else { return "??" }
     return ImageUtils.languageImages[lang.id] ?? ImageUtils.getLangCode(for: lang)
   }
 
-    var body: some View {
-        if useSystemInputIndicator,
-           let lang = appDelegate.currentLang,
-           let icon = ImageUtils.makeInputSourceIcon(for: lang) {
-            Image(nsImage: icon)
-        } else {
-            Text(menuBarTitle)
-                .baselineOffset(-1)
-        }
+  var body: some View {
+    if useSystemInputIndicator,
+       let lang = appDelegate.currentLang,
+       let icon = ImageUtils.makeInputSourceIcon(for: lang) {
+      Image(nsImage: icon)
+    } else {
+      Text(menuBarTitle)
+        .baselineOffset(-1)
     }
+  }
 }
 
 struct MenuView: View {
@@ -189,8 +190,6 @@ private struct CollapsibleClipboardSection: View {
             } label: {
                 HStack {
                     Text(title)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.secondary)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10))
@@ -200,7 +199,7 @@ private struct CollapsibleClipboardSection: View {
                         .frame(width: 16)
                 }
             }
-            .buttonStyle(MenuItemButtonStyle(compact: true))
+            .buttonStyle(MenuItemButtonStyle())
 
             if isExpanded {
                 VStack(spacing: 0) {
@@ -314,7 +313,7 @@ private struct MenuItemButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding(.horizontal, 9)
-            .padding(.vertical, 4)
+            .padding(.vertical, compact ? 2 : 4)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(isHovered ? Color.primary.opacity(0.1) : Color.clear)
             .foregroundStyle(Color.primary)

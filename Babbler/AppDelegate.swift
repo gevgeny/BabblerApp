@@ -128,30 +128,40 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     func handleGlobalSystemEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
-        if isSecurityInput { return }
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let isLeftMouseDown = event.type == .leftMouseDown
+        let code = isLeftMouseDown ? 0 : event.keyCode
+
         let withOption = flags == .option
         let withCommand = flags == .command
         let withShift = flags == .shift
         let withActionModifier = flags == KeyboardUtils.actionKeyFlag
-        let isLeftMouseDown = event.type == .leftMouseDown
-        let code = isLeftMouseDown ? 0 : event.keyCode
         let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
         let isEnter = code == Key.enter || code == Key.returnKey
         let isDelete = code == Key.delete
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
 
-        switch KeyboardUtils.checkActionKeyPress(code, flags) {
+        // checkActionKeyPress is stateful — call once only
+        let actionResult = KeyboardUtils.checkActionKeyPress(code, flags)
+
+        // Live secure-input check on action key so stale cached value never blocks a swap
+        if actionResult != .none {
+            let (secure, app) = SecurityInputUtils.checkSecureInput()
+            isSecurityInput = secure
+            securityApp = app
+        }
+
+        switch actionResult {
         case .action:
-            if preferenceStore.getIsTextReplaceEnabled() {
+            if preferenceStore.getIsTextReplaceEnabled() && !isSecurityInput {
                 self.pendingRecord = self.wordRecord
                 self.isWaitingForSwitch = true
             }
             InputSourceUtils.swapLang()
             return
         case .lineAction:
-            if preferenceStore.getIsTextReplaceEnabled() {
+            if preferenceStore.getIsTextReplaceEnabled() && !isSecurityInput {
 //              print("\n\nlineRecord:", self.lineRecord.map { $0.code},
 //                    "\npending record:", self.pendingRecord.map { $0.code},
 //                    "\nword record: ", self.wordRecord.map { $0.code},
@@ -165,6 +175,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         case .none:
             break
         }
+
+        if isSecurityInput { return }
 
         // flagsChanged events (modifier key presses/releases) are fully handled by
         // checkActionKeyPress above. If we let them fall through, releasing Shift while

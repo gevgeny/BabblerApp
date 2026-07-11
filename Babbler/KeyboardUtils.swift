@@ -57,7 +57,7 @@ let keyboardDelay = UInt64(50_000_000)
         } else if code == actionKeyCode && isActionKeyPressed {
             // Action key released — fire result
             let withShift = isShiftHeldWithAction
-            let wasInterrupted = actionKeyWasInterrupted || isNavigationKeyPressed()
+            let wasInterrupted = actionKeyWasInterrupted || isRegularKeyPressed()
             stopActionKeyInterruptionMonitor()
             isActionKeyPressed = false
             isShiftHeldWithAction = false
@@ -93,7 +93,7 @@ let keyboardDelay = UInt64(50_000_000)
     private static func startActionKeyInterruptionMonitor() {
         stopActionKeyInterruptionMonitor()
         actionKeyInterruptionTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
-            if isNavigationKeyPressed() {
+            if isRegularKeyPressed() {
                 actionKeyWasInterrupted = true
             }
         }
@@ -104,9 +104,10 @@ let keyboardDelay = UInt64(50_000_000)
         actionKeyInterruptionTimer = nil
     }
 
-    private static func isNavigationKeyPressed() -> Bool {
-        [Key.leftArrow, Key.rightArrow, Key.downArrow, Key.upArrow].contains {
-            CGEventSource.keyState(.combinedSessionState, key: CGKeyCode($0))
+    private static func isRegularKeyPressed() -> Bool {
+        (UInt16(0)...UInt16(127)).contains { code in
+            code != actionKeyCode && !isModifierKey(code) &&
+              CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(code))
         }
     }
 

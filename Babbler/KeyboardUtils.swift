@@ -16,6 +16,8 @@ let keyboardDelay = UInt64(50_000_000)
 
     static private var isActionKeyPressed = false
     static private var isShiftHeldWithAction = false
+    static private var actionKeyWasInterrupted = false
+    static private var actionKeyInterruptionTimer: Timer?
 
     static func setActionKey(code: UInt16) {
         actionKeyCode = CGKeyCode(code)
@@ -49,12 +51,18 @@ let keyboardDelay = UInt64(50_000_000)
             // Action key pressed — record whether Shift is also held
             isActionKeyPressed = true
             isShiftHeldWithAction = flags.contains(.shift)
+            actionKeyWasInterrupted = false
+            startActionKeyInterruptionMonitor()
             return .none
         } else if code == actionKeyCode && isActionKeyPressed {
             // Action key released — fire result
             let withShift = isShiftHeldWithAction
+            let wasInterrupted = actionKeyWasInterrupted || isNavigationKeyPressed()
+            stopActionKeyInterruptionMonitor()
             isActionKeyPressed = false
             isShiftHeldWithAction = false
+            actionKeyWasInterrupted = false
+            if wasInterrupted { return .none }
             return withShift ? .lineAction : .action
         } else if isActionKeyPressed && flags.contains(actionKeyFlag) {
             if isModifierKey(code) {
@@ -67,14 +75,38 @@ let keyboardDelay = UInt64(50_000_000)
                 }
             } else {
                 // A regular key (e.g. arrow, click) was pressed while action held — cancel
+                stopActionKeyInterruptionMonitor()
                 isActionKeyPressed = false
                 isShiftHeldWithAction = false
+                actionKeyWasInterrupted = false
             }
             return .none
         } else {
+            stopActionKeyInterruptionMonitor()
             isActionKeyPressed = false
             isShiftHeldWithAction = false
+            actionKeyWasInterrupted = false
             return .none
+        }
+    }
+
+    private static func startActionKeyInterruptionMonitor() {
+        stopActionKeyInterruptionMonitor()
+        actionKeyInterruptionTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
+            if isNavigationKeyPressed() {
+                actionKeyWasInterrupted = true
+            }
+        }
+    }
+
+    private static func stopActionKeyInterruptionMonitor() {
+        actionKeyInterruptionTimer?.invalidate()
+        actionKeyInterruptionTimer = nil
+    }
+
+    private static func isNavigationKeyPressed() -> Bool {
+        [Key.leftArrow, Key.rightArrow, Key.downArrow, Key.upArrow].contains {
+            CGEventSource.keyState(.combinedSessionState, key: CGKeyCode($0))
         }
     }
 
@@ -211,4 +243,3 @@ let keyboardDelay = UInt64(50_000_000)
         event2?.post(tap: .cghidEventTap)
     }
 }
-

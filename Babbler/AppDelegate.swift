@@ -25,6 +25,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     var text: String = ""
 
+    // Set right after an automatic correction so the next action-key press is
+    // understood as "undo that", and so repeated undos of the same word teach
+    // Babbler to leave it alone.
+    var lastAutoSwitchWord: String?
+    var lastAutoSwitchAt: Date?
+    var autoSwitchUndoCounts: [String: Int] = [:]
+    let autoSwitchUndoWindow: TimeInterval = 5.0
+
     // Accessibility lets us post synthetic keystrokes. Input Monitoring is a *separate*
     // grant that NSEvent.addGlobalMonitorForEvents needs for .keyDown/.keyUp — without it
     // the monitor silently delivers only .flagsChanged, so the action key is detected but
@@ -153,6 +161,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             return
         }
 
+        if preferenceStore.getAutoSwitchEnabled() {
+            LayoutDictionary.shared.preload()
+        }
+
         InputSourceUtils.onKeyboardInputSourceChanged {
             self.currentLang = InputSourceUtils.getCurrentInputSource()
             self.completePendingSwitch()
@@ -224,6 +236,89 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         InputSourceUtils.swapLang()
     }
 
+    // MARK: - Automatic layout switch
+
+    private var currentLayout: Layout? {
+        guard let source = InputSourceUtils.getCurrentInputSource() else { return nil }
+        if InputSourceUtils.isRussian(source) { return .russian }
+        if InputSourceUtils.isEnglish(source) { return .english }
+        return nil
+    }
+
+    private func isAutoSwitchAllowedInCurrentApp() -> Bool {
+        guard let bundleId = NSWorkspace.shared.frontmostApplication?.bundleIdentifier else {
+            return false
+        }
+        return !preferenceStore.getAutoSwitchExcludedApps().contains(bundleId)
+    }
+
+    /// A key that ends a word, so the word before it can now be judged.
+    private func wordTerminator(for event: NSEvent) -> Bool {
+        if event.keyCode == Key.space || event.keyCode == Key.enter || event.keyCode == Key.returnKey {
+            return true
+        }
+        guard let characters = event.characters, characters.count == 1 else { return false }
+        return ".,!?;:".contains(characters)
+    }
+
+    /// Called on the keystroke that ends a word. Returns true if it triggered a
+    /// correction, in which case the caller must stop processing the event.
+    private func handleAutoSwitch(_ event: NSEvent) -> Bool {
+        guard preferenceStore.getAutoSwitchEnabled(),
+              preferenceStore.getIsTextReplaceEnabled(),
+              wordTerminator(for: event),
+              !text.isEmpty,
+              !wordRecord.isEmpty,
+              let layout = currentLayout,
+              isAutoSwitchAllowedInCurrentApp() else {
+            return false
+        }
+
+        let word = AutoSwitchEngine.normalize(text)
+        if preferenceStore.getAutoSwitchIgnoredWords().contains(word) { return false }
+        guard AutoSwitchEngine.evaluate(word: text, currentLayout: layout) == .switchLayout else {
+            return false
+        }
+
+        // The terminator has already reached the focused app, so it has to be
+        // deleted and retyped along with the word. Its keycode is layout
+        // independent, so replaying it is safe.
+        let record = wordRecord + [(withShift: false, code: event.keyCode)]
+
+        lastAutoSwitchWord = word
+        lastAutoSwitchAt = Date()
+
+        // Leave the corrected run in wordRecord so pressing the action key right
+        // after undoes it. The next typed character clears it as usual, because
+        // the record now ends with the terminator.
+        wordRecord = record
+        text = ""
+
+        beginSwitch(record)
+        return true
+    }
+
+    /// The action key pressed just after an automatic correction means the user
+    /// disagreed. Two disagreements about the same word disable it permanently.
+    private func noteManualActionForUndo() {
+        guard let word = lastAutoSwitchWord,
+              let at = lastAutoSwitchAt,
+              Date().timeIntervalSince(at) <= autoSwitchUndoWindow else {
+            lastAutoSwitchWord = nil
+            lastAutoSwitchAt = nil
+            return
+        }
+
+        let count = (autoSwitchUndoCounts[word] ?? 0) + 1
+        autoSwitchUndoCounts[word] = count
+        if count >= 2 {
+            preferenceStore.addAutoSwitchIgnoredWord(word)
+        }
+
+        lastAutoSwitchWord = nil
+        lastAutoSwitchAt = nil
+    }
+
     func handleGlobalSystemEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
         if isSecurityInput { return }
@@ -242,9 +337,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         switch KeyboardUtils.checkActionKeyPress(code, flags) {
         case .action:
+            noteManualActionForUndo()
             beginSwitch(wordRecord)
             return
         case .lineAction:
+            noteManualActionForUndo()
             beginSwitch(lineRecord)
             return
         case .none:
@@ -255,6 +352,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         // checkActionKeyPress above. If we let them fall through, releasing Shift while
         // Option is still held would look like "Option + non-Option key" and wipe the records.
         if event.type == .flagsChanged { return }
+
+        // A word just ended: judge it before the cancel/record bookkeeping below,
+        // so terminators that reset the records (enter) are still covered.
+        if event.type == .keyDown, !event.isARepeat, handleAutoSwitch(event) { return }
 
         // Erase both records on cancel or when a shortcut modifier is active
         if isRecordCanceled || (withOption && code != Key.option) || withCommand || (withActionModifier && code != KeyboardUtils.actionKeyCode) {

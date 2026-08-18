@@ -164,3 +164,55 @@ sound, ignore-list persistence.
 - Learning from user corrections beyond the simple ignore list.
 - Layouts other than EN and RU.
 - Trie/`mmap`-backed dictionary to cut memory below 5 MB.
+
+---
+
+## Implementation notes (shipped)
+
+The MVP is implemented. Deviations from the plan above, and why:
+
+**Dictionaries.** English is `dwyl/english-words` intersected with the
+OpenSubtitles 2018 frequency list (`hermitdave/FrequencyWords`), giving 138,727
+forms. Russian is `danakt/russian-words` intersected with the same frequency
+list and cut to the 200,000 most frequent forms. Intersecting with a frequency
+list was necessary: the raw Russian list is 1.5 M forms (4.5 MB gzipped, far too
+much resident memory) and has no ordering, so it could not be trimmed safely.
+Shipped as `Babbler/Resources/{en,ru}.txt.gz`, 980 KB total.
+
+**Gzip.** Foundation has no public gzip API, so `LayoutDictionary` skips the
+gzip header by hand and inflates the payload with `libcompression`
+(`COMPRESSION_ZLIB`).
+
+**Punctuation rule — the important correction.** The plan proposed rejecting any
+word containing punctuation. That is wrong: `б ю ж э х ъ` sit on the `, . ; ' [ ]`
+keys, so a Russian word typed on the English layout is *full* of punctuation —
+`компьютер` is typed as `rjvgm.nth`. Rejecting those would have blinded the
+engine to its single most common case. Instead the disqualifying set excludes
+those characters, and eligibility of the *converted* candidate is enforced by
+requiring it to be all letters.
+
+**Word boundary.** Evaluation runs on the keystroke that ends the word (space,
+enter, or `.,!?;:`). Because the monitor is passive, that terminator has already
+reached the focused app, so it is appended to the record and replayed with the
+word. Its keycode is layout independent, so this is safe.
+
+**Undo.** After a correction the corrected run is left in `wordRecord`, so
+pressing the action key immediately swaps it straight back — no new code path.
+Two undos of the same word add it to a persistent ignore list.
+
+**Measured quality** (full-dictionary sweep, see commit message):
+
+| Metric | Result |
+| --- | --- |
+| False positives on 338,727 in-dictionary words | 0 |
+| False positives on 231,351 out-of-vocabulary words | 12 (0.005%) |
+| Recall, Russian typed on EN layout (top 20 k) | 99.7% |
+| Recall, English typed on RU layout (top 20 k) | 99.6% |
+
+Realistic non-words — `kubernetes`, `nginx`, `qwerty`, `asdf`, `github`,
+`recieve`, `teh` — are all correctly left alone.
+
+**Not implemented** (deliberately deferred, as in "Out of scope"): the sound
+option and the excluded-apps editor UI. The exclusion list itself works and
+ships with a sensible default (Terminal, iTerm, Warp, Xcode, VS Code, IntelliJ,
+1Password); it is editable via `defaults write eugene.Babbler autoSwitchExcludedApps`.

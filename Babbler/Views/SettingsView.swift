@@ -28,6 +28,7 @@ struct SettingsView: View {
     @AppStorage(langSwitchKeyCodeKey) private var selectedSwitchKeyCodeRaw: Int = Int(Key.option)
     @AppStorage(useSystemInputIndicatorKey) private var useSystemInputIndicator: Bool = false
     @AppStorage(clipboardHistoryEnabledKey) private var clipboardHistoryEnabled: Bool = true
+    @AppStorage(autoSwitchEnabledKey) private var autoSwitchEnabled: Bool = false
     @State private var configuredApps: [AppListItem] = []
 
     // Binding that bridges Int (AppStorage) ↔ UInt16 (Picker tags)
@@ -67,6 +68,18 @@ struct SettingsView: View {
                     }
                     Spacer()
                     Toggle("", isOn: $clipboardHistoryEnabled)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Switch layout automatically")
+                        Text("Corrects a word typed in the wrong layout as soon as you finish it. Press the action key right after to undo.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: $autoSwitchEnabled)
                         .labelsHidden()
                         .toggleStyle(.switch)
                 }
@@ -117,6 +130,11 @@ struct SettingsView: View {
         .onChange(of: selectedSwitchKeyCodeRaw) { _, newValue in
             // @AppStorage already persisted the value; just update the in-memory action key
             KeyboardUtils.setActionKey(code: UInt16(newValue))
+        }
+        .onChange(of: autoSwitchEnabled) { _, newValue in
+            // Loading the word lists takes ~150 ms, so start as soon as it is enabled
+            // rather than on the first keystroke.
+            if newValue { LayoutDictionary.shared.preload() }
         }
         .onAppear {
             loadConfiguredApps()

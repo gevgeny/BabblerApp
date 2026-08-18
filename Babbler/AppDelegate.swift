@@ -1,5 +1,6 @@
 import Cocoa
 import Carbon
+import IOKit.hid
 
 class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
@@ -24,8 +25,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     var text: String = ""
 
-    func hasPrivileges() -> Bool {
+    // Accessibility lets us post synthetic keystrokes. Input Monitoring is a *separate*
+    // grant that NSEvent.addGlobalMonitorForEvents needs for .keyDown/.keyUp — without it
+    // the monitor silently delivers only .flagsChanged, so the action key is detected but
+    // no typed word is ever recorded.
+    func hasAccessibilityAccess() -> Bool {
         AXIsProcessTrusted()
+    }
+
+    func hasInputMonitoringAccess() -> Bool {
+        IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
+    }
+
+    func hasPrivileges() -> Bool {
+        hasAccessibilityAccess() && hasInputMonitoringAccess()
     }
 
     func showError(_ title: String, _ message: String) {
@@ -39,7 +52,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func openAccessibilitySettings() {
-        guard let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else {
+        openPrivacySettings("Privacy_Accessibility")
+    }
+
+    func openInputMonitoringSettings() {
+        openPrivacySettings("Privacy_ListenEvent")
+    }
+
+    private func openPrivacySettings(_ anchor: String) {
+        guard let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(anchor)") else {
             return
         }
         NSWorkspace.shared.open(settingsURL)
@@ -61,23 +82,63 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func requestAccessibilityPermissions() {
+        // Fires the system Input Monitoring prompt if macOS has never asked before.
+        if !hasInputMonitoringAccess() {
+            _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        }
+        if hasPrivileges() {
+            finishApplicationSetup()
+            return
+        }
+
+        let needsAccessibility = !hasAccessibilityAccess()
+        let needsInputMonitoring = !hasInputMonitoringAccess()
+
         let alert = NSAlert()
-        alert.messageText = "Accessibility Access Required"
-        alert.informativeText = "Babbler needs Accessibility access to monitor keyboard shortcuts and replace typed text. Click Open System Settings, enable Babbler in Accessibility, and return to the app."
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Quit")
+
+        if needsAccessibility && needsInputMonitoring {
+            alert.messageText = "Accessibility and Input Monitoring Access Required"
+            alert.informativeText = "Babbler needs two separate permissions: Input Monitoring to see the word you are typing, and Accessibility to replace it. Enable Babbler in both lists, then return to the app."
+            alert.addButton(withTitle: "Open Input Monitoring")
+            alert.addButton(withTitle: "Open Accessibility")
+            alert.addButton(withTitle: "Quit")
+        } else if needsInputMonitoring {
+            alert.messageText = "Input Monitoring Access Required"
+            alert.informativeText = "Babbler needs Input Monitoring access to see the word you are typing. Without it the action key is detected but the last typed word cannot be swapped. Enable Babbler in Input Monitoring, then return to the app."
+            alert.addButton(withTitle: "Open System Settings")
+            alert.addButton(withTitle: "Quit")
+        } else {
+            alert.messageText = "Accessibility Access Required"
+            alert.informativeText = "Babbler needs Accessibility access to replace typed text. Click Open System Settings, enable Babbler in Accessibility, and return to the app."
+            alert.addButton(withTitle: "Open System Settings")
+            alert.addButton(withTitle: "Quit")
+        }
 
         NSApp.activate(ignoringOtherApps: true)
 
         let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            openAccessibilitySettings()
-            startPermissionPolling()
+        if response == .alertThirdButtonReturn {
+            NSApplication.shared.terminate(self)
+            return
+        }
+        if response == .alertSecondButtonReturn && !(needsAccessibility && needsInputMonitoring) {
+            NSApplication.shared.terminate(self)
             return
         }
 
-        NSApplication.shared.terminate(self)
+        if needsAccessibility && needsInputMonitoring {
+            if response == .alertFirstButtonReturn {
+                openInputMonitoringSettings()
+            } else {
+                openAccessibilitySettings()
+            }
+        } else if needsInputMonitoring {
+            openInputMonitoringSettings()
+        } else {
+            openAccessibilitySettings()
+        }
+        startPermissionPolling()
     }
 
     func finishApplicationSetup() {

@@ -11,6 +11,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var didFinishAppSetup = false
     let clipboardHistory = ClipboardHistory()
     var permissionCheckTimer: Timer?
+    // Safety net: if the input-source-changed notification never arrives, this fires
+    // so isWaitingForSwitch can never latch on and permanently disable event handling.
+    var switchWatchdog: Timer?
 
     // Keycodes of the current word; resets on word break (space → new char) or cancel.
     var wordRecord: [(withShift: Bool, code: UInt16)] = []
@@ -91,22 +94,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         InputSourceUtils.onKeyboardInputSourceChanged {
             self.currentLang = InputSourceUtils.getCurrentInputSource()
-
-            if !self.isWaitingForSwitch { return }
-
-            if self.pendingRecord.count > 0 {
-                Task {
-                    try? await Task.sleep(nanoseconds: keyboardDelay)
-                    await KeyboardUtils.replaceTypedText(self.pendingRecord)
-                }
-            } else {
-                KeyboardUtils.fetchSelectedText { text in
-                    if text.count == 0 { return }
-                    KeyboardUtils.typeText(text)
-                }
-            }
-
-            self.isWaitingForSwitch = false
+            self.completePendingSwitch()
         }
 
         WorkspaceUtils.onActiveAppChanged { app in
@@ -124,6 +112,55 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             clipboardHistory.start()
         }
         NSApp.setActivationPolicy(.accessory)
+    }
+
+    // Performs the pending text replacement exactly once. isWaitingForSwitch stays set
+    // while synthetic keystrokes are posted so they are not recorded back into wordRecord,
+    // and a watchdog guarantees it is always released even if something fails.
+    func completePendingSwitch() {
+        switchWatchdog?.invalidate()
+        switchWatchdog = nil
+
+        if !isWaitingForSwitch { return }
+
+        let record = pendingRecord
+        pendingRecord = []
+
+        armWatchdog(2.0) { [weak self] in self?.finishSwitch() }
+
+        if record.count > 0 {
+            Task {
+                try? await Task.sleep(nanoseconds: keyboardDelay)
+                await KeyboardUtils.replaceTypedText(record)
+                await MainActor.run { self.finishSwitch() }
+            }
+        } else {
+            KeyboardUtils.fetchSelectedText { text in
+                if text.count > 0 { KeyboardUtils.typeText(text) }
+                self.finishSwitch()
+            }
+        }
+    }
+
+    func finishSwitch() {
+        switchWatchdog?.invalidate()
+        switchWatchdog = nil
+        isWaitingForSwitch = false
+    }
+
+    private func armWatchdog(_ interval: TimeInterval, _ action: @escaping () -> Void) {
+        switchWatchdog?.invalidate()
+        switchWatchdog = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { _ in action() }
+    }
+
+    func beginSwitch(_ record: [(withShift: Bool, code: UInt16)]) {
+        if preferenceStore.getIsTextReplaceEnabled() {
+            pendingRecord = record
+            isWaitingForSwitch = true
+            // If the input-source-changed notification never arrives, replace anyway.
+            armWatchdog(0.5) { [weak self] in self?.completePendingSwitch() }
+        }
+        InputSourceUtils.swapLang()
     }
 
     func handleGlobalSystemEvent(_ event: NSEvent) {
@@ -144,23 +181,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         switch KeyboardUtils.checkActionKeyPress(code, flags) {
         case .action:
-            if preferenceStore.getIsTextReplaceEnabled() {
-                self.pendingRecord = self.wordRecord
-                self.isWaitingForSwitch = true
-            }
-            InputSourceUtils.swapLang()
+            beginSwitch(wordRecord)
             return
         case .lineAction:
-            if preferenceStore.getIsTextReplaceEnabled() {
-//              print("\n\nlineRecord:", self.lineRecord.map { $0.code},
-//                    "\npending record:", self.pendingRecord.map { $0.code},
-//                    "\nword record: ", self.wordRecord.map { $0.code},
-//                    "\ntext: ", self.text
-//              );
-              self.pendingRecord = self.lineRecord
-              self.isWaitingForSwitch = true
-            }
-            InputSourceUtils.swapLang()
+            beginSwitch(lineRecord)
             return
         case .none:
             break
@@ -206,7 +230,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let entry = (withShift: withShift, code: event.keyCode)
         wordRecord.append(entry)
         lineRecord.append(entry)
-        text += event.characters!
+        text += event.characters ?? ""
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {

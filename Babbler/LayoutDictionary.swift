@@ -48,8 +48,10 @@ final class LayoutDictionary {
 
     DispatchQueue.global(qos: .utility).async { [weak self] in
       guard let self else { return }
-      let en = Self.loadWords(named: "en")
-      let ru = Self.loadWords(named: "ru")
+      var en = Self.loadWords(named: "en")
+      var ru = Self.loadWords(named: "ru")
+      en.formUnion(Self.loadCustomWords(named: "custom-en"))
+      ru.formUnion(Self.loadCustomWords(named: "custom-ru"))
 
       self.lock.lock()
       self.english = en
@@ -57,6 +59,13 @@ final class LayoutDictionary {
       self.isLoaded = !en.isEmpty && !ru.isEmpty
       self.lock.unlock()
     }
+  }
+
+  /// Directory holding the user's own additions, alongside the crash logs.
+  static var customWordsDirectory: URL {
+    FileManager.default
+      .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent("Babbler", isDirectory: true)
   }
 
   func contains(_ word: String, in layout: Layout) -> Bool {
@@ -77,6 +86,20 @@ final class LayoutDictionary {
     words.reserveCapacity(220_000)
     text.enumerateLines { line, _ in
       if !line.isEmpty { words.insert(line) }
+    }
+    return words
+  }
+
+  /// Plain-text words the user added themselves, one per line, `#` for comments.
+  /// Missing files are normal and simply contribute nothing.
+  private static func loadCustomWords(named name: String) -> Set<String> {
+    let url = customWordsDirectory.appendingPathComponent("\(name).txt")
+    guard let text = try? String(contentsOf: url, encoding: .utf8) else { return [] }
+
+    var words = Set<String>()
+    text.enumerateLines { line, _ in
+      let word = line.trimmingCharacters(in: .whitespaces).lowercased()
+      if !word.isEmpty, !word.hasPrefix("#") { words.insert(word) }
     }
     return words
   }

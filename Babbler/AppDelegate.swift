@@ -25,13 +25,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     var text: String = ""
 
-    // Set right after an automatic correction so the next action-key press is
-    // understood as "undo that", and so repeated undos of the same word teach
-    // Babbler to leave it alone.
-    var lastAutoSwitchWord: String?
-    var lastAutoSwitchAt: Date?
-    var autoSwitchUndoCounts: [String: Int] = [:]
-    let autoSwitchUndoWindow: TimeInterval = 5.0
+    // Learns which words the user does not want corrected. Holds all the state
+    // and window logic; AppDelegate only forwards events to it.
+    var autoSwitchSettleTimer: Timer?
+    // The layout in use when the last correction fired, so a change back to it
+    // can be recognised as a manual revert.
+    var layoutBeforeAutoSwitch: Layout?
 
     // Word-delimited buffers used only by auto switch. wordRecord cannot serve
     // here: it resets on a space-then-character transition, so it happily
@@ -183,8 +182,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         InputSourceUtils.onKeyboardInputSourceChanged {
+            let wasOurs = self.isWaitingForSwitch
             self.currentLang = InputSourceUtils.getCurrentInputSource()
             self.completePendingSwitch()
+            // Anything not driven by completePendingSwitch was the user.
+            if !wasOurs { self.noteLayoutChangedByUser() }
         }
 
         WorkspaceUtils.onActiveAppChanged { app in
@@ -309,7 +311,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         let normalized = AutoSwitchEngine.normalize(word)
-        guard !preferenceStore.getAutoSwitchIgnoredWords().contains(normalized),
+        guard !autoSwitchMemory.shouldSkip(word: normalized),
               AutoSwitchEngine.evaluate(word: word, currentLayout: layout) == .switchLayout else {
             rememberTypedWord(record, word)
             return false
@@ -326,8 +328,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let full = (anchorIsExact ? phrasePrefix(for: layout) : []) + record
         autoSwitchTail = []
 
-        lastAutoSwitchWord = normalized
-        lastAutoSwitchAt = Date()
+        autoSwitchMemory.noteCorrection(word: normalized)
+        layoutBeforeAutoSwitch = layout
+        scheduleAutoSwitchSettle()
 
         // Leave the corrected run in wordRecord so pressing the action key right
         // after undoes it. The next typed character clears it as usual, because
@@ -374,24 +377,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     /// The action key pressed just after an automatic correction means the user
-    /// disagreed. Two disagreements about the same word disable it permanently.
+    /// disagreed. Counted immediately: it is an unambiguous undo.
     private func noteManualActionForUndo() {
-        guard let word = lastAutoSwitchWord,
-              let at = lastAutoSwitchAt,
-              Date().timeIntervalSince(at) <= autoSwitchUndoWindow else {
-            lastAutoSwitchWord = nil
-            lastAutoSwitchAt = nil
-            return
-        }
+        autoSwitchMemory.noteActionKey()
+    }
 
-        let count = (autoSwitchUndoCounts[word] ?? 0) + 1
-        autoSwitchUndoCounts[word] = count
-        if count >= 2 {
-            preferenceStore.addAutoSwitchIgnoredWord(word)
-        }
+    /// The input source changed while no correction of ours was in flight, so
+    /// the user changed it. If it went back to the layout the last correction
+    /// moved away from, that is a possible rejection — but only a possible one,
+    /// because an edit may still follow and show the user was fixing their own
+    /// text. AutoSwitchMemory holds it open until the suspicion window passes.
+    private func noteLayoutChangedByUser() {
+        guard let before = layoutBeforeAutoSwitch, currentLayout == before else { return }
+        autoSwitchMemory.noteLayoutReverted()
+        scheduleAutoSwitchSettle()
+    }
 
-        lastAutoSwitchWord = nil
-        lastAutoSwitchAt = nil
+    /// Runs the memory's window logic once the relevant deadline has passed.
+    /// A pending rejection only commits from here, never from the event itself.
+    private func scheduleAutoSwitchSettle() {
+        autoSwitchSettleTimer?.invalidate()
+        let delay = AutoSwitchMemory.suspicionWindow + 0.25
+        autoSwitchSettleTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+            autoSwitchMemory.settlePending()
+        }
     }
 
     func handleGlobalSystemEvent(_ event: NSEvent) {
@@ -451,6 +460,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
         if isDelete && lineRecord.count > 0 {
             lineRecord.removeLast()
+        }
+        if isDelete && event.type == .keyDown {
+            // Deleting after a correction means the user is reworking the text
+            // themselves, so a layout revert around it is them fixing their own
+            // mistake rather than rejecting ours. Text cannot be retyped without
+            // deleting first, which is what makes this a reliable marker.
+            autoSwitchMemory.noteTextEdited()
         }
         if isDelete {
             if autoSwitchWord.isEmpty {

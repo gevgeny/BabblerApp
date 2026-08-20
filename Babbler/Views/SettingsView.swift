@@ -30,6 +30,7 @@ struct SettingsView: View {
     @AppStorage(clipboardHistoryEnabledKey) private var clipboardHistoryEnabled: Bool = true
     @AppStorage(autoSwitchEnabledKey) private var autoSwitchEnabled: Bool = false
     @State private var configuredApps: [AppListItem] = []
+    @State private var learnedWords: [String] = []
 
     // Binding that bridges Int (AppStorage) ↔ UInt16 (Picker tags)
     private var switchKeyCodeBinding: Binding<UInt16> {
@@ -82,6 +83,26 @@ struct SettingsView: View {
                     Toggle("", isOn: $autoSwitchEnabled)
                         .labelsHidden()
                         .toggleStyle(.switch)
+                }
+                if autoSwitchEnabled {
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Learned exceptions")
+                            Text(learnedWords.isEmpty
+                                 ? "Words you undo three times are never corrected again."
+                                 : learnedWords.joined(separator: ", "))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(3)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer()
+                        Button("Forget") {
+                            autoSwitchMemory.forgetAll()
+                            learnedWords = []
+                        }
+                        .disabled(learnedWords.isEmpty)
+                    }
                 }
             }
 
@@ -138,6 +159,7 @@ struct SettingsView: View {
         }
         .onAppear {
             loadConfiguredApps()
+            learnedWords = autoSwitchMemory.learnedWords
         }
     }
     

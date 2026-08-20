@@ -295,5 +295,191 @@ print(String(format: "  EN %d/%d = %.4f%%, RU %d/%d = %.4f%%",
 check(englishRate < 0.05, "English typo false-positive rate \(englishRate)% exceeds budget")
 check(russianRate < 0.05, "Russian typo false-positive rate \(russianRate)% exceeds budget")
 
+// MARK: - Learning from rejected corrections
+
+/// In-memory stand-in for PreferenceStore so the state machine can be driven
+/// without touching UserDefaults.
+final class FakeMemoryStore: AutoSwitchMemoryStore {
+  var rejections: [String: AutoSwitchMemory.Entry] = [:]
+  var legacyIgnored: Set<String> = []
+  var migrated = false
+  var writeCount = 0
+
+  func getAutoSwitchRejections() -> [String: AutoSwitchMemory.Entry] { rejections }
+  func setAutoSwitchRejections(_ entries: [String: AutoSwitchMemory.Entry]) {
+    rejections = entries
+    writeCount += 1
+  }
+  func getAutoSwitchIgnoredWords() -> Set<String> { legacyIgnored }
+  func clearAutoSwitchIgnoredWords() { legacyIgnored = [] }
+  func didMigrateAutoSwitchRejections() -> Bool { migrated }
+  func setDidMigrateAutoSwitchRejections(_ value: Bool) { migrated = value }
+}
+
+let epoch = Date(timeIntervalSince1970: 1_700_000_000)
+func at(_ seconds: TimeInterval) -> Date { epoch.addingTimeInterval(seconds) }
+
+/// Runs one correction and one rejection gesture, settling afterwards.
+func reject(_ memory: AutoSwitchMemory, _ word: String, from base: TimeInterval, using gesture: (AutoSwitchMemory, TimeInterval) -> Void) {
+  memory.noteCorrection(word: word, at: at(base))
+  gesture(memory, base)
+  memory.settlePending(now: at(base + 30))
+}
+
+func undoGesture(_ memory: AutoSwitchMemory, _ base: TimeInterval) {
+  memory.noteActionKey(at: at(base + 1))
+}
+
+func revertGesture(_ memory: AutoSwitchMemory, _ base: TimeInterval) {
+  memory.noteLayoutReverted(at: at(base + 1))
+}
+
+print("=== learning: the threshold fires on exactly the third rejection")
+do {
+  let store = FakeMemoryStore()
+  let memory = AutoSwitchMemory(store: store)
+  for round in 0..<2 {
+    reject(memory, "ghbdtn", from: Double(round) * 100, using: undoGesture)
+    check(!memory.shouldSkip(word: "ghbdtn", now: at(500)),
+          "must not be skipped after \(round + 1) rejections")
+  }
+  reject(memory, "ghbdtn", from: 200, using: undoGesture)
+  check(memory.shouldSkip(word: "ghbdtn", now: at(500)),
+        "must be skipped after 3 rejections")
+}
+
+print("=== learning: a layout revert without an edit counts")
+do {
+  let store = FakeMemoryStore()
+  let memory = AutoSwitchMemory(store: store)
+  for round in 0..<3 {
+    reject(memory, "ghbdtn", from: Double(round) * 100, using: revertGesture)
+  }
+  check(memory.shouldSkip(word: "ghbdtn", now: at(500)),
+        "three reverts without edits must reach the threshold")
+}
+
+print("=== learning: a layout revert followed by an edit does not count")
+do {
+  let store = FakeMemoryStore()
+  let memory = AutoSwitchMemory(store: store)
+  for round in 0..<5 {
+    let base = Double(round) * 100
+    memory.noteCorrection(word: "ghbdtn", at: at(base))
+    memory.noteLayoutReverted(at: at(base + 1))
+    // The user starts fixing their own text before the suspicion window closes.
+    memory.noteTextEdited(at: at(base + 2))
+    memory.settlePending(now: at(base + 30))
+  }
+  check(!memory.shouldSkip(word: "ghbdtn", now: at(600)),
+        "editing the text after a revert means the user was fixing their own mistake")
+}
+
+print("=== learning: an edit before the revert also cancels it")
+do {
+  let store = FakeMemoryStore()
+  let memory = AutoSwitchMemory(store: store)
+  for round in 0..<5 {
+    let base = Double(round) * 100
+    memory.noteCorrection(word: "ghbdtn", at: at(base))
+    memory.noteTextEdited(at: at(base + 1))
+    memory.noteLayoutReverted(at: at(base + 2))
+    memory.settlePending(now: at(base + 30))
+  }
+  check(!memory.shouldSkip(word: "ghbdtn", now: at(600)),
+        "an edit before the revert must block it just as one after does")
+}
+
+print("=== learning: one undo is never counted twice")
+do {
+  let store = FakeMemoryStore()
+  let memory = AutoSwitchMemory(store: store)
+  // Pressing the action key also changes the layout, so both signals arrive.
+  for round in 0..<2 {
+    let base = Double(round) * 100
+    memory.noteCorrection(word: "ghbdtn", at: at(base))
+    memory.noteActionKey(at: at(base + 1))
+    memory.noteLayoutReverted(at: at(base + 1))
+    memory.settlePending(now: at(base + 30))
+  }
+  check(!memory.shouldSkip(word: "ghbdtn", now: at(500)),
+        "two undos must count as two, not four")
+}
+
+print("=== learning: gestures outside the window are ignored")
+do {
+  let store = FakeMemoryStore()
+  let memory = AutoSwitchMemory(store: store)
+  for round in 0..<5 {
+    let base = Double(round) * 1000
+    memory.noteCorrection(word: "ghbdtn", at: at(base))
+    memory.noteActionKey(at: at(base + AutoSwitchMemory.rejectionWindow + 5))
+    memory.settlePending(now: at(base + 100))
+  }
+  check(!memory.shouldSkip(word: "ghbdtn", now: at(6000)),
+        "an action key long after the correction is unrelated to it")
+}
+
+print("=== learning: entries expire")
+do {
+  let store = FakeMemoryStore()
+  let memory = AutoSwitchMemory(store: store)
+  for round in 0..<3 {
+    reject(memory, "ghbdtn", from: Double(round) * 100, using: undoGesture)
+  }
+  check(memory.shouldSkip(word: "ghbdtn", now: at(500)), "blocked initially")
+  let afterLifetime = AutoSwitchMemory.entryLifetime + 1000
+  check(!memory.shouldSkip(word: "ghbdtn", now: at(afterLifetime)),
+        "an entry not reinforced within its lifetime must stop blocking")
+}
+
+print("=== learning: migration runs once and preserves old entries")
+do {
+  let store = FakeMemoryStore()
+  store.legacyIgnored = ["it.", "ghbdtn"]
+  let memory = AutoSwitchMemory(store: store)
+  check(memory.shouldSkip(word: "it."), "migrated word must still be blocked")
+  check(memory.shouldSkip(word: "ghbdtn"), "migrated word must still be blocked")
+  check(store.migrated, "migration must be marked done")
+  check(!store.legacyIgnored.isEmpty,
+        "the legacy key must survive so a downgrade does not lose it")
+
+  // A second instance must not migrate again, and must not resurrect words the
+  // user has since forgotten.
+  store.rejections = [:]
+  let second = AutoSwitchMemory(store: store)
+  check(!second.shouldSkip(word: "it."), "migration must not run a second time")
+}
+
+print("=== learning: forgetting clears everything")
+do {
+  let store = FakeMemoryStore()
+  let memory = AutoSwitchMemory(store: store)
+  for round in 0..<3 {
+    reject(memory, "ghbdtn", from: Double(round) * 100, using: undoGesture)
+  }
+  check(memory.learnedWordCount == 1, "one learned word")
+  memory.forgetAll()
+  check(memory.learnedWordCount == 0, "forgetAll must empty the list")
+  check(!memory.shouldSkip(word: "ghbdtn", now: at(500)), "and stop blocking")
+  check(store.legacyIgnored.isEmpty, "and clear the legacy list too")
+}
+
+print("=== learning: the store is capped")
+do {
+  let store = FakeMemoryStore()
+  let memory = AutoSwitchMemory(store: store)
+  // Push well past the cap, each word newer than the last.
+  for index in 0..<(AutoSwitchMemory.maximumEntries + 50) {
+    reject(memory, "word\(index)", from: Double(index) * 100, using: undoGesture)
+  }
+  check(store.rejections.count <= AutoSwitchMemory.maximumEntries,
+        "stored entries \(store.rejections.count) exceed the cap")
+  check(store.rejections["word\(AutoSwitchMemory.maximumEntries + 49)"] != nil,
+        "the most recent word must survive eviction")
+  check(store.rejections["word0"] == nil,
+        "the oldest word must be evicted first")
+}
+
 print(failures == 0 ? "\nALL CHECKS PASS" : "\n\(failures) FAILURES")
 exit(failures == 0 ? 0 : 1)

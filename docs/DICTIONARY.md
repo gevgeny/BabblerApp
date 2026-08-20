@@ -236,6 +236,70 @@ non-word, every tier runs and the typo search explores its whole space) and
 **0.001 ms** typically (a real word, decided immediately). This runs once per
 space keystroke.
 
+## Learning from rejected corrections
+
+A word rejected three times is never corrected again. What counts as a rejection
+is the whole design problem.
+
+### Which gestures count
+
+| Gesture | Meaning | Counts |
+| --- | --- | --- |
+| Action key straight after a correction | An explicit undo | **Yes**, immediately |
+| Layout switched back, text left alone | The text was right as typed; we were wrong | **Yes** |
+| Layout switched back **and the text edited** | The user is fixing their own mistake | **No** |
+
+The third row is the important one. If the user reverts the layout and then
+reworks the text, that is evidence about *their* typing, not about our decision.
+Counting it would let a user's own typos accumulate against words we handle
+correctly.
+
+Because the edit can arrive either before or after the revert, **a revert cannot
+be counted when it happens**. It arms a suspicion for three seconds, and a
+Delete arriving in that window cancels it. An edit that arrives before the
+revert marks the correction as already reworked, so a later revert cannot
+resurrect it.
+
+Delete is the marker because text cannot be retyped without first removing what
+is there. Typing the next word is not an edit.
+
+### Why it did not work before
+
+The mechanism existed but was effectively dead:
+
+- **Counts lived only in memory**, so they reset on every restart. Real
+  rejections are spread across days, which made any threshold unreachable. This
+  was the main failure.
+- **Only the action key counted.** A manual layout revert was ignored.
+- **The list was invisible and permanent.** A `"it."` entry from a bug fixed back
+  in v1.3 was still blocking that word long after the engine stopped needing it.
+
+That last point is why the learned list is now shown in Settings with a Forget
+button, and why entries expire after 90 days without reinforcement. Learned
+state that outlives the bug it was learned from is worse than no learning.
+
+### Storage
+
+`autoSwitchRejections` maps each word to a count and the date it was last
+reinforced. The legacy `autoSwitchIgnoredWords` list is migrated once into the
+new format as entries already at the threshold, and is deliberately left in place
+so downgrading does not lose it. The store is capped at 500 entries, evicting the
+least recently seen.
+
+The unit is the **anchor word as typed**, not the phrase. A phrase correction
+only ever begins at an anchor — the backward sweep over short words runs after
+the anchor fires — so blocking the anchor blocks the phrase too. That is both
+more precise and more compact than storing phrases.
+
+### Testing
+
+The state machine lives in `AutoSwitchMemory`, deliberately free of AppKit,
+timers and clocks: every input is an explicit event with an explicit timestamp.
+This is a direct response to the v1.4 bug, which happened because logic of
+exactly this kind sat in `AppDelegate` where no test could reach it. `tests/run.sh`
+drives ten scenarios against an in-memory store, and they were verified to fail
+when the rules are deliberately broken.
+
 ## Extending the dictionaries
 
 Four routes, cheapest first.

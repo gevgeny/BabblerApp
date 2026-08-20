@@ -33,13 +33,15 @@ hook = """  func setForTests(_ en: Set<String>, _ ru: Set<String>) {
 open(path, "w").write(source.replace("  func contains(", hook, 1))
 PY
 
-cp "$ROOT_DIR/Babbler/AutoSwitchEngine.swift" "$ROOT_DIR/Babbler/KeyDictionary.swift" "$WORK_DIR/"
+cp "$ROOT_DIR/Babbler/AutoSwitchEngine.swift" "$ROOT_DIR/Babbler/KeyDictionary.swift" \
+   "$ROOT_DIR/Babbler/AutoSwitchMemory.swift" "$WORK_DIR/"
 cp "$ROOT_DIR/tests/AutoSwitchTests.swift" "$WORK_DIR/main.swift"
 
 swiftc -O -o "$WORK_DIR/tests" \
     "$WORK_DIR/main.swift" \
     "$WORK_DIR/LayoutDictionary.swift" \
     "$WORK_DIR/AutoSwitchEngine.swift" \
-    "$WORK_DIR/KeyDictionary.swift"
+    "$WORK_DIR/KeyDictionary.swift" \
+    "$WORK_DIR/AutoSwitchMemory.swift"
 
 BABBLER_RESOURCES="$ROOT_DIR/Babbler/Resources" "$WORK_DIR/tests"

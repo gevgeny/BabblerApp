@@ -270,12 +270,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     /// A key that ends a word, so the word before it can now be judged.
+    ///
+    /// Only layout-independent keys qualify. Sentence punctuation must NOT be
+    /// treated as a terminator: on the English layout `,` is б, `.` is ю, `;` is
+    /// ж and `:` is Ж, so "бизнес" is typed as ",bpytc" and "работает" as
+    /// "hf,jnftn". Splitting on those characters cuts a quarter of the Russian
+    /// language in half and leaves fragments that match nothing.
+    ///
+    /// Waiting for the space costs nothing. A word followed by real punctuation
+    /// is judged when the space arrives, and AutoSwitchEngine's
+    /// trailing-punctuation rule is what tells "it." (a word plus a full stop)
+    /// from "ndj." (твою) at that point.
     private func wordTerminator(for event: NSEvent) -> Bool {
-        if event.keyCode == Key.space || event.keyCode == Key.enter || event.keyCode == Key.returnKey {
-            return true
-        }
-        guard let characters = event.characters, characters.count == 1 else { return false }
-        return ".,!?;:".contains(characters)
+        event.keyCode == Key.space
+            || event.keyCode == Key.enter
+            || event.keyCode == Key.returnKey
+            || event.keyCode == Key.tab
     }
 
     /// Called on the keystroke that ends a word. Returns true if it triggered a

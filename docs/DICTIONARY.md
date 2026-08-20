@@ -106,6 +106,46 @@ Measured on whole phrases, typing the entire phrase on the wrong layout:
 | Russian typed on the EN layout | 80% | **100%** |
 | English typed on the RU layout | 90% | **100%** |
 
+### The tokenizer is not the engine
+
+`AutoSwitchEngine` decides whether a *word* should switch. Something else has to
+decide where words begin and end, and that split lives in `AppDelegate`. The two
+are easy to confuse and were the source of the worst bug so far.
+
+Only layout-independent keys — space, tab, enter, return — end a word.
+Punctuation must never be treated as a terminator, because on the English layout
+those keys carry Russian letters:
+
+| Key | Russian letter |
+| --- | --- |
+| `,` | б |
+| `.` | ю |
+| `;` | ж |
+| `'` | э |
+| `[` `]` | х ъ |
+
+While `. , ; :` were terminators, `,bpytc` (бизнес) was cut at the leading comma
+into `""` + `bpytc` → `изнес`, which matches nothing. The same broke every word
+containing б, ю or ж anywhere: `hf,jnftn` → `ра` + `отает`, `vj;yj` → `мо` + `но`.
+**26.3% of the Russian dictionary — 52,576 of 200,189 words — could never be
+corrected.**
+
+Nothing is lost by waiting for the space. A word followed by real punctuation is
+judged when the space arrives, and the trailing-punctuation rule tells `it.`
+from `ndj.` at that point.
+
+Every test written before this bug called `AutoSwitchEngine.evaluate` directly
+with whole words, so the tokenizer had no coverage at all. `tests/run.sh` now
+drives the split as well as the decision; run it after any change to word
+boundaries or character classes.
+
+### Known limitation: a trailing Russian full stop
+
+A Russian sentence ending in a full stop, typed on the English layout, produces
+`ghbdtn/` — the Russian period lives on the `/` key. `/` signals paths and URLs
+and is rejected, so the word is left alone. Fixing it means correcting only part
+of a keystroke run, which is a larger change than it appears.
+
 ### Why the short end of the dictionary is hand-written
 
 Words of one and two letters come exclusively from `dictionaries/short-en.txt`

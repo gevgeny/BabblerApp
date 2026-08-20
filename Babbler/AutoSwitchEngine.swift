@@ -67,7 +67,34 @@ enum AutoSwitchEngine {
       return .keep
     }
 
-    return dictionary.contains(converted, in: currentLayout.other) ? .switchLayout : .keep
+    if dictionary.contains(converted, in: currentLayout.other) { return .switchLayout }
+
+    // Last resort: the user typed a real word in the other layout but missed a
+    // keystroke, so "ghdtn" is "првет" — obviously Russian, but not a word.
+    //
+    // The match only informs the decision. The replacement is still built from
+    // the keys actually pressed, so the user gets "првет" and fixes the typo
+    // themselves. Correcting the layout fixes an encoding error; correcting the
+    // spelling would silently rewrite what they wrote, which is a different and
+    // much riskier thing to do. It also means an ambiguous match costs nothing,
+    // because we never have to choose between candidates.
+    if dictionary.hasWordOneInsertionAway(converted, in: currentLayout.other) {
+      return .switchLayout
+    }
+
+    return .keep
+  }
+
+  /// Whether the decision for this word was an exact dictionary hit rather than
+  /// a typo match. Only exact hits are confident enough to drag preceding words
+  /// along with them.
+  static func isExactMatch(
+    word rawWord: String,
+    currentLayout: Layout,
+    dictionary: LayoutDictionary = .shared
+  ) -> Bool {
+    let word = rawWord.trimmingCharacters(in: trimmableCharacters).lowercased()
+    return dictionary.contains(convert(word, to: currentLayout.other), in: currentLayout.other)
   }
 
   private static func hasAmbiguousTrailing(_ word: String) -> Bool {

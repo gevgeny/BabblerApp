@@ -227,5 +227,73 @@ for word in englishWords where word.count >= 2 {
 print("  English word + trailing punctuation corrupted: \(punctuationCorruptions)")
 check(punctuationCorruptions == 0, "trailing punctuation corruptions")
 
+// MARK: - Typo tolerance
+
+print("=== typos: a dropped keystroke still switches the layout")
+let typoCases: [(typed: String, meaning: String)] = [
+  ("ghdtn",     "привет minus и"),
+  ("hf,jftn",   "работает minus т"),
+  ("cgfcbj",    "спасибо minus б"),
+  ("rjvgm.nth", "компьютер, spelt correctly"),
+  ("cjj,otyb",  "сообщение minus е"),
+]
+for testCase in typoCases {
+  check(AutoSwitchEngine.evaluate(word: testCase.typed, currentLayout: .english) == .switchLayout,
+        "\(testCase.typed) (\(testCase.meaning)) must switch")
+}
+
+print("=== typos: English typed on the Russian layout")
+for typed in ["руддщ", "сщьзгеук"] {
+  check(AutoSwitchEngine.evaluate(word: typed, currentLayout: .russian) == .switchLayout,
+        "\(typed) must switch")
+}
+// "helo" is "hello" minus an l; typed on the Russian layout that is "руды".
+check(AutoSwitchEngine.evaluate(word: "руды", currentLayout: .russian) == .keep,
+      "руды is a Russian word and must not be switched")
+
+print("=== typos: too short to judge")
+// Under the typo length floor these must not be rescued by a typo match.
+// "cgf" is excluded on purpose: it converts to "спа", a real Russian word, so
+// it is an exact tier-2 hit rather than a typo.
+for typed in ["ghdt", "hfj", "ytr"] {
+  check(AutoSwitchEngine.evaluate(word: typed, currentLayout: .english) == .keep,
+        "\(typed) is under the typo length floor and must be kept")
+}
+
+print("=== typos: an exact match is still distinguishable from a typo match")
+check(AutoSwitchEngine.isExactMatch(word: "ghbdtn", currentLayout: .english),
+      "ghbdtn is an exact match")
+check(!AutoSwitchEngine.isExactMatch(word: "ghdtn", currentLayout: .english),
+      "ghdtn is a typo match, not exact")
+
+print("=== typos: measured cost on correctly typed words")
+var englishTypoFalsePositives: [String] = []
+for word in englishWords where word.count >= LayoutDictionary.minimumTypoLength {
+  let converted = AutoSwitchEngine.convert(word, to: .russian)
+  guard !LayoutDictionary.shared.contains(converted, in: .russian) else { continue }
+  if LayoutDictionary.shared.hasWordOneInsertionAway(converted, in: .russian) {
+    englishTypoFalsePositives.append(word)
+  }
+}
+var russianTypoFalsePositives: [String] = []
+for word in russianWords where word.count >= LayoutDictionary.minimumTypoLength {
+  let converted = AutoSwitchEngine.convert(word, to: .english)
+  guard !LayoutDictionary.shared.contains(converted, in: .english) else { continue }
+  if LayoutDictionary.shared.hasWordOneInsertionAway(converted, in: .english) {
+    russianTypoFalsePositives.append(word)
+  }
+}
+let englishLong = englishWords.filter { $0.count >= LayoutDictionary.minimumTypoLength }.count
+let russianLong = russianWords.filter { $0.count >= LayoutDictionary.minimumTypoLength }.count
+let englishRate = Double(englishTypoFalsePositives.count) * 100 / Double(englishLong)
+let russianRate = Double(russianTypoFalsePositives.count) * 100 / Double(russianLong)
+print(String(format: "  EN %d/%d = %.4f%%, RU %d/%d = %.4f%%",
+             englishTypoFalsePositives.count, englishLong, englishRate,
+             russianTypoFalsePositives.count, russianLong, russianRate))
+// Measured at 0.0115% and 0.0170%. Allow headroom for dictionary changes, but
+// fail loudly if a change makes typo matching an order of magnitude looser.
+check(englishRate < 0.05, "English typo false-positive rate \(englishRate)% exceeds budget")
+check(russianRate < 0.05, "Russian typo false-positive rate \(russianRate)% exceeds budget")
+
 print(failures == 0 ? "\nALL CHECKS PASS" : "\n\(failures) FAILURES")
 exit(failures == 0 ? 0 : 1)

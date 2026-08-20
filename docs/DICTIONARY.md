@@ -163,6 +163,79 @@ This is not tidiness. A bogus short entry does real damage:
 
 Both were found in real use, not in theory.
 
+## Typo tolerance
+
+`ghdtn` converts to `првет` — Russian by any reading, but not a word, so exact
+matching does nothing. Every typo used to silently disable the feature for that
+word.
+
+### Why naive fuzzy matching was rejected
+
+Allowing any edit of distance one raises the false-positive rate from 0.025% to
+**4.01% — 160× worse**. `learn` matched `дукат`, `rate` matched `кафе`, `tuff`
+matched `бега`. It would corrupt correctly typed English constantly.
+
+Modelling how people actually mistype, rather than allowing arbitrary edits,
+behaves completely differently. Measured over 40,000 correctly typed English
+words:
+
+| Rule | Extra false positives | Typo recall |
+| --- | --- | --- |
+| Any edit of distance 1 | 4.01% | — |
+| omit + transpose + double | 0.033% | 7/7 |
+| omit + transpose | 0.022% | 7/7 |
+| **omit only** | **0.010%** | **7/7** |
+| transpose only | 0.013% | 4/7 |
+
+A dropped keystroke carries essentially all the benefit. Transposition adds no
+recall, and the doubled-letter rule is actively harmful because English is full
+of `ff`, `ee` and `ll` — `cuffy`, `beele`, `heels` and `ettle` were all false
+positives under it.
+
+Full-dictionary sweep with omission only:
+
+| Metric | Result |
+| --- | --- |
+| Correct EN words made wrongly switchable | 15 / 129,879 = **0.0115%** |
+| Correct RU words made wrongly switchable | 33 / 193,955 = **0.0170%** |
+| RU recall, one dropped key | **100%** |
+| EN recall, one dropped key | **100%** |
+
+Two extra guards, both measured: a minimum length of five characters, and the
+reconstructed word must start with the same character the user typed. Typos
+essentially never hit the first key, and requiring it lowered false positives.
+
+### The spelling is never corrected
+
+The typo match decides *whether* to switch. It never builds the replacement.
+
+Type `ghdtn` and you get `првет` — the layout is fixed, the typo is yours to
+fix. Correcting the layout repairs an encoding error; correcting the spelling
+would silently rewrite what you wrote, which is a different and much riskier
+product decision. Punto Switcher draws the line in the same place.
+
+This also removes a whole class of problem. 13.6% of typos have more than one
+candidate word, but since we only ask "is at least one real word one keystroke
+away?" and never "which one?", ambiguity costs nothing. No frequency data, no
+ranking, no tie-breaking.
+
+For the same reason a typo match may not anchor a backward phrase sweep. It is a
+weaker signal, and letting it drag neighbouring words in would multiply an error
+instead of containing it.
+
+### No index, no extra memory
+
+A deletion index over the dictionary would hold roughly 1.6M entries. It is
+unnecessary: `w` is a word of which `q` is a one-character deletion exactly when
+some single-character insertion into `q` equals `w`. So the insertions of the
+query are generated and probed against the set that already exists — about 224
+hash lookups.
+
+Measured on the real decision path: **0.19 ms** in the worst case (a long
+non-word, every tier runs and the typo search explores its whole space) and
+**0.001 ms** typically (a real word, decided immediately). This runs once per
+space keystroke.
+
 ## Extending the dictionaries
 
 Four routes, cheapest first.

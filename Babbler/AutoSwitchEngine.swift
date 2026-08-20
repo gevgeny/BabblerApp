@@ -30,6 +30,12 @@ enum AutoSwitchEngine {
   /// survives intact.
   private static let trimmableCharacters = CharacterSet(charactersIn: "!?()\"«»…—")
 
+  /// Sentence punctuation that is also a Russian letter on the English layout:
+  /// `,` is б, `.` is ю, `;` is ж, `'` is э. When one of these ends a typed run
+  /// the reading is genuinely ambiguous — "ndj." is "твою", but "it." is just
+  /// "it" followed by a full stop.
+  private static let ambiguousTrailingCharacters = CharacterSet(charactersIn: ",.;'")
+
   static func evaluate(
     word rawWord: String,
     currentLayout: Layout,
@@ -45,6 +51,13 @@ enum AutoSwitchEngine {
     // Already a real word where it stands — leave it alone.
     if dictionary.contains(word, in: currentLayout) { return .keep }
 
+    // "it." is a real word plus a full stop; "ndj." is the Russian "твою". Tell
+    // them apart by asking whether dropping the trailing punctuation leaves a
+    // word in the layout the user is already using.
+    if hasAmbiguousTrailing(word), dictionary.contains(stem(of: word), in: currentLayout) {
+      return .keep
+    }
+
     let converted = convert(word, to: currentLayout.other)
     guard converted != word else { return .keep }
 
@@ -55,6 +68,55 @@ enum AutoSwitchEngine {
     }
 
     return dictionary.contains(converted, in: currentLayout.other) ? .switchLayout : .keep
+  }
+
+  private static func hasAmbiguousTrailing(_ word: String) -> Bool {
+    guard let last = word.unicodeScalars.last else { return false }
+    return ambiguousTrailingCharacters.contains(last)
+  }
+
+  private static func stem(of word: String) -> String {
+    var scalars = Array(word.unicodeScalars)
+    while let last = scalars.last, ambiguousTrailingCharacters.contains(last) {
+      scalars.removeLast()
+    }
+    return String(String.UnicodeScalarView(scalars))
+  }
+
+  /// Whether a word that was skipped on its own should be swept up by a
+  /// confident correction that follows it.
+  ///
+  /// One- and two-letter words are far too ambiguous to judge alone — 46% of
+  /// them are also a valid word in the other layout, versus 6% at three letters
+  /// — so `evaluate` never touches them. But "я не могу" is `z yt vjue`, and
+  /// fixing only `могу` is barely worth having. Once a longer word has switched
+  /// confidently, the words immediately before it are almost certainly the same
+  /// language, and that context is what makes the short ones decidable.
+  ///
+  /// Still conservative: a word that is already valid where it stands stops the
+  /// sweep, so a genuinely mixed-language phrase is left alone.
+  static func qualifiesForPhraseExtension(
+    word rawWord: String,
+    currentLayout: Layout,
+    dictionary: LayoutDictionary = .shared
+  ) -> Bool {
+    guard dictionary.isReady else { return false }
+
+    let word = rawWord.trimmingCharacters(in: trimmableCharacters).lowercased()
+    guard !word.isEmpty, word.count <= 4 else { return false }
+    guard word == word.lowercased() else { return false }
+    guard word.rangeOfCharacter(from: .decimalDigits) == nil else { return false }
+    guard word.rangeOfCharacter(from: disqualifyingCharacters) == nil else { return false }
+
+    // Already correct here — the user was writing in this layout. Stop.
+    if dictionary.contains(word, in: currentLayout) { return false }
+
+    let converted = convert(word, to: currentLayout.other)
+    guard converted != word,
+          converted.rangeOfCharacter(from: CharacterSet.letters.inverted) == nil else {
+      return false
+    }
+    return dictionary.contains(converted, in: currentLayout.other)
   }
 
   /// Lowercased, edge-punctuation-free form used as the identity of a word for

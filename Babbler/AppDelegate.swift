@@ -33,6 +33,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var autoSwitchUndoCounts: [String: Int] = [:]
     let autoSwitchUndoWindow: TimeInterval = 5.0
 
+    // Word-delimited buffers used only by auto switch. wordRecord cannot serve
+    // here: it resets on a space-then-character transition, so it happily
+    // accumulates "it" + "." into "it." — which is exactly how "it." came to be
+    // rewritten as "шею". These reset cleanly on every word terminator.
+    struct TypedWord {
+        // The word's keystrokes plus the terminator that ended it, so the run
+        // can be replayed verbatim.
+        var record: [(withShift: Bool, code: UInt16)]
+        // The word itself, without the terminator.
+        var text: String
+    }
+    var autoSwitchWord: [(withShift: Bool, code: UInt16)] = []
+    var autoSwitchText: String = ""
+    var autoSwitchTail: [TypedWord] = []
+    let autoSwitchMaxPhraseWords = 4
+    let autoSwitchMaxPhraseKeys = 28
+
     // Accessibility lets us post synthetic keystrokes. Input Monitoring is a *separate*
     // grant that NSEvent.addGlobalMonitorForEvents needs for .keyDown/.keyUp — without it
     // the monitor silently delivers only .flagsChanged, so the action key is detected but
@@ -264,38 +281,81 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     /// Called on the keystroke that ends a word. Returns true if it triggered a
     /// correction, in which case the caller must stop processing the event.
     private func handleAutoSwitch(_ event: NSEvent) -> Bool {
+        guard wordTerminator(for: event) else { return false }
+
+        let word = autoSwitchText
+        let record = autoSwitchWord + [(withShift: false, code: event.keyCode)]
+        // Whatever happens below, this word is finished.
+        autoSwitchWord = []
+        autoSwitchText = ""
+
         guard preferenceStore.getAutoSwitchEnabled(),
               preferenceStore.getIsTextReplaceEnabled(),
-              wordTerminator(for: event),
-              !text.isEmpty,
-              !wordRecord.isEmpty,
+              !word.isEmpty,
               let layout = currentLayout,
               isAutoSwitchAllowedInCurrentApp() else {
+            rememberTypedWord(record, word)
             return false
         }
 
-        let word = AutoSwitchEngine.normalize(text)
-        if preferenceStore.getAutoSwitchIgnoredWords().contains(word) { return false }
-        guard AutoSwitchEngine.evaluate(word: text, currentLayout: layout) == .switchLayout else {
+        let normalized = AutoSwitchEngine.normalize(word)
+        guard !preferenceStore.getAutoSwitchIgnoredWords().contains(normalized),
+              AutoSwitchEngine.evaluate(word: word, currentLayout: layout) == .switchLayout else {
+            rememberTypedWord(record, word)
             return false
         }
 
-        // The terminator has already reached the focused app, so it has to be
-        // deleted and retyped along with the word. Its keycode is layout
-        // independent, so replaying it is safe.
-        let record = wordRecord + [(withShift: false, code: event.keyCode)]
+        // Sweep up the short words just before this one. They were skipped on
+        // their own because one and two letter words are ambiguous, but this
+        // correction is the context that resolves them.
+        let full = phrasePrefix(for: layout) + record
+        autoSwitchTail = []
 
-        lastAutoSwitchWord = word
+        lastAutoSwitchWord = normalized
         lastAutoSwitchAt = Date()
 
         // Leave the corrected run in wordRecord so pressing the action key right
         // after undoes it. The next typed character clears it as usual, because
         // the record now ends with the terminator.
-        wordRecord = record
+        wordRecord = full
         text = ""
 
-        beginSwitch(record)
+        beginSwitch(full)
         return true
+    }
+
+    private func rememberTypedWord(_ record: [(withShift: Bool, code: UInt16)], _ word: String) {
+        guard !word.isEmpty else { return }
+        autoSwitchTail.append(TypedWord(record: record, text: word))
+        if autoSwitchTail.count > autoSwitchMaxPhraseWords {
+            autoSwitchTail.removeFirst(autoSwitchTail.count - autoSwitchMaxPhraseWords)
+        }
+    }
+
+    /// Keystrokes of the immediately preceding words that should be corrected
+    /// along with the current one. Walks backwards and stops at the first word
+    /// that does not clearly belong to the other layout.
+    private func phrasePrefix(for layout: Layout) -> [(withShift: Bool, code: UInt16)] {
+        var chosen: [[(withShift: Bool, code: UInt16)]] = []
+        var keys = 0
+
+        for unit in autoSwitchTail.reversed() {
+            guard chosen.count < autoSwitchMaxPhraseWords,
+                  keys + unit.record.count <= autoSwitchMaxPhraseKeys,
+                  AutoSwitchEngine.qualifiesForPhraseExtension(word: unit.text, currentLayout: layout) else {
+                break
+            }
+            chosen.append(unit.record)
+            keys += unit.record.count
+        }
+
+        return chosen.reversed().flatMap { $0 }
+    }
+
+    private func resetAutoSwitchBuffers() {
+        autoSwitchWord = []
+        autoSwitchText = ""
+        autoSwitchTail = []
     }
 
     /// The action key pressed just after an automatic correction means the user
@@ -338,10 +398,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         switch KeyboardUtils.checkActionKeyPress(code, flags) {
         case .action:
             noteManualActionForUndo()
+            resetAutoSwitchBuffers()
             beginSwitch(wordRecord)
             return
         case .lineAction:
             noteManualActionForUndo()
+            resetAutoSwitchBuffers()
             beginSwitch(lineRecord)
             return
         case .none:
@@ -355,13 +417,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         // A word just ended: judge it before the cancel/record bookkeeping below,
         // so terminators that reset the records (enter) are still covered.
-        if event.type == .keyDown, !event.isARepeat, handleAutoSwitch(event) { return }
+        let endsWord = event.type == .keyDown && !event.isARepeat && wordTerminator(for: event)
+        if endsWord, handleAutoSwitch(event) { return }
 
         // Erase both records on cancel or when a shortcut modifier is active
         if isRecordCanceled || (withOption && code != Key.option) || withCommand || (withActionModifier && code != KeyboardUtils.actionKeyCode) {
             wordRecord = []
             lineRecord = []
             text = ""
+            resetAutoSwitchBuffers()
             return
         }
 
@@ -372,6 +436,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
         if isDelete && lineRecord.count > 0 {
             lineRecord.removeLast()
+        }
+        if isDelete {
+            if autoSwitchWord.isEmpty {
+                // Backspacing past the start of the current word: the phrase we
+                // remembered no longer matches what is on screen.
+                autoSwitchTail = []
+            } else {
+                autoSwitchWord.removeLast()
+                autoSwitchText = String(autoSwitchText.dropLast())
+            }
         }
 
         if code == Key.delete || event.type != .keyDown || event.isARepeat {
@@ -385,6 +459,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             text = ""
             if appDidChange {
                 lineRecord = []
+                resetAutoSwitchBuffers()
             }
         }
 
@@ -393,6 +468,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         wordRecord.append(entry)
         lineRecord.append(entry)
         text += event.characters ?? ""
+
+        // The auto-switch buffer is word-delimited, so a terminator has already
+        // been folded into the phrase tail by handleAutoSwitch and must not be
+        // recorded again as the start of the next word.
+        if !endsWord {
+            autoSwitchWord.append(entry)
+            autoSwitchText += event.characters ?? ""
+        }
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {

@@ -81,25 +81,47 @@ The 12 out-of-vocabulary misfires are obscure three-letter entries (`bde`,
 `jnd`, `pfg`). Realistic non-words — `kubernetes`, `nginx`, `qwerty`, `asdf`,
 `github`, `recieve`, `teh` — are all left alone.
 
-### The three-character floor
+### Short words and phrase correction
 
-Words shorter than three characters are never auto-switched. This is not
-caution, it is measured:
+A word of one or two characters is never judged on its own. That is measured,
+not cautious:
 
 | Word length | Share of words in one layout that are also a valid word in the other |
 | --- | --- |
 | 2 | **46%** |
 | 3 | **6%** |
 
-The two-character space is far too dense to disambiguate — `фи`/`ab`, `иу`/`be`,
-`ан`/`fy` and hundreds more collide. So `я`, `не`, `на`, `по`, `i`, `we`, `to`,
-`a` are left alone.
+But refusing to touch them is not acceptable either — `я не могу` is `z yt vjue`
+and fixing only `могу` is barely worth having. So short words are corrected
+**with context instead of in isolation**: once a word of three characters or
+more switches confidently, that correction sweeps backwards over the words
+immediately before it, rewriting any that clearly belong to the other layout.
+The sweep stops at the first word that is already valid where it stands, so a
+genuinely mixed-language phrase is left alone.
 
-In practice this costs much less than it looks. A phrase-level test corrected
-80% of Russian words and 90% of English words, and **every** miss was a word of
-two characters or fewer. And in real use the first correction in a phrase
-switches the layout, so everything typed after it is already correct — the only
-noticeable case is a sentence that *opens* with a short word.
+Measured on whole phrases, typing the entire phrase on the wrong layout:
+
+| | Before phrase correction | After |
+| --- | --- | --- |
+| Russian typed on the EN layout | 80% | **100%** |
+| English typed on the RU layout | 90% | **100%** |
+
+### Why the short end of the dictionary is hand-written
+
+Words of one and two letters come exclusively from `dictionaries/short-en.txt`
+and `short-ru.txt`. Generated lists contribute nothing below three letters, and
+generated three-letter words must rank inside the top 30,000 by frequency.
+
+This is not tidiness. A bogus short entry does real damage:
+
+- `at.` was rewritten as `фею` because the subtitle corpus lists `dc`, `lf`,
+  `bk`, `cb` and `ct` as English words, which broke the "is this punctuation or
+  a Russian letter?" test.
+- `где` stayed broken because `ult` — an obscure abbreviation ranked 214,770 —
+  looked like a real English word, which stopped the backward sweep dead and
+  left the whole phrase uncorrected.
+
+Both were found in real use, not in theory.
 
 ## Extending the dictionaries
 

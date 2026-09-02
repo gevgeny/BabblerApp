@@ -14,17 +14,20 @@ class SecurityInputUtils: NSObject {
     static func runCommand(_ command: String) -> String? {
         let pipe = Pipe()
         let task = Process()
-        task.launchPath = "/bin/sh"
-        task.arguments = ["-c", String(format:"%@", command)]
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        task.arguments = ["-c", command]
         task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+        do {
+            try task.run()
+        } catch {
+            return nil
+        }
         let file = pipe.fileHandleForReading
-        task.launch()
         if let result = NSString(data: file.readDataToEndOfFile(), encoding: String.Encoding.utf8.rawValue) {
             return result as String
         }
-        else {
-            return nil
-        }
+        return nil
     }
     static func getSecurityInputEnablerPid() -> String? {
         let output = SecurityInputUtils.runCommand("ioreg -l -w 0 | grep kCGSSessionSecureInputPID")

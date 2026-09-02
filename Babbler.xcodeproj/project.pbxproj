@@ -26,6 +26,11 @@
 		7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */; };
 		7AC0131C23AE10D600FA3F07 /* InputSourceUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131B23AE10D600FA3F07 /* InputSourceUtils.swift */; };
 		7AC0131E23AE8E3800FA3F07 /* TISInputSourceExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */; };
+		BB200000012F00000100AA01 /* LayoutDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000012F00000100AA01 /* LayoutDictionary.swift */; };
+		BB200000022F00000100AA01 /* AutoSwitchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100000022F00000100AA01 /* AutoSwitchEngine.swift */; };
+		BB200000032F00000100AA01 /* en.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = BB100000032F00000100AA01 /* en.txt.gz */; };
+		BB200000042F00000100AA01 /* ru.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = BB100000042F00000100AA01 /* ru.txt.gz */; };
+		BB2000000523F00001AA01 /* AutoSwitchMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000000523F00001AA01 /* AutoSwitchMemory.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -57,6 +62,11 @@
 		7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityInputUtils.swift; sourceTree = "<group>"; };
 		7AC0131B23AE10D600FA3F07 /* InputSourceUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSourceUtils.swift; sourceTree = "<group>"; };
 		7AC0131D23AE8E3800FA3F07 /* TISInputSourceExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TISInputSourceExtension.swift; sourceTree = "<group>"; };
+		BB100000012F00000100AA01 /* LayoutDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutDictionary.swift; sourceTree = "<group>"; };
+		BB100000022F00000100AA01 /* AutoSwitchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoSwitchEngine.swift; sourceTree = "<group>"; };
+		BB100000032F00000100AA01 /* en.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; name = en.txt.gz; path = Resources/en.txt.gz; sourceTree = "<group>"; };
+		BB100000042F00000100AA01 /* ru.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; name = ru.txt.gz; path = Resources/ru.txt.gz; sourceTree = "<group>"; };
+		BB1000000523F00001AA01 /* AutoSwitchMemory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoSwitchMemory.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +150,11 @@
 				7A765D6125D91EB60076B974 /* KeyboardUtils.swift */,
 				7A765D6425D98B170076B974 /* WorkspaceUtils.swift */,
 				7A765D6C25DC56B50076B974 /* KeyDictionary.swift */,
+				BB1000000523F00001AA01 /* AutoSwitchMemory.swift */,
+				BB100000012F00000100AA01 /* LayoutDictionary.swift */,
+				BB100000022F00000100AA01 /* AutoSwitchEngine.swift */,
+				BB100000032F00000100AA01 /* en.txt.gz */,
+				BB100000042F00000100AA01 /* ru.txt.gz */,
 				7A765D8D25DF09F50076B974 /* StatusItemController.swift */,
 				7A765D9225E2D7170076B974 /* ImageUtils.swift */,
 				7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */,
@@ -214,6 +229,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */,
+				BB200000032F00000100AA01 /* en.txt.gz in Resources */,
+				BB200000042F00000100AA01 /* ru.txt.gz in Resources */,
 				7A765D9D25E7ABCE0076B974 /* SettingsViewController.xib in Resources */,
 				7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */,
 			);
@@ -234,6 +251,9 @@
 				7A765D9C25E7ABCE0076B974 /* SettingsView.swift in Sources */,
 				7A765D8E25DF09F50076B974 /* StatusItemController.swift in Sources */,
 				7A765D6D25DC56B50076B974 /* KeyDictionary.swift in Sources */,
+				BB2000000523F00001AA01 /* AutoSwitchMemory.swift in Sources */,
+				BB200000012F00000100AA01 /* LayoutDictionary.swift in Sources */,
+				BB200000022F00000100AA01 /* AutoSwitchEngine.swift in Sources */,
 				7A765D5F25D916460076B974 /* Key.swift in Sources */,
 				286A658A2F94003B00D25CBC /* MenuView.swift in Sources */,
 				286A658B2F94003B00D25CBC /* BabblerApp.swift in Sources */,

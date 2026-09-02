@@ -30,3 +30,6 @@ Babbler [0-9]*/
 
 # Credentials / environment
 *.env
+
+# Local distributable builds
+dist/

@@ -28,7 +28,9 @@ struct SettingsView: View {
     @AppStorage(langSwitchKeyCodeKey) private var selectedSwitchKeyCodeRaw: Int = Int(Key.option)
     @AppStorage(useSystemInputIndicatorKey) private var useSystemInputIndicator: Bool = false
     @AppStorage(clipboardHistoryEnabledKey) private var clipboardHistoryEnabled: Bool = true
+    @AppStorage(autoSwitchEnabledKey) private var autoSwitchEnabled: Bool = false
     @State private var configuredApps: [AppListItem] = []
+    @State private var learnedWords: [String] = []
 
     // Binding that bridges Int (AppStorage) ↔ UInt16 (Picker tags)
     private var switchKeyCodeBinding: Binding<UInt16> {
@@ -69,6 +71,38 @@ struct SettingsView: View {
                     Toggle("", isOn: $clipboardHistoryEnabled)
                         .labelsHidden()
                         .toggleStyle(.switch)
+                }
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Switch layout automatically")
+                        Text("Corrects a word typed in the wrong layout as soon as you finish it. Press the action key right after to undo.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: $autoSwitchEnabled)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
+                if autoSwitchEnabled {
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Learned exceptions")
+                            Text(learnedWords.isEmpty
+                                 ? "Words you undo three times are never corrected again."
+                                 : learnedWords.joined(separator: ", "))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(3)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer()
+                        Button("Forget") {
+                            autoSwitchMemory.forgetAll()
+                            learnedWords = []
+                        }
+                        .disabled(learnedWords.isEmpty)
+                    }
                 }
             }
 
@@ -118,8 +152,14 @@ struct SettingsView: View {
             // @AppStorage already persisted the value; just update the in-memory action key
             KeyboardUtils.setActionKey(code: UInt16(newValue))
         }
+        .onChange(of: autoSwitchEnabled) { _, newValue in
+            // Loading the word lists takes ~150 ms, so start as soon as it is enabled
+            // rather than on the first keystroke.
+            if newValue { LayoutDictionary.shared.preload() }
+        }
         .onAppear {
             loadConfiguredApps()
+            learnedWords = autoSwitchMemory.learnedWords
         }
     }
     

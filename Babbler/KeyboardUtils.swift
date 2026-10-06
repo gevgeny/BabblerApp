@@ -16,8 +16,9 @@ let keyboardDelay = UInt64(50_000_000)
 
     static private var isActionKeyPressed = false
     static private var isShiftHeldWithAction = false
-    static private var actionKeyWasInterrupted = false
-    static private var actionKeyInterruptionTimer: Timer?
+    // Secure input hides keyDown events from the global monitor, so compare the
+    // system-wide keyDown counter between action key press and release instead.
+    static private var keyDownCountAtActionPress: UInt32 = 0
 
     static func setActionKey(code: UInt16) {
         actionKeyCode = CGKeyCode(code)
@@ -51,17 +52,14 @@ let keyboardDelay = UInt64(50_000_000)
             // Action key pressed — record whether Shift is also held
             isActionKeyPressed = true
             isShiftHeldWithAction = flags.contains(.shift)
-            actionKeyWasInterrupted = false
-            startActionKeyInterruptionMonitor()
+            keyDownCountAtActionPress = keyDownCount()
             return .none
         } else if code == actionKeyCode && isActionKeyPressed {
             // Action key released — fire result
             let withShift = isShiftHeldWithAction
-            let wasInterrupted = actionKeyWasInterrupted || isRegularKeyPressed()
-            stopActionKeyInterruptionMonitor()
+            let wasInterrupted = keyDownCount() != keyDownCountAtActionPress
             isActionKeyPressed = false
             isShiftHeldWithAction = false
-            actionKeyWasInterrupted = false
             if wasInterrupted { return .none }
             return withShift ? .lineAction : .action
         } else if isActionKeyPressed && flags.contains(actionKeyFlag) {
@@ -75,40 +73,19 @@ let keyboardDelay = UInt64(50_000_000)
                 }
             } else {
                 // A regular key (e.g. arrow, click) was pressed while action held — cancel
-                stopActionKeyInterruptionMonitor()
                 isActionKeyPressed = false
                 isShiftHeldWithAction = false
-                actionKeyWasInterrupted = false
             }
             return .none
         } else {
-            stopActionKeyInterruptionMonitor()
             isActionKeyPressed = false
             isShiftHeldWithAction = false
-            actionKeyWasInterrupted = false
             return .none
         }
     }
 
-    private static func startActionKeyInterruptionMonitor() {
-        stopActionKeyInterruptionMonitor()
-        actionKeyInterruptionTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
-            if isRegularKeyPressed() {
-                actionKeyWasInterrupted = true
-            }
-        }
-    }
-
-    private static func stopActionKeyInterruptionMonitor() {
-        actionKeyInterruptionTimer?.invalidate()
-        actionKeyInterruptionTimer = nil
-    }
-
-    private static func isRegularKeyPressed() -> Bool {
-        (UInt16(0)...UInt16(127)).contains { code in
-            code != actionKeyCode && !isModifierKey(code) &&
-              CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(code))
-        }
+    private static func keyDownCount() -> UInt32 {
+        CGEventSource.counterForEventType(.combinedSessionState, eventType: .keyDown)
     }
 
     private static func isModifierKey(_ code: UInt16) -> Bool {

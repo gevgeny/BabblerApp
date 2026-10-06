@@ -36,11 +36,8 @@ class SecurityInputUtils: NSObject {
       let users = value.takeRetainedValue() as? [[String: Any]]
     else { return nil }
 
-    for session in users {
-      if let pid = session["kCGSSessionSecureInputPID"] as? pid_t {
-        return pid
-      }
-    }
-    return nil
+    // Only our own session — other logged-in users (fast user switching) may have secure input on
+    let session = users.first { $0["kCGSSessionUserIDKey"] as? uid_t == getuid() }
+    return session?["kCGSSessionSecureInputPID"] as? pid_t
   }
 }

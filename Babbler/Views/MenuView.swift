@@ -145,6 +145,25 @@ struct MenuView: View {
                 Divider()
             }
 
+            // About — standard panel reads name, icon, version and build from the bundle
+            Button {
+                dismiss()
+                NSApp.activate(ignoringOtherApps: true)
+                NSApp.orderFrontStandardAboutPanel(options: [
+                    .credits: NSAttributedString(
+                        string: "github.com/gevgeny/BabblerApp",
+                        attributes: [
+                            .link: URL(string: "https://github.com/gevgeny/BabblerApp")!,
+                            .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
+                        ]
+                    ),
+                ])
+            } label: {
+                Text("About Babbler")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(MenuItemButtonStyle())
+
             // Settings
             Button {
                 dismiss()

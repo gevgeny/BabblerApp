@@ -109,7 +109,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             self.isWaitingForSwitch = false
         }
 
-        WorkspaceUtils.onActiveAppChanged { app in
+        WorkspaceUtils.onActiveAppChanged { [weak self] app in
+            self?.refreshSecureInput()
             if let appId = app.bundleIdentifier {
                 let inputSource = preferenceStore.getInputSource(appId)
                 if inputSource != nil {
@@ -124,6 +125,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             clipboardHistory.start()
         }
         NSApp.setActivationPolicy(.accessory)
+    }
+
+    func refreshSecureInput() {
+        let (isEnabled, appName) = SecurityInputUtils.checkSecureInput()
+        if isSecurityInput != isEnabled { isSecurityInput = isEnabled }
+        if securityApp != appName { securityApp = appName }
     }
 
     func handleGlobalSystemEvent(_ event: NSEvent) {
@@ -145,11 +152,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         // checkActionKeyPress is stateful — call once only
         let actionResult = KeyboardUtils.checkActionKeyPress(code, flags)
 
-        // Live secure-input check on action key so stale cached value never blocks a swap
-        if actionResult != .none {
-            let (secure, app) = SecurityInputUtils.checkSecureInput()
-            isSecurityInput = secure
-            securityApp = app
+        // Cached value is polled every 10 s, so refresh live: on action key (never block a swap),
+        // on click (focus may move into or out of a secure field) and while secure
+        // (first keystroke after secure input ends must be recorded, not dropped)
+        if actionResult != .none || isLeftMouseDown || isSecurityInput {
+            refreshSecureInput()
         }
 
         switch actionResult {
@@ -232,10 +239,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             return
         }
 
-        SecurityInputUtils.listenForSecurityInput { [weak self] isEnabled, appName in
-            guard let self else { return }
-            if self.isSecurityInput != isEnabled { self.isSecurityInput = isEnabled }
-            if self.securityApp != appName { self.securityApp = appName }
+        SecurityInputUtils.listenForSecurityInput { [weak self] _, _ in
+            self?.refreshSecureInput()
         }
 
         NSApp.setActivationPolicy(.regular)

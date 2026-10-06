@@ -24,7 +24,7 @@ macOS menu bar app that switches typed/selected text between English and Russian
 - `ClipboardHistory.swift` — `ObservableObject` polling `NSPasteboard` every 0.5 s; deduplicating, capped history (default 20 items)
 - `KeyDictionary.swift` — EN↔RU character mapping dictionaries
 - `ImageUtils.swift` — menu bar icon generation; emoji map for common layouts, custom-drawn fallback; grayscale for secure-input state
-- `SecurityInputUtils.swift` — polls IORegistry every 2 s to detect secure input mode; returns the app that enabled it
+- `SecurityInputUtils.swift` — polls IORegistry every 10 s to detect secure input mode; returns the app that enabled it. `AppDelegate.refreshSecureInput()` also re-checks live on action key, click, app switch, and any event while secure
 - `WorkspaceUtils.swift` — active app change callbacks; app enumeration for the settings picker
 - `CrashLogger.swift` — installs global exception/signal handlers; writes logs to `~/Library/Application Support/Babbler/`
 

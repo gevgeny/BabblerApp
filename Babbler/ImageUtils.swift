@@ -54,5 +54,47 @@ import Carbon
     return image
   }
 
+  static func makeTextIcon(_ text: String) -> NSImage {
+    let attrs: [NSAttributedString.Key: Any] = [
+      .font: NSFont.menuBarFont(ofSize: 0),
+      // Dynamic colour resolves against the menu bar appearance at draw time
+      .foregroundColor: NSColor.labelColor,
+    ]
+    let size = (text as NSString).size(withAttributes: attrs)
+    return NSImage(size: size, flipped: false) { _ in
+      (text as NSString).draw(at: .zero, withAttributes: attrs)
+      return true
+    }
+  }
 
+  static let disabledIconAlpha: CGFloat = 0.4
+
+  static func dimmed(_ base: NSImage) -> NSImage {
+    let image = NSImage(size: base.size, flipped: false) { rect in
+      base.draw(in: rect, from: .zero, operation: .sourceOver, fraction: disabledIconAlpha)
+      return true
+    }
+    image.isTemplate = base.isTemplate
+    return image
+  }
+
+  // Secure input also blocks text replacement, so the base is always dimmed here
+  static func addSecureInputDot(to base: NSImage) -> NSImage {
+    let dotSize: CGFloat = 6
+    let overhang: CGFloat = 2  // dot shift right past the base; padded left and right to keep it centred
+    let rise: CGFloat = 2      // dot shift above the base; padded top and bottom to keep it centred
+    let size = NSSize(width: base.size.width + overhang * 2, height: base.size.height + rise * 2)
+    return NSImage(size: size, flipped: false) { _ in
+      let baseRect = NSRect(origin: NSPoint(x: overhang, y: rise), size: base.size)
+      base.draw(in: baseRect, from: .zero, operation: .sourceOver, fraction: disabledIconAlpha)
+      if base.isTemplate {
+        // Result isn't a template (the dot must stay red), so tint the base by hand
+        NSColor.labelColor.set()
+        baseRect.fill(using: .sourceAtop)
+      }
+      NSColor.systemRed.setFill()
+      NSBezierPath(ovalIn: NSRect(x: baseRect.maxX - dotSize + overhang, y: size.height - dotSize, width: dotSize, height: dotSize)).fill()
+      return true
+    }
+  }
 }

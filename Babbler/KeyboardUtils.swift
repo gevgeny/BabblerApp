@@ -16,6 +16,9 @@ let keyboardDelay = UInt64(50_000_000)
 
     static private var isActionKeyPressed = false
     static private var isShiftHeldWithAction = false
+    // Secure input hides keyDown events from the global monitor, so compare the
+    // system-wide keyDown counter between action key press and release instead.
+    static private var keyDownCountAtActionPress: UInt32 = 0
 
     static func setActionKey(code: UInt16) {
         actionKeyCode = CGKeyCode(code)
@@ -49,12 +52,15 @@ let keyboardDelay = UInt64(50_000_000)
             // Action key pressed — record whether Shift is also held
             isActionKeyPressed = true
             isShiftHeldWithAction = flags.contains(.shift)
+            keyDownCountAtActionPress = keyDownCount()
             return .none
         } else if code == actionKeyCode && isActionKeyPressed {
             // Action key released — fire result
             let withShift = isShiftHeldWithAction
+            let wasInterrupted = keyDownCount() != keyDownCountAtActionPress
             isActionKeyPressed = false
             isShiftHeldWithAction = false
+            if wasInterrupted { return .none }
             return withShift ? .lineAction : .action
         } else if isActionKeyPressed && flags.contains(actionKeyFlag) {
             if isModifierKey(code) {
@@ -76,6 +82,10 @@ let keyboardDelay = UInt64(50_000_000)
             isShiftHeldWithAction = false
             return .none
         }
+    }
+
+    private static func keyDownCount() -> UInt32 {
+        CGEventSource.counterForEventType(.combinedSessionState, eventType: .keyDown)
     }
 
     private static func isModifierKey(_ code: UInt16) -> Bool {
@@ -211,4 +221,3 @@ let keyboardDelay = UInt64(50_000_000)
         event2?.post(tap: .cghidEventTap)
     }
 }
-

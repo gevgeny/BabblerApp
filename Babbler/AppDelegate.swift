@@ -109,7 +109,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             self.isWaitingForSwitch = false
         }
 
-        WorkspaceUtils.onActiveAppChanged { app in
+        WorkspaceUtils.onActiveAppChanged { [weak self] app in
+            self?.refreshSecureInput()
             if let appId = app.bundleIdentifier {
                 let inputSource = preferenceStore.getInputSource(appId)
                 if inputSource != nil {
@@ -126,32 +127,48 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         NSApp.setActivationPolicy(.accessory)
     }
 
+    func refreshSecureInput() {
+        let (isEnabled, appName) = SecurityInputUtils.checkSecureInput()
+        if isSecurityInput != isEnabled { isSecurityInput = isEnabled }
+        if securityApp != appName { securityApp = appName }
+    }
+
     func handleGlobalSystemEvent(_ event: NSEvent) {
         if isWaitingForSwitch { return }
-        if isSecurityInput { return }
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let isLeftMouseDown = event.type == .leftMouseDown
+        let code = isLeftMouseDown ? 0 : event.keyCode
+
         let withOption = flags == .option
         let withCommand = flags == .command
         let withShift = flags == .shift
         let withActionModifier = flags == KeyboardUtils.actionKeyFlag
-        let isLeftMouseDown = event.type == .leftMouseDown
-        let code = isLeftMouseDown ? 0 : event.keyCode
         let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
         let isEnter = code == Key.enter || code == Key.returnKey
         let isDelete = code == Key.delete
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
 
-        switch KeyboardUtils.checkActionKeyPress(code, flags) {
+        // checkActionKeyPress is stateful — call once only
+        let actionResult = KeyboardUtils.checkActionKeyPress(code, flags)
+
+        // Cached value is polled every 10 s, so refresh live: on action key (never block a swap),
+        // on click (focus may move into or out of a secure field) and while secure
+        // (first keystroke after secure input ends must be recorded, not dropped)
+        if actionResult != .none || isLeftMouseDown || isSecurityInput {
+            refreshSecureInput()
+        }
+
+        switch actionResult {
         case .action:
-            if preferenceStore.getIsTextReplaceEnabled() {
+            if preferenceStore.getIsTextReplaceEnabled() && !isSecurityInput {
                 self.pendingRecord = self.wordRecord
                 self.isWaitingForSwitch = true
             }
             InputSourceUtils.swapLang()
             return
         case .lineAction:
-            if preferenceStore.getIsTextReplaceEnabled() {
+            if preferenceStore.getIsTextReplaceEnabled() && !isSecurityInput {
 //              print("\n\nlineRecord:", self.lineRecord.map { $0.code},
 //                    "\npending record:", self.pendingRecord.map { $0.code},
 //                    "\nword record: ", self.wordRecord.map { $0.code},
@@ -165,6 +182,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         case .none:
             break
         }
+
+        if isSecurityInput { return }
 
         // flagsChanged events (modifier key presses/releases) are fully handled by
         // checkActionKeyPress above. If we let them fall through, releasing Shift while
@@ -220,10 +239,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             return
         }
 
-        SecurityInputUtils.listenForSecurityInput { [weak self] isEnabled, appName in
-            guard let self else { return }
-            if self.isSecurityInput != isEnabled { self.isSecurityInput = isEnabled }
-            if self.securityApp != appName { self.securityApp = appName }
+        SecurityInputUtils.listenForSecurityInput { [weak self] _, _ in
+            self?.refreshSecureInput()
         }
 
         NSApp.setActivationPolicy(.regular)

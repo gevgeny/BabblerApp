@@ -1,6 +1,7 @@
 import SwiftUI
 import Carbon
 import UniformTypeIdentifiers
+import ServiceManagement
 
 
 struct SwitchKeyOption: Identifiable {
@@ -29,6 +30,8 @@ struct SettingsView: View {
     @AppStorage(useSystemInputIndicatorKey) private var useSystemInputIndicator: Bool = false
     @AppStorage(clipboardHistoryEnabledKey) private var clipboardHistoryEnabled: Bool = true
     @State private var configuredApps: [AppListItem] = []
+    // Read from the system, not UserDefaults — the user can also remove Babbler in Login Items
+    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     // Binding that bridges Int (AppStorage) ↔ UInt16 (Picker tags)
     private var switchKeyCodeBinding: Binding<UInt16> {
@@ -57,6 +60,11 @@ struct SettingsView: View {
                     .labelsHidden()
                     .fixedSize()
                 }
+                Toggle("Launch at login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, enabled in
+                        try? enabled ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
+                        launchAtLogin = SMAppService.mainApp.status == .enabled
+                    }
                 Toggle("Use contrast input indicator", isOn: $useSystemInputIndicator)
                 HStack(alignment: .top, spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {

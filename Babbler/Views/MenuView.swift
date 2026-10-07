@@ -43,7 +43,7 @@ struct MenuBarLabel: View {
   }
 
   var body: some View {
-    if appDelegate.isSecurityInput {
+    if appDelegate.isSecurityInput || !appDelegate.hasAccessibility {
       Image(nsImage: ImageUtils.addSecureInputDot(to: stateIconBase))
     } else if !isTextReplaceEnabled {
       Image(nsImage: ImageUtils.dimmed(stateIconBase))
@@ -80,7 +80,22 @@ struct MenuView: View {
             .padding(.top, 10)
             .padding(.bottom, 6)
 
-            if appDelegate.isSecurityInput {
+            if !appDelegate.hasAccessibility {
+                Text("⛔️ Babbler needs Accessibility access to replace text")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 2)
+                Button {
+                    dismiss()
+                    appDelegate.openAccessibilitySettings()
+                } label: {
+                    Text("Open Accessibility Settings...")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(MenuItemButtonStyle())
+                .padding(.bottom, 4)
+            } else if appDelegate.isSecurityInput {
                 let name = appDelegate.securityApp ?? "An app"
                 Text("⛔️ \"\(name)\" enabled security input mode")
                     .font(.caption)

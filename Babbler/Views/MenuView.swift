@@ -88,9 +88,9 @@ struct MenuView: View {
                     .padding(.bottom, 2)
                 Button {
                     dismiss()
-                    appDelegate.openAccessibilitySettings()
+                    appDelegate.requestAccessibilityPermissions()
                 } label: {
-                    Text("Open Accessibility Settings...")
+                    Text("Grant Accessibility Access...")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(MenuItemButtonStyle())

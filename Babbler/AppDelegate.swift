@@ -32,13 +32,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         NSApplication.shared.terminate(self)
     }
 
-    func openAccessibilitySettings() {
-        guard let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else {
-            return
-        }
-        NSWorkspace.shared.open(settingsURL)
-    }
-
     func startPermissionPolling() {
         permissionCheckTimer?.invalidate()
         permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
@@ -56,8 +49,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func requestAccessibilityPermissions() {
-        // The system prompt also adds Babbler to the Accessibility list (switched off),
-        // so the user only has to flip the switch instead of adding the app by hand
+        // The system prompt (re)adds Babbler to the Accessibility list, switched off, and its
+        // "Open System Settings" button goes straight there — so the user only flips the switch.
+        // No dialog of our own: every call shows the system one, two at once is noise
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         AXIsProcessTrustedWithOptions(options)
         startPermissionPolling()

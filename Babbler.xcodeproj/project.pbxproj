@@ -22,6 +22,7 @@
 		7A765D9D25E7ABCE0076B974 /* SettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A765D9B25E7ABCE0076B974 /* SettingsViewController.xib */; };
 		7A906C5925F3F95A00913B56 /* PreferenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A906C5825F3F95A00913B56 /* PreferenceStore.swift */; };
 		7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130723A68C9A00FA3F07 /* Assets.xcassets */; };
+		7AC0DEAD23A68C9A00FA3F02 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0DEAD23A68C9A00FA3F01 /* AppIcon.icon */; };
 		7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7AC0130923A68C9A00FA3F07 /* Main.storyboard */; };
 		7AC0131A23ABEFEB00FA3F07 /* SecurityInputUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131923ABEFEA00FA3F07 /* SecurityInputUtils.swift */; };
 		7AC0131C23AE10D600FA3F07 /* InputSourceUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0131B23AE10D600FA3F07 /* InputSourceUtils.swift */; };
@@ -51,6 +52,7 @@
 		7AC0130023A68C9700FA3F07 /* Babbler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Babbler.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7AC0130323A68C9700FA3F07 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AC0130723A68C9A00FA3F07 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7AC0DEAD23A68C9A00FA3F01 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		7AC0130A23A68C9A00FA3F07 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		7AC0130C23A68C9A00FA3F07 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7AC0130D23A68C9A00FA3F07 /* Babbler.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Babbler.entitlements; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				286A65882F94003B00D25CBC /* BabblerApp.swift */,
 				7AC0130323A68C9700FA3F07 /* AppDelegate.swift */,
 				7AC0130723A68C9A00FA3F07 /* Assets.xcassets */,
+				7AC0DEAD23A68C9A00FA3F01 /* AppIcon.icon */,
 				7AC0130923A68C9A00FA3F07 /* Main.storyboard */,
 				7AC0130C23A68C9A00FA3F07 /* Info.plist */,
 				7AC0130D23A68C9A00FA3F07 /* Babbler.entitlements */,
@@ -214,6 +217,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7AC0130823A68C9A00FA3F07 /* Assets.xcassets in Resources */,
+				7AC0DEAD23A68C9A00FA3F02 /* AppIcon.icon in Resources */,
 				7A765D9D25E7ABCE0076B974 /* SettingsViewController.xib in Resources */,
 				7AC0130B23A68C9A00FA3F07 /* Main.storyboard in Resources */,
 			);

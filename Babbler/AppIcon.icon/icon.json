@@ -1,25 +1,49 @@
 {
-  "fill" : {
-    "linear-gradient" : [
-      "display-p3:0.13333,0.69020,0.65098,1.00000",
-      "srgb:0.04314,0.36078,0.40000,1.00000"
-    ],
-    "orientation" : {
-      "start" : {
-        "x" : 0.5,
-        "y" : 0
-      },
-      "stop" : {
-        "x" : 0.5,
-        "y" : 0.7
+  "fill-specializations" : [
+    {
+      "value" : {
+        "linear-gradient" : [
+          "display-p3:0.13333,0.69020,0.65098,1.00000",
+          "srgb:0.04314,0.36078,0.40000,1.00000"
+        ],
+        "orientation" : {
+          "start" : {
+            "x" : 0.5,
+            "y" : 0
+          },
+          "stop" : {
+            "x" : 0.5,
+            "y" : 0.7
+          }
+        }
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : {
+        "linear-gradient" : [
+          "display-p3:0.12157,0.29020,0.29804,1.00000",
+          "srgb:0.03922,0.10196,0.10980,1.00000"
+        ],
+        "orientation" : {
+          "start" : {
+            "x" : 0.5,
+            "y" : 0
+          },
+          "stop" : {
+            "x" : 0.5,
+            "y" : 0.7
+          }
+        }
       }
     }
-  },
+  ],
   "groups" : [
     {
       "layers" : [
         {
           "glass" : false,
+          "hidden" : false,
           "image-name" : "2-glyphs-dark-slash.svg",
           "name" : "2-glyphs-dark-slash",
           "position" : {

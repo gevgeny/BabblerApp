@@ -39,18 +39,15 @@ Ghbdtn   →  ⌥  →  Привет
 | Fix the whole last line | <kbd>⇧</kbd> <kbd>⌥</kbd> |
 | Fix selected text | Select, then <kbd>⌥</kbd> |
 
-Option combos you already use (<kbd>⌥</kbd> <kbd>←</kbd>, <kbd>⌥</kbd> + click, …) keep working — Babbler only reacts to a clean tap.
-
 ## Features
 
 - **Instant layout fix** — retypes the last word, line or selection in the other layout
-- **Menu bar indicator** — shows the current input source as a flag or a contrast "EN / RU" badge
+- **Menu bar indicator** — shows the current input source as a flag or an "EN / RU" badge, or just the Babbler icon
 - **Per-app input sources** — automatically switch to a chosen layout when an app comes to the front
 - **Clipboard history** — recently copied text, with pinned items, one click away in the menu
 - **Secure input aware** — when an app enables secure input (password fields, Terminal's Secure Keyboard Entry), the icon shows a red dot and text replacement pauses; layout switching still works
 - **Configurable action key** — Option, Right Option, Control or Right Control
 - **Launch at login**
-- **Energy efficient** — no background subprocesses; idle cost is close to zero
 
 ## Requirements
 
@@ -65,8 +62,6 @@ Option combos you already use (<kbd>⌥</kbd> <kbd>←</kbd>, <kbd>⌥</kbd> + c
 3. macOS asks for Accessibility access — click **Open System Settings** and turn on **Babbler**.
    Babbler picks the permission up automatically; no restart needed.
 4. Optional: open **Settings…** from the menu bar to pick the action key, enable launch at login and set per-app input sources.
-
-Until the permission is granted, the menu shows a reminder with a **Grant Accessibility Access…** button, and switching layouts from the menu still works.
 
 ## Building from source
 

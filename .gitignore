@@ -30,3 +30,7 @@ Babbler [0-9]*/
 
 # Credentials / environment
 *.env
+
+# Xcode archive exports
+Babbler 20*/
+Babbler 20*.zip

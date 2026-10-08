@@ -165,6 +165,9 @@ struct MenuView: View {
                 dismiss()
                 NSApp.activate(ignoringOtherApps: true)
                 NSApp.orderFrontStandardAboutPanel(options: [
+                    // Explicit, from our asset catalog: the default lookup goes through the system icon
+                    // cache, which can serve an older Babbler build's icon for the same bundle ID
+                    .applicationIcon: NSImage(named: "AppIcon") as Any,
                     .credits: NSAttributedString(
                         string: "github.com/gevgeny/BabblerApp",
                         attributes: [

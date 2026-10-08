@@ -24,7 +24,7 @@ private extension View {
 
 struct MenuBarLabel: View {
   @EnvironmentObject var appDelegate: AppDelegate
-  @AppStorage(useSystemInputIndicatorKey) var useSystemInputIndicator: Bool = false
+  @AppStorage(menuBarIconStyleKey) var menuBarIconStyle: MenuBarIconStyle = .flag
   @AppStorage(isTextReplaceEnabledKey) var isTextReplaceEnabled: Bool = true
 
   var menuBarTitle: String {
@@ -32,14 +32,18 @@ struct MenuBarLabel: View {
     return ImageUtils.languageImages[lang.id] ?? ImageUtils.getLangCode(for: lang)
   }
 
-  var systemIndicatorIcon: NSImage? {
-    guard useSystemInputIndicator, let lang = appDelegate.currentLang else { return nil }
-    return ImageUtils.makeInputSourceIcon(for: lang)
+  // nil → flag style, drawn as text
+  var styleIcon: NSImage? {
+    switch menuBarIconStyle {
+    case .appIcon: return NSImage(named: "MenuBarIcon")
+    case .langCode: return appDelegate.currentLang.flatMap { ImageUtils.makeInputSourceIcon(for: $0) }
+    case .flag: return nil
+    }
   }
 
   // MenuBarExtra labels ignore overlays and opacity, so state is drawn into the image itself
   var stateIconBase: NSImage {
-    systemIndicatorIcon ?? ImageUtils.makeTextIcon(menuBarTitle)
+    styleIcon ?? ImageUtils.makeTextIcon(menuBarTitle)
   }
 
   var body: some View {
@@ -47,7 +51,7 @@ struct MenuBarLabel: View {
       Image(nsImage: ImageUtils.addSecureInputDot(to: stateIconBase))
     } else if !isTextReplaceEnabled {
       Image(nsImage: ImageUtils.dimmed(stateIconBase))
-    } else if let icon = systemIndicatorIcon {
+    } else if let icon = styleIcon {
       Image(nsImage: icon)
     } else {
       Text(menuBarTitle)

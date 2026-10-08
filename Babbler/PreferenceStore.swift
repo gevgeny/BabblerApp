@@ -10,10 +10,23 @@ import Foundation
 
 let appInputSourcesKey = "appInputSources"
 let langSwitchKeyCodeKey = "langSwitchKeyCode"
-let useSystemInputIndicatorKey = "useSystemInputIndicator"
+let useSystemInputIndicatorKey = "useSystemInputIndicator"  // legacy, migrated to menuBarIconStyleKey
+let menuBarIconStyleKey = "menuBarIconStyle"
 let isTextReplaceEnabledKey = "isTextReplaceEnabled"
 let clipboardHistoryEnabledKey = "clipboardHistoryEnabled"
 let pinnedClipboardItemsKey = "pinnedClipboardItems"
+
+enum MenuBarIconStyle: String, CaseIterable, Identifiable {
+    case appIcon, langCode, flag
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .flag: "Flag"
+        case .langCode: "Language code"
+        case .appIcon: "Babbler icon"
+        }
+    }
+}
 
 class PreferenceStore {
     private var appInputSources: [String: [String]]
@@ -61,12 +74,14 @@ class PreferenceStore {
         UserDefaults.standard.set(Int(code), forKey: langSwitchKeyCodeKey)
     }
     
-    func getUseSystemInputIndicator() -> Bool {
-        return UserDefaults.standard.bool(forKey: useSystemInputIndicatorKey)
-    }
-    
-    func setUseSystemInputIndicator(_ value: Bool) {
-        UserDefaults.standard.set(value, forKey: useSystemInputIndicatorKey)
+    // The on/off "contrast input indicator" became a 3-way menu bar icon style; convert it once
+    func migrateMenuBarIconStyle() {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: menuBarIconStyleKey) == nil,
+              defaults.object(forKey: useSystemInputIndicatorKey) != nil else { return }
+        let style: MenuBarIconStyle = defaults.bool(forKey: useSystemInputIndicatorKey) ? .langCode : .flag
+        defaults.set(style.rawValue, forKey: menuBarIconStyleKey)
+        defaults.removeObject(forKey: useSystemInputIndicatorKey)
     }
 
     func getIsTextReplaceEnabled() -> Bool {

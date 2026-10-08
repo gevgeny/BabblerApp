@@ -18,7 +18,10 @@ import Carbon
   }
 
   static func makeInputSourceIcon(for source: TISInputSource) -> NSImage? {
-    let text = getLangCode(for: source)
+    makeLangCodeIcon(getLangCode(for: source))
+  }
+
+  static func makeLangCodeIcon(_ text: String) -> NSImage {
     let imageSize = NSSize(width: 22, height: 17)
 
     let image = NSImage(size: imageSize, flipped: false) { drawRect in

@@ -20,9 +20,9 @@ DerivedData/
 build/
 Babbler/Products/
 
-# Release archives and zips created by the build script
-Babbler *.zip
-Babbler [0-9]*/
+# Xcode archive exports and stray zips in the repo root (bin/ release zips are tracked)
+/Babbler *.zip
+/Babbler [0-9]*/
 
 # Swift Package Manager (not used here but just in case)
 .build/
@@ -30,7 +30,3 @@ Babbler [0-9]*/
 
 # Credentials / environment
 *.env
-
-# Xcode archive exports
-Babbler 20*/
-Babbler 20*.zip

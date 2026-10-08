@@ -6,6 +6,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     @Published var currentLang: TISInputSource? = InputSourceUtils.getCurrentInputSource()
     @Published var isSecurityInput = false
     @Published var securityApp: String?
+    @Published var hasAccessibility = AXIsProcessTrusted()
 
     var isWaitingForSwitch = false
     var didFinishAppSetup = false
@@ -21,10 +22,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     var text: String = ""
 
-    func hasPrivileges() -> Bool {
-        AXIsProcessTrusted()
-    }
-
     func showError(_ title: String, _ message: String) {
         let alert = NSAlert()
         alert.messageText = title
@@ -35,13 +32,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         NSApplication.shared.terminate(self)
     }
 
-    func openAccessibilitySettings() {
-        guard let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else {
-            return
-        }
-        NSWorkspace.shared.open(settingsURL)
-    }
-
     func startPermissionPolling() {
         permissionCheckTimer?.invalidate()
         permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
@@ -49,32 +39,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 timer.invalidate()
                 return
             }
-            if self.hasPrivileges() {
+            if AXIsProcessTrusted() {
                 timer.invalidate()
                 self.permissionCheckTimer = nil
-                self.finishApplicationSetup()
+                self.hasAccessibility = true
+                KeyboardUtils.addGlobalEventListener(self.handleGlobalSystemEvent)
             }
         }
     }
 
     func requestAccessibilityPermissions() {
-        let alert = NSAlert()
-        alert.messageText = "Accessibility Access Required"
-        alert.informativeText = "Babbler needs Accessibility access to monitor keyboard shortcuts and replace typed text. Click Open System Settings, enable Babbler in Accessibility, and return to the app."
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Quit")
-
-        NSApp.activate(ignoringOtherApps: true)
-
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            openAccessibilitySettings()
-            startPermissionPolling()
-            return
-        }
-
-        NSApplication.shared.terminate(self)
+        // The system prompt (re)adds Babbler to the Accessibility list, switched off, and its
+        // "Open System Settings" button goes straight there — so the user only flips the switch.
+        // No dialog of our own: every call shows the system one, two at once is noise
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+        AXIsProcessTrustedWithOptions(options)
+        startPermissionPolling()
     }
 
     func finishApplicationSetup() {
@@ -120,7 +100,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         currentLang = InputSourceUtils.getCurrentInputSource()
-        KeyboardUtils.addGlobalEventListener(handleGlobalSystemEvent)
+        // Everything above works without Accessibility (menu switcher, per-app sources);
+        // key monitoring and text replacement need it
+        if hasAccessibility {
+            KeyboardUtils.addGlobalEventListener(handleGlobalSystemEvent)
+        } else {
+            requestAccessibilityPermissions()
+        }
         if UserDefaults.standard.object(forKey: clipboardHistoryEnabledKey) == nil || UserDefaults.standard.bool(forKey: clipboardHistoryEnabledKey) {
             clipboardHistory.start()
         }
@@ -243,13 +229,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             self?.refreshSecureInput()
         }
 
-        NSApp.setActivationPolicy(.regular)
-
-        if !hasPrivileges() {
-            requestAccessibilityPermissions()
-            return
-        }
-        
         finishApplicationSetup()
     }
 }

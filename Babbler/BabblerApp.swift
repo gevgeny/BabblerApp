@@ -5,6 +5,11 @@ struct BabblerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @AppStorage(clipboardHistoryEnabledKey) var clipboardHistoryEnabled: Bool = true
 
+    init() {
+        // Before any view reads @AppStorage, so the menu bar never flashes the default style
+        preferenceStore.migrateMenuBarIconStyle()
+    }
+
     var body: some Scene {
         Settings {
             SettingsView()

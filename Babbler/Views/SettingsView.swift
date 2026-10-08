@@ -1,6 +1,7 @@
 import SwiftUI
 import Carbon
 import UniformTypeIdentifiers
+import ServiceManagement
 
 
 struct SwitchKeyOption: Identifiable {
@@ -16,6 +17,16 @@ let switchKeyOptions: [SwitchKeyOption] = [
     SwitchKeyOption(label: "Right Control", code: Key.rightControl),
 ]
 
+// Segmented control content for each style — previews what the menu bar will show
+@ViewBuilder
+private func menuBarIconStylePreview(_ style: MenuBarIconStyle) -> some View {
+    switch style {
+    case .flag: Text("🇬🇧")
+    case .langCode: Image(nsImage: ImageUtils.makeLangCodeIcon("EN"))
+    case .appIcon: Image("MenuBarIcon")
+    }
+}
+
 struct AppListItem: Identifiable {
     let name: String
     let id: String
@@ -26,9 +37,11 @@ struct SettingsView: View {
     // @AppStorage keeps these live — no init() needed, always in sync with UserDefaults
     // and with the same keys read by MenuBarLabel and AppDelegate.
     @AppStorage(langSwitchKeyCodeKey) private var selectedSwitchKeyCodeRaw: Int = Int(Key.option)
-    @AppStorage(useSystemInputIndicatorKey) private var useSystemInputIndicator: Bool = false
+    @AppStorage(menuBarIconStyleKey) private var menuBarIconStyle: MenuBarIconStyle = .flag
     @AppStorage(clipboardHistoryEnabledKey) private var clipboardHistoryEnabled: Bool = true
     @State private var configuredApps: [AppListItem] = []
+    // Read from the system, not UserDefaults — the user can also remove Babbler in Login Items
+    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     // Binding that bridges Int (AppStorage) ↔ UInt16 (Picker tags)
     private var switchKeyCodeBinding: Binding<UInt16> {
@@ -57,7 +70,25 @@ struct SettingsView: View {
                     .labelsHidden()
                     .fixedSize()
                 }
-                Toggle("Use contrast input indicator", isOn: $useSystemInputIndicator)
+                Toggle("Launch at login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, enabled in
+                        try? enabled ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
+                        launchAtLogin = SMAppService.mainApp.status == .enabled
+                    }
+                HStack(alignment: .top, spacing: 12) {
+                    Text("Menu bar icon")
+                    Spacer()
+                    Picker("", selection: $menuBarIconStyle) {
+                        ForEach(MenuBarIconStyle.allCases) { style in
+                            menuBarIconStylePreview(style)
+                                .help(style.label)
+                                .tag(style)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
+                }
                 HStack(alignment: .top, spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Enable Clipboard History")

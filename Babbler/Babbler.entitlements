@@ -6,5 +6,11 @@
     <true/>
     <key>com.apple.security.files.user-selected.read-only</key>
     <true/>
+    <!-- AXIsProcessTrustedWithOptions registers the app in the Accessibility list via this service;
+         the sandbox blocks it otherwise, so Babbler never shows up there -->
+    <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+    <array>
+        <string>com.apple.universalaccessAuthWarn</string>
+    </array>
 </dict>
 </plist>

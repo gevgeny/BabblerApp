@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-14.4%2B-blue?logo=apple&logoColor=white" alt="macOS 14.4+">
-  <img src="https://img.shields.io/badge/version-0.8.2-teal" alt="Version 0.8.2">
+  <img src="https://img.shields.io/badge/version-0.8.3-teal" alt="Version 0.8.3">
   <img src="https://img.shields.io/badge/Swift-SwiftUI-orange?logo=swift&logoColor=white" alt="Swift / SwiftUI">
 </p>
 
@@ -41,7 +41,7 @@ Ghbdtn   →  ⌥  →  Привет
 
 ## Features
 
-- **Instant layout fix** — retypes the last word, line or selection in the other layout
+- **Instant layout fix** — retypes the last word, line or selection in the other layout, preserving capitalization
 - **Menu bar indicator** — shows the current input source as a flag or an "EN / RU" badge, or just the Babbler icon
 - **Per-app input sources** — automatically switch to a chosen layout when an app comes to the front
 - **Remember app languages** — restore the last language used in each app, with a timeout or `Never`

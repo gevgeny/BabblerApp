@@ -15,6 +15,19 @@ func replaceLog(_ message: @autoclosure () -> String) {
 #endif
 }
 
+struct RecordedKey {
+  let code: UInt16
+  let modifiers: CGEventFlags
+
+  init(code: UInt16, flags: NSEvent.ModifierFlags) {
+    self.code = code
+    var modifiers: CGEventFlags = []
+    if flags.contains(.shift) { modifiers.insert(.maskShift) }
+    if flags.contains(.capsLock) { modifiers.insert(.maskAlphaShift) }
+    self.modifiers = modifiers
+  }
+}
+
 @objc class KeyboardUtils: NSObject {
     static private(set) var actionKeyCode = CGKeyCode(58);
     
@@ -119,35 +132,18 @@ func replaceLog(_ message: @autoclosure () -> String) {
         deleteUp?.post(tap: loc)
     }
     
-    private static func deleteTypedText(_ src: CGEventSource?, _ loc: CGEventTapLocation, _ record: [(withShift: Bool, code: UInt16)]) {
-        let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
-        let loc = CGEventTapLocation.cghidEventTap
-
-        // Delete last typed text
-        for _ in 1...record.count {
-            let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
-            let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
-
-            postSynthetic(eventDown, flags: [], loc)
-            postSynthetic(eventUp, flags: [], loc)
-        }
-    }
-    
-    private static func typeRecordedText(
-        _ record: [(withShift: Bool, code: UInt16)],
-        _ src: CGEventSource?,
-        _ loc: CGEventTapLocation
-    ) {
-        let actionUp = CGEvent(keyboardEventSource: src, virtualKey: actionKeyCode, keyDown: false)
-         
-        record.forEach { (withShift: Bool, code: UInt16) in
-            let eventDown = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true)
-            let eventUp = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)
-            
-            postSynthetic(actionUp, flags: [], loc)
-            postSynthetic(eventDown, flags: withShift ? .maskShift : [], loc)
-            postSynthetic(eventUp, flags: withShift ? .maskShift : [], loc)
-        }
+    static func recordedKeyEvents(_ key: RecordedKey, source: CGEventSource?) -> [CGEvent] {
+      let events = [
+        CGEvent(keyboardEventSource: source, virtualKey: key.code, keyDown: true),
+        CGEvent(keyboardEventSource: source, virtualKey: key.code, keyDown: false)
+      ].compactMap { $0 }
+      // CGEvent initially inherits live modifiers. Shift used to trigger a line
+      // conversion must not turn the replacement into uppercase or a selection.
+      for event in events {
+        event.flags = key.modifiers
+        event.setIntegerValueField(.eventSourceUserData, value: syntheticEventMarker)
+      }
+      return events
     }
 
     // Tags events we post so the global monitor can ignore them — the replacement must not
@@ -169,21 +165,24 @@ func replaceLog(_ message: @autoclosure () -> String) {
 
     
     
-    static func replaceTypedText(_ record: [(withShift: Bool, code: UInt16)]) async {
-        let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
-        let loc = CGEventTapLocation.cghidEventTap
-                
-        replaceLog("replace: delete \(record.count) chars")
-        deleteTypedText(src, loc, record)
-        
-        try? await Task.sleep(nanoseconds: keyboardDelay)
-        
-         
-        replaceLog("replace: retype codes \(record.map { ($0.withShift ? "⇧" : "") + String($0.code) })")
-        typeRecordedText(record, src, loc)
-        replaceLog("replace: done")
+    @MainActor
+    static func replaceTypedText(_ record: [RecordedKey]) async {
+      guard !record.isEmpty else { return }
+      let source = CGEventSource(stateID: .privateState)
+      let location = CGEventTapLocation.cghidEventTap
+      let delete = RecordedKey(code: Key.delete, flags: [])
+      replaceLog("replace: delete \(record.count) chars")
+      for _ in record {
+        for event in recordedKeyEvents(delete, source: source) { event.post(tap: location) }
+      }
+      try? await Task.sleep(nanoseconds: keyboardDelay)
+      replaceLog("replace: retype codes \(record.map { $0.code })")
+      for key in record {
+        for event in recordedKeyEvents(key, source: source) { event.post(tap: location) }
+      }
+      replaceLog("replace: done")
     }
-    
+
     static func fetchSelectedText(_ callback: @escaping (String) -> Void) -> Void {
         // Save current text from clipboard
         let clipboardText = NSPasteboard.general.string(forType: .string) ?? ""

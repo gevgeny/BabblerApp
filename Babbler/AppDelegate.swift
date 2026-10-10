@@ -16,11 +16,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var permissionCheckTimer: Timer?
 
     // Keycodes of the current word; resets on word break (space → new char) or cancel.
-    var wordRecord: [(withShift: Bool, code: UInt16)] = []
+    var wordRecord: [RecordedKey] = []
     // Keycodes since the last hard cancel (escape, enter, arrow, click, app change); spans multiple words.
-    var lineRecord: [(withShift: Bool, code: UInt16)] = []
+    var lineRecord: [RecordedKey] = []
     // Snapshot of whichever record the current action fired on; consumed by onKeyboardInputSourceChanged.
-    var pendingRecord: [(withShift: Bool, code: UInt16)] = []
+    var pendingRecord: [RecordedKey] = []
 
     var text: String = ""
 
@@ -89,10 +89,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             // Stay in waiting state until the replacement is posted, so action key taps
             // in the meantime are ignored instead of starting a second, overlapping swap
             if self.pendingRecord.count > 0 {
-                Task {
+                let record = self.pendingRecord
+                self.pendingRecord = []
+                Task { @MainActor in
                     try? await Task.sleep(nanoseconds: keyboardDelay)
-                    await KeyboardUtils.replaceTypedText(self.pendingRecord)
-                    await MainActor.run { self.isWaitingForSwitch = false }
+                    await KeyboardUtils.replaceTypedText(record)
+                    self.isWaitingForSwitch = false
                 }
             } else {
                 KeyboardUtils.fetchSelectedText { text in
@@ -154,7 +156,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         let withOption = flags == .option
         let withCommand = flags == .command
-        let withShift = flags == .shift
         let withActionModifier = flags == KeyboardUtils.actionKeyFlag
         let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
         let isEnter = code == Key.enter || code == Key.returnKey
@@ -239,7 +240,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         // Save pressed key to both records
-        let entry = (withShift: withShift, code: event.keyCode)
+        let entry = RecordedKey(code: event.keyCode, flags: flags)
         wordRecord.append(entry)
         lineRecord.append(entry)
         text += event.characters!

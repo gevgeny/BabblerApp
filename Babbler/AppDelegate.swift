@@ -74,19 +74,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
             if !self.isWaitingForSwitch { return }
 
+            // Stay in waiting state until the replacement is posted, so action key taps
+            // in the meantime are ignored instead of starting a second, overlapping swap
             if self.pendingRecord.count > 0 {
                 Task {
                     try? await Task.sleep(nanoseconds: keyboardDelay)
                     await KeyboardUtils.replaceTypedText(self.pendingRecord)
+                    await MainActor.run { self.isWaitingForSwitch = false }
                 }
             } else {
                 KeyboardUtils.fetchSelectedText { text in
-                    if text.count == 0 { return }
-                    KeyboardUtils.typeText(text)
+                    if text.count > 0 { KeyboardUtils.typeText(text) }
+                    self.isWaitingForSwitch = false
                 }
             }
-
-            self.isWaitingForSwitch = false
         }
 
         WorkspaceUtils.onActiveAppChanged { [weak self] app in
@@ -120,7 +121,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func handleGlobalSystemEvent(_ event: NSEvent) {
-        if isWaitingForSwitch { return }
+        // Our own replacement keystrokes leave the records unchanged: same keycodes deleted and retyped
+        if isWaitingForSwitch || KeyboardUtils.isSynthetic(event) { return }
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let isLeftMouseDown = event.type == .leftMouseDown

@@ -116,8 +116,8 @@ let keyboardDelay = UInt64(50_000_000)
             let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
             let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
 
-            eventDown?.post(tap: loc)
-            eventUp?.post(tap: loc)
+            postSynthetic(eventDown, flags: [], loc)
+            postSynthetic(eventUp, flags: [], loc)
         }
     }
     
@@ -132,13 +132,27 @@ let keyboardDelay = UInt64(50_000_000)
             let eventDown = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true)
             let eventUp = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)
             
-            if withShift {
-                eventDown?.flags = CGEventFlags.maskShift;
-            }
-            actionUp?.post(tap: loc)
-            eventDown?.post(tap: loc)
-            eventUp?.post(tap: loc)
+            postSynthetic(actionUp, flags: [], loc)
+            postSynthetic(eventDown, flags: withShift ? .maskShift : [], loc)
+            postSynthetic(eventUp, flags: withShift ? .maskShift : [], loc)
         }
+    }
+
+    // Tags events we post so the global monitor can ignore them — the replacement must not
+    // re-enter the record or the action key logic (a fast second Option tap used to interleave)
+    private static let syntheticEventMarker: Int64 = 0x0BAB_B1E5
+
+    // Flags are always set explicitly: otherwise a physically held Option leaks into the
+    // retyped keys (œ∑† instead of qwt) and turns Delete into Option+Delete (delete word)
+    private static func postSynthetic(_ event: CGEvent?, flags: CGEventFlags, _ loc: CGEventTapLocation) {
+        guard let event else { return }
+        event.flags = flags
+        event.setIntegerValueField(.eventSourceUserData, value: syntheticEventMarker)
+        event.post(tap: loc)
+    }
+
+    static func isSynthetic(_ event: NSEvent) -> Bool {
+        event.cgEvent?.getIntegerValueField(.eventSourceUserData) == syntheticEventMarker
     }
 
     

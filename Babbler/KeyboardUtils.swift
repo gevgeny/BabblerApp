@@ -194,9 +194,8 @@ func replaceLog(_ message: @autoclosure () -> String) {
         let loc = CGEventTapLocation.cghidEventTap
         let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.c, keyDown: true)
         let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.c, keyDown: false)
-        eventDown?.flags = CGEventFlags.maskCommand;
-        eventDown?.post(tap: loc)
-        eventUp?.post(tap: loc)
+        postSynthetic(eventDown, flags: .maskCommand, loc)
+        postSynthetic(eventUp, flags: [], loc)
         
         Task {
             // Wait till text copied
@@ -241,12 +240,10 @@ func replaceLog(_ message: @autoclosure () -> String) {
         
         let utf16Chars = Array(tranlatedText.utf16)
         let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true);
-        event1?.flags = .maskNonCoalesced
         event1?.keyboardSetUnicodeString(stringLength: utf16Chars.count, unicodeString: utf16Chars)
-        event1?.post(tap: .cghidEventTap)
+        postSynthetic(event1, flags: .maskNonCoalesced, .cghidEventTap)
 
         let event2 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: false);
-        event2?.flags = .maskNonCoalesced
-        event2?.post(tap: .cghidEventTap)
+        postSynthetic(event2, flags: .maskNonCoalesced, .cghidEventTap)
     }
 }

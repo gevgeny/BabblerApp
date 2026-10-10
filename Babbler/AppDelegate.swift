@@ -136,7 +136,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let withActionModifier = flags == KeyboardUtils.actionKeyFlag
         let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
         let isEnter = code == Key.enter || code == Key.returnKey
-        let isDelete = code == Key.delete
+        // keyDown only (repeats included) — counting the keyUp too removed two symbols per Backspace
+        let isDelete = code == Key.delete && event.type == .keyDown
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
 
         // checkActionKeyPress is stateful — call once only

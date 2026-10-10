@@ -16,6 +16,7 @@ let appInputSourceTimeoutMinutesKey = "appInputSourceTimeoutMinutes"
 let defaultAppInputSourceTimeoutMinutes = 3
 let appInputSourceTimeoutNever = 0
 let appInputSourceTimeoutChoices = [1, 3, 5, 10, 15]
+let globeActionKeyEnabledKey = "globeActionKeyEnabled"
 let langSwitchKeyCodeKey = "langSwitchKeyCode"
 let useSystemInputIndicatorKey = "useSystemInputIndicator"  // legacy, migrated to menuBarIconStyleKey
 let menuBarIconStyleKey = "menuBarIconStyle"

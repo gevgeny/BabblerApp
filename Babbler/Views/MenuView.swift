@@ -67,6 +67,8 @@ struct MenuView: View {
     @Environment(\.dismiss) var dismiss
     @AppStorage(isTextReplaceEnabledKey) var isTextReplaceEnabled: Bool = true
     @AppStorage(clipboardHistoryEnabledKey) var clipboardHistoryEnabled: Bool = true
+    @AppStorage(globeActionKeyEnabledKey) var globeActionKeyEnabled: Bool = false
+    @AppStorage(langSwitchKeyCodeKey) var switchKeyCodeRaw: Int = Int(Key.option)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -108,19 +110,19 @@ struct MenuView: View {
                     .padding(.bottom, 8)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             } else if isTextReplaceEnabled {
-                let key = actionKeySymbol()
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Replace last word: \(key)")
+                    replacementShortcutLabel(forLine: false)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
                         .padding(.bottom, 2)
-                    Text("Replace last line: ⇧\(key)")
+                    replacementShortcutLabel(forLine: true)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 14)
                         .padding(.bottom, 8)
                 }
+                .symbolRenderingMode(.monochrome)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
@@ -222,7 +224,13 @@ struct MenuView: View {
     }
 
     private func actionKeySymbol() -> String {
-        KeyboardUtils.actionKeyFlag == .control ? "⌃" : "⌥"
+        switchKeyCodeRaw == Int(Key.control) || switchKeyCodeRaw == Int(Key.rightControl) ? "⌃" : "⌥"
+    }
+
+    private func replacementShortcutLabel(forLine: Bool) -> Text {
+        let primary = Text("Replace last \(forLine ? "line" : "word"): \(forLine ? "⇧" : "")\(actionKeySymbol())")
+        guard globeActionKeyEnabled else { return primary }
+        return primary + Text(forLine ? " or ⇧" : " or ") + Text(Image(systemName: "globe"))
     }
 }
 

@@ -18,7 +18,7 @@ KEYBOARD_SOURCES=(
   "$ROOT_DIR/Babbler/TISInputSourceExtension.swift"
   "$ROOT_DIR/Babbler/KeyDictionary.swift"
 )
-for TEST_NAME in KeyboardUtilsTests; do
+for TEST_NAME in KeyboardUtilsTests ActionKeyTests; do
   xcrun swiftc -module-cache-path "$BUILD_DIR/module-cache" \
     "${KEYBOARD_SOURCES[@]}" "$ROOT_DIR/tests/$TEST_NAME.swift" -o "$BUILD_DIR/$TEST_NAME"
   "$BUILD_DIR/$TEST_NAME"

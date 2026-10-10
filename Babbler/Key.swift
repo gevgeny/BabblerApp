@@ -8,6 +8,7 @@ struct Key {
     static let space                     : UInt16 = 0x31
     static let delete                    : UInt16 = 0x33
     static let escape                    : UInt16 = 0x35
+    static let rightCommand              : UInt16 = 0x36
     static let command                   : UInt16 = 0x37
     static let shift                     : UInt16 = 0x38
     static let capsLock                  : UInt16 = 0x39

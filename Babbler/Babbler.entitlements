@@ -6,6 +6,17 @@
     <true/>
     <key>com.apple.security.files.user-selected.read-only</key>
     <true/>
+    <!-- Check the current Globe action so setup guidance appears only when needed. -->
+    <key>com.apple.security.temporary-exception.shared-preference.read-only</key>
+    <array>
+        <string>com.apple.HIToolbox</string>
+    </array>
+    <!-- Read the Apple Fn / Globe HID element when macOS suppresses its key event.
+         Input Monitoring permission is still required; the app remains sandboxed. -->
+    <key>com.apple.security.temporary-exception.iokit-user-client-class</key>
+    <array>
+        <string>IOHIDLibUserClient</string>
+    </array>
     <!-- AXIsProcessTrustedWithOptions registers the app in the Accessibility list via this service;
          the sandbox blocks it otherwise, so Babbler never shows up there -->
     <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>

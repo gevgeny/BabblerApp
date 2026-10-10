@@ -34,6 +34,8 @@ struct AppListItem: Identifiable {
 }
 
 struct SettingsView: View {
+    @EnvironmentObject private var appDelegate: AppDelegate
+    @AppStorage(globeActionKeyEnabledKey) private var globeActionKeyEnabled: Bool = false
     // @AppStorage keeps these live — no init() needed, always in sync with UserDefaults
     // and with the same keys read by MenuBarLabel and AppDelegate.
     @AppStorage(langSwitchKeyCodeKey) private var selectedSwitchKeyCodeRaw: Int = Int(Key.option)
@@ -43,6 +45,7 @@ struct SettingsView: View {
     @AppStorage(appInputSourceTimeoutMinutesKey) private var appInputSourceTimeoutMinutes: Int =
         defaultAppInputSourceTimeoutMinutes
     @State private var configuredApps: [AppListItem] = []
+    @State private var globeSetupInstructions: [String] = []
     // Read from the system, not UserDefaults — the user can also remove Babbler in Login Items
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
@@ -60,7 +63,7 @@ struct SettingsView: View {
                 HStack(alignment: .top, spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Action key")
-                        Text("Press the action key to convert the last typed word or selected text to the other keyboard layout.")
+                        Text("Switch language. When text replacement is enabled, also convert the last word or selection.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -72,6 +75,22 @@ struct SettingsView: View {
                     }
                     .labelsHidden()
                     .fixedSize()
+                }
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Use Globe / Fn as an additional action key")
+                        if globeActionKeyEnabled {
+                            ForEach(globeSetupInstructions, id: \.self) { instruction in
+                                Text(instruction)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                    }
+                    Spacer()
+                    Toggle("Use Globe / Fn as an additional action key", isOn: $globeActionKeyEnabled)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
                 }
                 Toggle("Launch at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in
@@ -180,10 +199,33 @@ struct SettingsView: View {
             // @AppStorage already persisted the value; just update the in-memory action key
             KeyboardUtils.setActionKey(code: UInt16(newValue))
         }
+        .onChange(of: globeActionKeyEnabled) { _, _ in
+            appDelegate.globeKeyAvailable = KeyboardUtils.updateGlobeKeyMonitoring()
+            refreshGlobeSetupInstructions()
+        }
+        .onChange(of: appDelegate.globeKeyAvailable) { _, _ in
+            refreshGlobeSetupInstructions()
+        }
+        .onChange(of: appDelegate.hasAccessibility) { _, _ in
+            refreshGlobeSetupInstructions()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshGlobeSetupInstructions()
+        }
         .onAppear {
             appInputSourceTimeoutMinutes = preferenceStore.getAppInputSourceTimeoutMinutes()
             loadConfiguredApps()
+            refreshGlobeSetupInstructions()
         }
+    }
+
+    private func refreshGlobeSetupInstructions() {
+        globeSetupInstructions = KeyboardUtils.globeSetupInstructions(
+            accessibilityGranted: AXIsProcessTrusted(),
+            inputMonitoringGranted: KeyboardUtils.hasInputMonitoringPermission,
+            systemAction: KeyboardUtils.systemGlobeAction,
+            listenerAvailable: appDelegate.globeKeyAvailable
+        )
     }
     
     private var appVersion: String {

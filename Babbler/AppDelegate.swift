@@ -10,6 +10,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     var isWaitingForSwitch = false
     var didFinishAppSetup = false
+    var activeAppId: String?
+    var activeAppInputSourceId: String?
     let clipboardHistory = ClipboardHistory()
     var permissionCheckTimer: Timer?
 
@@ -71,6 +73,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         InputSourceUtils.onKeyboardInputSourceChanged {
             self.currentLang = InputSourceUtils.getCurrentInputSource()
+            // Notifications may arrive after focus moved. Attribute a layout only
+            // when the tracked app is still in front.
+            if let appId = self.activeAppId,
+               NSWorkspace.shared.frontmostApplication?.bundleIdentifier == appId,
+               let source = self.currentLang {
+              self.activeAppInputSourceId = source.id
+              preferenceStore.rememberInputSource(source.id, for: appId)
+            }
+
 
             replaceLog("lang changed → \(self.currentLang?.id ?? "nil") waiting=\(self.isWaitingForSwitch) pending=\(self.pendingRecord.map { $0.code })")
             if !self.isWaitingForSwitch { return }
@@ -92,13 +103,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         WorkspaceUtils.onActiveAppChanged { [weak self] app in
-            self?.refreshSecureInput()
-            if let appId = app.bundleIdentifier {
-                let inputSource = preferenceStore.getInputSource(appId)
-                if inputSource != nil {
-                    InputSourceUtils.switchLang(inputSource![0])
-                }
-            }
+          guard let self else { return }
+          self.refreshSecureInput()
+          guard let appId = app.bundleIdentifier else { return }
+          // Use the cached outgoing layout: macOS may already have selected the
+          // incoming app's layout by the time the activation notification arrives.
+          if let previousAppId = self.activeAppId, let sourceId = self.activeAppInputSourceId {
+            preferenceStore.rememberInputSource(sourceId, for: previousAppId)
+          }
+          self.activeAppId = appId
+          let availableIds = Set(InputSourceUtils.inputSources?.map { $0.id } ?? [])
+          if let sourceId = preferenceStore.inputSourceForActivation(appId, availableSourceIds: availableIds) {
+            InputSourceUtils.switchLang(sourceId)
+          }
+          self.currentLang = InputSourceUtils.getCurrentInputSource()
+          self.activeAppInputSourceId = self.currentLang?.id
+          self.wordRecord = []
+          self.lineRecord = []
+          self.text = ""
         }
 
         currentLang = InputSourceUtils.getCurrentInputSource()

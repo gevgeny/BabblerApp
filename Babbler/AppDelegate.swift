@@ -72,21 +72,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         InputSourceUtils.onKeyboardInputSourceChanged {
             self.currentLang = InputSourceUtils.getCurrentInputSource()
 
+            replaceLog("lang changed → \(self.currentLang?.id ?? "nil") waiting=\(self.isWaitingForSwitch) pending=\(self.pendingRecord.map { $0.code })")
             if !self.isWaitingForSwitch { return }
 
+            // Stay in waiting state until the replacement is posted, so action key taps
+            // in the meantime are ignored instead of starting a second, overlapping swap
             if self.pendingRecord.count > 0 {
                 Task {
                     try? await Task.sleep(nanoseconds: keyboardDelay)
                     await KeyboardUtils.replaceTypedText(self.pendingRecord)
+                    await MainActor.run { self.isWaitingForSwitch = false }
                 }
             } else {
                 KeyboardUtils.fetchSelectedText { text in
-                    if text.count == 0 { return }
-                    KeyboardUtils.typeText(text)
+                    if text.count > 0 { KeyboardUtils.typeText(text) }
+                    self.isWaitingForSwitch = false
                 }
             }
-
-            self.isWaitingForSwitch = false
         }
 
         WorkspaceUtils.onActiveAppChanged { [weak self] app in
@@ -120,7 +122,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func handleGlobalSystemEvent(_ event: NSEvent) {
-        if isWaitingForSwitch { return }
+        replaceLog("event \(event.type == .flagsChanged ? "flags" : event.type == .keyDown ? "down" : event.type == .keyUp ? "up" : "mouse") code=\(event.type == .leftMouseDown ? 0 : event.keyCode) chars=\(event.type == .keyDown ? event.characters ?? "" : "") flags=\(event.modifierFlags.intersection(.deviceIndependentFlagsMask).rawValue) waiting=\(isWaitingForSwitch) synthetic=\(KeyboardUtils.isSynthetic(event))")
+        // Our own replacement keystrokes leave the records unchanged: same keycodes deleted and retyped
+        if isWaitingForSwitch || KeyboardUtils.isSynthetic(event) { return }
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let isLeftMouseDown = event.type == .leftMouseDown
@@ -132,7 +136,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let withActionModifier = flags == KeyboardUtils.actionKeyFlag
         let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
         let isEnter = code == Key.enter || code == Key.returnKey
-        let isDelete = code == Key.delete
+        // keyDown only (repeats included) — counting the keyUp too removed two symbols per Backspace
+        let isDelete = code == Key.delete && event.type == .keyDown
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
 
         // checkActionKeyPress is stateful — call once only
@@ -143,6 +148,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         // (first keystroke after secure input ends must be recorded, not dropped)
         if actionResult != .none || isLeftMouseDown || isSecurityInput {
             refreshSecureInput()
+        }
+
+        if actionResult != .none {
+            replaceLog("ACTION \(actionResult) word='\(text)' wordCodes=\(wordRecord.map { $0.code }) lineCodes=\(lineRecord.map { $0.code }) lang=\(currentLang?.id ?? "nil")")
         }
 
         switch actionResult {

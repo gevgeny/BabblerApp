@@ -72,6 +72,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         InputSourceUtils.onKeyboardInputSourceChanged {
             self.currentLang = InputSourceUtils.getCurrentInputSource()
 
+            replaceLog("lang changed → \(self.currentLang?.id ?? "nil") waiting=\(self.isWaitingForSwitch) pending=\(self.pendingRecord.map { $0.code })")
             if !self.isWaitingForSwitch { return }
 
             // Stay in waiting state until the replacement is posted, so action key taps
@@ -121,6 +122,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func handleGlobalSystemEvent(_ event: NSEvent) {
+        replaceLog("event \(event.type == .flagsChanged ? "flags" : event.type == .keyDown ? "down" : event.type == .keyUp ? "up" : "mouse") code=\(event.type == .leftMouseDown ? 0 : event.keyCode) chars=\(event.type == .keyDown ? event.characters ?? "" : "") flags=\(event.modifierFlags.intersection(.deviceIndependentFlagsMask).rawValue) waiting=\(isWaitingForSwitch) synthetic=\(KeyboardUtils.isSynthetic(event))")
         // Our own replacement keystrokes leave the records unchanged: same keycodes deleted and retyped
         if isWaitingForSwitch || KeyboardUtils.isSynthetic(event) { return }
 
@@ -145,6 +147,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         // (first keystroke after secure input ends must be recorded, not dropped)
         if actionResult != .none || isLeftMouseDown || isSecurityInput {
             refreshSecureInput()
+        }
+
+        if actionResult != .none {
+            replaceLog("ACTION \(actionResult) word='\(text)' wordCodes=\(wordRecord.map { $0.code }) lineCodes=\(lineRecord.map { $0.code }) lang=\(currentLang?.id ?? "nil")")
         }
 
         switch actionResult {

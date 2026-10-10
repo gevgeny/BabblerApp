@@ -1,7 +1,19 @@
 import Foundation
 import Cocoa
+import os
 
 let keyboardDelay = UInt64(50_000_000)
+
+// ponytail: temporary logging for the fast-Option wrong-symbols bug; remove after the fix.
+// DEBUG only — it logs typed text. Xcode console, or:
+// /usr/bin/log stream --level debug --predicate 'subsystem == "eugene.Babbler"'
+private let replaceLogger = Logger(subsystem: "eugene.Babbler", category: "replace")
+func replaceLog(_ message: @autoclosure () -> String) {
+#if DEBUG
+    let text = message()
+    replaceLogger.debug("\(text, privacy: .public)")
+#endif
+}
 
 @objc class KeyboardUtils: NSObject {
     static private(set) var actionKeyCode = CGKeyCode(58);
@@ -161,12 +173,15 @@ let keyboardDelay = UInt64(50_000_000)
         let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
         let loc = CGEventTapLocation.cghidEventTap
                 
+        replaceLog("replace: delete \(record.count) chars")
         deleteTypedText(src, loc, record)
         
         try? await Task.sleep(nanoseconds: keyboardDelay)
         
          
+        replaceLog("replace: retype codes \(record.map { ($0.withShift ? "⇧" : "") + String($0.code) })")
         typeRecordedText(record, src, loc)
+        replaceLog("replace: done")
     }
     
     static func fetchSelectedText(_ callback: @escaping (String) -> Void) -> Void {

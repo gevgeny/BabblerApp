@@ -345,6 +345,7 @@ final class GlobeKeyMonitor {
         // Save current text from clipboard
         let clipboardText = NSPasteboard.general.string(forType: .string) ?? ""
         NSPasteboard.general.clearContents()
+        replaceLog("select: app=\(NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "nil") saved clipboard \(clipboardText.count) chars, types before copy=\(NSPasteboard.general.types?.map { $0.rawValue } ?? []) changeCount=\(NSPasteboard.general.changeCount)")
         
         // Fire Cmd+C
         let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
@@ -362,13 +363,16 @@ final class GlobeKeyMonitor {
             // made the swap silently do nothing. We cleared the clipboard above, so any string
             // appearing now is the copied selection; give up after ~300 ms (nothing selected).
             var newClipboardText = ""
+            var waitedMs = 0
             for _ in 0..<30 {
                 try? await Task.sleep(nanoseconds: 10_000_000)
+                waitedMs += 10
                 if let copied = NSPasteboard.general.string(forType: .string) {
                     newClipboardText = copied
                     break
                 }
             }
+            replaceLog("select: after \(waitedMs) ms copied='\(newClipboardText)' (\(newClipboardText.utf16.count) utf16) types=\(NSPasteboard.general.types?.map { $0.rawValue } ?? []) changeCount=\(NSPasteboard.general.changeCount)\(newClipboardText.isEmpty ? " — TIMEOUT, nothing copied" : "")")
 
             // Restore old clipboard contents
             NSPasteboard.general.clearContents()
@@ -405,6 +409,7 @@ final class GlobeKeyMonitor {
         let (tranlatedText, toRussian) = translateText(text)
         
         let utf16Chars = Array(tranlatedText.utf16)
+        replaceLog("select: lang=\(InputSourceUtils.getCurrentInputSource()?.id ?? "nil") '\(text)' → '\(tranlatedText)' (\(utf16Chars.count) utf16), typing it")
         let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true);
         event1?.keyboardSetUnicodeString(stringLength: utf16Chars.count, unicodeString: utf16Chars)
         postSynthetic(event1, flags: .maskNonCoalesced, .cghidEventTap)

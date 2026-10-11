@@ -354,22 +354,27 @@ final class GlobeKeyMonitor {
         postSynthetic(eventDown, flags: .maskCommand, loc)
         postSynthetic(eventUp, flags: [], loc)
         
-        Task {
-            // Wait till text copied
-            try? await Task.sleep(nanoseconds: keyboardDelay)
-
-            // All NSPasteboard access and the callback must run on the main thread.
-            // NSPasteboard (like all AppKit objects) is not thread-safe, and the
-            // downstream callback calls Carbon TIS APIs which also require the main thread.
-            await MainActor.run {
-                let newClipboardText = NSPasteboard.general.string(forType: .string) ?? ""
-
-                // Restore old clipboard contents
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(clipboardText, forType: .string)
-
-                callback(newClipboardText)
+        // All NSPasteboard access and the callback must run on the main thread.
+        // NSPasteboard (like all AppKit objects) is not thread-safe, and the
+        // downstream callback calls Carbon TIS APIs which also require the main thread.
+        Task { @MainActor in
+            // The app copies asynchronously, so a fixed delay was too short for slow apps and
+            // made the swap silently do nothing. We cleared the clipboard above, so any string
+            // appearing now is the copied selection; give up after ~300 ms (nothing selected).
+            var newClipboardText = ""
+            for _ in 0..<30 {
+                try? await Task.sleep(nanoseconds: 10_000_000)
+                if let copied = NSPasteboard.general.string(forType: .string) {
+                    newClipboardText = copied
+                    break
+                }
             }
+
+            // Restore old clipboard contents
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(clipboardText, forType: .string)
+
+            callback(newClipboardText)
         }
     }
     

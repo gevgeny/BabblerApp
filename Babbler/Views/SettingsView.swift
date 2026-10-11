@@ -186,6 +186,11 @@ struct SettingsView: View {
     }
 
     private func refreshGlobeSetupInstructions() {
+        // Don't read the Globe preference or Input Monitoring status unless Globe is in use
+        guard globeActionKeyEnabled else {
+            globeSetupInstructions = []
+            return
+        }
         globeSetupInstructions = KeyboardUtils.globeSetupInstructions(
             accessibilityGranted: AXIsProcessTrusted(),
             inputMonitoringGranted: KeyboardUtils.hasInputMonitoringPermission,

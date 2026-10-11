@@ -27,6 +27,21 @@ private func menuBarIconStylePreview(_ style: MenuBarIconStyle) -> some View {
     }
 }
 
+// The Globe / Fn key drawn as a small keycap, like on the Mac keyboard
+private struct GlobeKeyCap: View {
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "globe")
+            Text("fn")
+        }
+        .font(.system(size: 11, weight: .medium))
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
+        .overlay(RoundedRectangle(cornerRadius: 5).stroke(.tertiary, lineWidth: 0.5))
+    }
+}
+
 struct AppListItem: Identifiable {
     let name: String
     let id: String
@@ -75,7 +90,13 @@ struct SettingsView: View {
                 }
                 HStack(alignment: .top, spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Use Globe / Fn as an additional action key")
+                        HStack(spacing: 5) {
+                            Text("Use")
+                            GlobeKeyCap()
+                            Text("as an additional action key")
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Use Globe / Fn as an additional action key")
                         if globeActionKeyEnabled {
                             ForEach(globeSetupInstructions, id: \.self) { instruction in
                                 Text(instruction)
@@ -154,7 +175,12 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        // A grouped Form scrolls by default, so it has no natural height and the window
+        // opened at an arbitrary size. Without scrolling it reports its content height,
+        // and the window (contentSize resizability) follows it as rows appear/disappear.
+        .scrollDisabled(true)
         .frame(width: 500)
+        .fixedSize(horizontal: false, vertical: true)
         .overlay(alignment: .topTrailing) {
             Text(appVersion)
                 .font(.system(size: 10))

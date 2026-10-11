@@ -15,6 +15,7 @@ struct BabblerApp: App {
             SettingsView()
                 .environmentObject(appDelegate)
         }
+        .windowResizability(.contentSize)
 
         MenuBarExtra {
             MenuView()

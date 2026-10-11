@@ -1,7 +1,19 @@
 import Foundation
 import Cocoa
+import os
 
 let keyboardDelay = UInt64(50_000_000)
+
+// ponytail: temporary logging for the fast-Option wrong-symbols bug; remove after the fix.
+// DEBUG only — it logs typed text. Xcode console, or:
+// /usr/bin/log stream --level debug --predicate 'subsystem == "eugene.Babbler"'
+private let replaceLogger = Logger(subsystem: "eugene.Babbler", category: "replace")
+func replaceLog(_ message: @autoclosure () -> String) {
+#if DEBUG
+    let text = message()
+    replaceLogger.debug("\(text, privacy: .public)")
+#endif
+}
 
 @objc class KeyboardUtils: NSObject {
     static private(set) var actionKeyCode = CGKeyCode(58);
@@ -116,8 +128,8 @@ let keyboardDelay = UInt64(50_000_000)
             let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
             let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
 
-            eventDown?.post(tap: loc)
-            eventUp?.post(tap: loc)
+            postSynthetic(eventDown, flags: [], loc)
+            postSynthetic(eventUp, flags: [], loc)
         }
     }
     
@@ -132,13 +144,27 @@ let keyboardDelay = UInt64(50_000_000)
             let eventDown = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true)
             let eventUp = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)
             
-            if withShift {
-                eventDown?.flags = CGEventFlags.maskShift;
-            }
-            actionUp?.post(tap: loc)
-            eventDown?.post(tap: loc)
-            eventUp?.post(tap: loc)
+            postSynthetic(actionUp, flags: [], loc)
+            postSynthetic(eventDown, flags: withShift ? .maskShift : [], loc)
+            postSynthetic(eventUp, flags: withShift ? .maskShift : [], loc)
         }
+    }
+
+    // Tags events we post so the global monitor can ignore them — the replacement must not
+    // re-enter the record or the action key logic (a fast second Option tap used to interleave)
+    private static let syntheticEventMarker: Int64 = 0x0BAB_B1E5
+
+    // Flags are always set explicitly: otherwise a physically held Option leaks into the
+    // retyped keys (œ∑† instead of qwt) and turns Delete into Option+Delete (delete word)
+    private static func postSynthetic(_ event: CGEvent?, flags: CGEventFlags, _ loc: CGEventTapLocation) {
+        guard let event else { return }
+        event.flags = flags
+        event.setIntegerValueField(.eventSourceUserData, value: syntheticEventMarker)
+        event.post(tap: loc)
+    }
+
+    static func isSynthetic(_ event: NSEvent) -> Bool {
+        event.cgEvent?.getIntegerValueField(.eventSourceUserData) == syntheticEventMarker
     }
 
     
@@ -147,12 +173,15 @@ let keyboardDelay = UInt64(50_000_000)
         let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
         let loc = CGEventTapLocation.cghidEventTap
                 
+        replaceLog("replace: delete \(record.count) chars")
         deleteTypedText(src, loc, record)
         
         try? await Task.sleep(nanoseconds: keyboardDelay)
         
          
+        replaceLog("replace: retype codes \(record.map { ($0.withShift ? "⇧" : "") + String($0.code) })")
         typeRecordedText(record, src, loc)
+        replaceLog("replace: done")
     }
     
     static func fetchSelectedText(_ callback: @escaping (String) -> Void) -> Void {
@@ -165,9 +194,8 @@ let keyboardDelay = UInt64(50_000_000)
         let loc = CGEventTapLocation.cghidEventTap
         let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.c, keyDown: true)
         let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.c, keyDown: false)
-        eventDown?.flags = CGEventFlags.maskCommand;
-        eventDown?.post(tap: loc)
-        eventUp?.post(tap: loc)
+        postSynthetic(eventDown, flags: .maskCommand, loc)
+        postSynthetic(eventUp, flags: [], loc)
         
         Task {
             // Wait till text copied
@@ -212,12 +240,10 @@ let keyboardDelay = UInt64(50_000_000)
         
         let utf16Chars = Array(tranlatedText.utf16)
         let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true);
-        event1?.flags = .maskNonCoalesced
         event1?.keyboardSetUnicodeString(stringLength: utf16Chars.count, unicodeString: utf16Chars)
-        event1?.post(tap: .cghidEventTap)
+        postSynthetic(event1, flags: .maskNonCoalesced, .cghidEventTap)
 
         let event2 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: false);
-        event2?.flags = .maskNonCoalesced
-        event2?.post(tap: .cghidEventTap)
+        postSynthetic(event2, flags: .maskNonCoalesced, .cghidEventTap)
     }
 }

@@ -44,7 +44,7 @@ Ghbdtn   →  ⌥  →  Привет
 - **Instant layout fix** — retypes the last word, line or selection in the other layout, preserving capitalization
 - **Menu bar indicator** — shows the current input source as a flag or an "EN / RU" badge, or just the Babbler icon
 - **Per-app input sources** — automatically switch to a chosen layout when an app comes to the front
-- **Remember app languages** — restore the last language used in each app, with a timeout or `Never`
+- **Per-app language memory** — coming back to an app within 3 minutes restores the language you last used there; after that, its default applies
 - **Clipboard history** — recently copied text, with pinned items, one click away in the menu
 - **Secure input aware** — when an app enables secure input (password fields, Terminal's Secure Keyboard Entry), the icon shows a red dot and text replacement pauses; layout switching still works
 - **Configurable action key** — Option, Right Option, Control or Right Control
@@ -66,7 +66,6 @@ Ghbdtn   →  ⌥  →  Привет
 3. macOS asks for Accessibility access — click **Open System Settings** and turn on **Babbler**.
    Babbler picks the permission up automatically; no restart needed.
 4. Optional: open **Settings…** to pick the action key, enable launch at login and set per-app input sources.
-   Enable **Remember last input language per app** and choose a timeout or `Never`.
 5. Optional: enable **Use Globe / Fn as an additional action key** in Settings.
 6. If you enable Globe, set macOS **Press Globe key to** to **Do Nothing**.
 7. If you enable Globe, allow Babbler in **Privacy & Security → Input Monitoring** and restart Babbler.

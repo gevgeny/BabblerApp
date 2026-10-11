@@ -9,13 +9,11 @@
 import Foundation
 
 let appInputSourcesKey = "appInputSources"
-let rememberAppInputSourcesKey = "rememberAppInputSources"
 let lastAppInputSourcesKey = "lastAppInputSources"
 let lastAppInputSourceUsedAtKey = "lastAppInputSourceUsedAt"
-let appInputSourceTimeoutMinutesKey = "appInputSourceTimeoutMinutes"
-let defaultAppInputSourceTimeoutMinutes = 3
-let appInputSourceTimeoutNever = 0
-let appInputSourceTimeoutChoices = [1, 3, 5, 10, 15]
+// Returning to an app within this window restores the language last used there; after it,
+// the app's default applies. ponytail: fixed on purpose, make it a setting only if users ask
+let appInputSourceMemorySeconds: Double = 3 * 60
 let globeActionKeyEnabledKey = "globeActionKeyEnabled"
 let langSwitchKeyCodeKey = "langSwitchKeyCode"
 let useSystemInputIndicatorKey = "useSystemInputIndicator"  // legacy, migrated to menuBarIconStyleKey
@@ -62,17 +60,7 @@ class PreferenceStore {
         return inputSource
     }
     
-    func getAppInputSourceTimeoutMinutes() -> Int {
-      guard let minutes = defaults.object(forKey: appInputSourceTimeoutMinutesKey) as? Int else {
-        return defaultAppInputSourceTimeoutMinutes
-      }
-      if minutes == appInputSourceTimeoutNever { return minutes }
-      // Round legacy 2- and 4-minute choices up to the next supported duration.
-      return appInputSourceTimeoutChoices.first { $0 >= minutes } ?? appInputSourceTimeoutChoices.last!
-    }
-
     func rememberInputSource(_ sourceId: String, for appId: String, now: Date = Date()) {
-      guard defaults.bool(forKey: rememberAppInputSourcesKey) else { return }
       var remembered = defaults.dictionary(forKey: lastAppInputSourcesKey) as? [String: String] ?? [:]
       var usedAt = defaults.dictionary(forKey: lastAppInputSourceUsedAtKey) as? [String: Double] ?? [:]
       // Refresh the timestamp even when the language did not change. On app
@@ -84,23 +72,17 @@ class PreferenceStore {
     }
 
     func inputSourceForActivation(_ appId: String, availableSourceIds: Set<String>, now: Date = Date()) -> String? {
-      if defaults.bool(forKey: rememberAppInputSourcesKey),
-         var remembered = defaults.dictionary(forKey: lastAppInputSourcesKey) as? [String: String],
+      if var remembered = defaults.dictionary(forKey: lastAppInputSourcesKey) as? [String: String],
          let sourceId = remembered[appId] {
         var usedAt = defaults.dictionary(forKey: lastAppInputSourceUsedAtKey) as? [String: Double] ?? [:]
-        let minutes = getAppInputSourceTimeoutMinutes()
-        if availableSourceIds.contains(sourceId), minutes == appInputSourceTimeoutNever {
-          return sourceId
-        }
         if let timestamp = usedAt[appId] {
           let age = now.timeIntervalSince1970 - timestamp
-          let timeout = Double(minutes * 60)
-          if age >= 0 && age < timeout && availableSourceIds.contains(sourceId) {
+          if age >= 0 && age < appInputSourceMemorySeconds && availableSourceIds.contains(sourceId) {
             return sourceId
           }
         }
-        // Expired entries and entries from builds without timestamps must not
-        // return later if the timeout is increased or a layout is re-enabled.
+        // Expired entries and entries without timestamps must not return later,
+        // e.g. once a disabled layout is re-enabled.
         remembered[appId] = nil
         usedAt[appId] = nil
         defaults.set(remembered, forKey: lastAppInputSourcesKey)

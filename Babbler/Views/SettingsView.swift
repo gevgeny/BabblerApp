@@ -41,9 +41,6 @@ struct SettingsView: View {
     @AppStorage(langSwitchKeyCodeKey) private var selectedSwitchKeyCodeRaw: Int = Int(Key.option)
     @AppStorage(menuBarIconStyleKey) private var menuBarIconStyle: MenuBarIconStyle = .flag
     @AppStorage(clipboardHistoryEnabledKey) private var clipboardHistoryEnabled: Bool = true
-    @AppStorage(rememberAppInputSourcesKey) private var rememberAppInputSources: Bool = false
-    @AppStorage(appInputSourceTimeoutMinutesKey) private var appInputSourceTimeoutMinutes: Int =
-        defaultAppInputSourceTimeoutMinutes
     @State private var configuredApps: [AppListItem] = []
     @State private var globeSetupInstructions: [String] = []
     // Read from the system, not UserDefaults — the user can also remove Babbler in Login Items
@@ -126,36 +123,6 @@ struct SettingsView: View {
             }
 
             Section {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(alignment: .top, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Remember last input language per app")
-                            Text("Restore the last language you used when you return to an app.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Toggle("Remember last input language per app", isOn: $rememberAppInputSources)
-                            .labelsHidden()
-                            .toggleStyle(.switch)
-                    }
-                    if rememberAppInputSources {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Picker("Reset to default after", selection: $appInputSourceTimeoutMinutes) {
-                                Text("Never").tag(appInputSourceTimeoutNever)
-                                ForEach(appInputSourceTimeoutChoices, id: \.self) { minutes in
-                                    Text(minutes == 1 ? "1 minute away" : "\(minutes) minutes away")
-                                        .tag(minutes)
-                                }
-                            }
-                            Text(appInputSourceTimeoutMinutes == appInputSourceTimeoutNever
-                                 ? "Always remember the app's last language, even after restarting Babbler."
-                                 : "After this much time away, use the app's default language when you return.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
                 ScrollView {
                     if configuredApps.isEmpty {
                         Text("No apps configured.")
@@ -180,7 +147,7 @@ struct SettingsView: View {
             } header: {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Default Input Source")
-                    Text("Keyboard input automatically switches when the app is activated.")
+                    Text("Keyboard input automatically switches when the app is activated. Coming back within 3 minutes keeps the language you last used there.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -213,7 +180,6 @@ struct SettingsView: View {
             refreshGlobeSetupInstructions()
         }
         .onAppear {
-            appInputSourceTimeoutMinutes = preferenceStore.getAppInputSourceTimeoutMinutes()
             loadConfiguredApps()
             refreshGlobeSetupInstructions()
         }

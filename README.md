@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-14.4%2B-blue?logo=apple&logoColor=white" alt="macOS 14.4+">
-  <img src="https://img.shields.io/badge/version-0.8.4-teal" alt="Version 0.8.4">
+  <img src="https://img.shields.io/badge/version-0.8.5-teal" alt="Version 0.8.5">
   <img src="https://img.shields.io/badge/Swift-SwiftUI-orange?logo=swift&logoColor=white" alt="Swift / SwiftUI">
 </p>
 

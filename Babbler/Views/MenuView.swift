@@ -73,9 +73,9 @@ struct MenuView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
 
-            // Replace typed text toggle
+            // Convert typed text toggle
             HStack {
-                Text("Replace typed text")
+                Text("Convert typed text")
                     .fontWeight(.semibold)
                 Spacer()
                 Toggle("", isOn: $isTextReplaceEnabled)
@@ -110,18 +110,21 @@ struct MenuView: View {
                     .padding(.bottom, 8)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             } else if isTextReplaceEnabled {
-                VStack(alignment: .leading, spacing: 0) {
-                    replacementShortcutLabel(forLine: false)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 14)
-                        .padding(.bottom, 2)
-                    replacementShortcutLabel(forLine: true)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 14)
-                        .padding(.bottom, 8)
+                // Key first so the shortcuts scan quickly
+                Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 2) {
+                    GridRow {
+                        shortcutKeys(withShift: false)
+                        Text("last word or selection")
+                    }
+                    GridRow {
+                        shortcutKeys(withShift: true)
+                        Text("whole line")
+                    }
                 }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 8)
                 .symbolRenderingMode(.monochrome)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -227,10 +230,12 @@ struct MenuView: View {
         switchKeyCodeRaw == Int(Key.control) || switchKeyCodeRaw == Int(Key.rightControl) ? "⌃" : "⌥"
     }
 
-    private func replacementShortcutLabel(forLine: Bool) -> Text {
-        let primary = Text("Replace last \(forLine ? "line" : "word"): \(forLine ? "⇧" : "")\(actionKeySymbol())")
+    // "⌥", "⇧⌥", plus the Globe key when it's enabled as an extra action key
+    private func shortcutKeys(withShift: Bool) -> Text {
+        let shift = withShift ? "⇧" : ""
+        let primary = Text("\(shift)\(actionKeySymbol())")
         guard globeActionKeyEnabled else { return primary }
-        return primary + Text(forLine ? " or ⇧" : " or ") + Text(Image(systemName: "globe"))
+        return primary + Text(" / \(shift)") + Text(Image(systemName: "globe"))
     }
 }
 

@@ -7,18 +7,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     @Published var isSecurityInput = false
     @Published var securityApp: String?
     @Published var hasAccessibility = AXIsProcessTrusted()
+    @Published var globeKeyAvailable = false
 
     var isWaitingForSwitch = false
     var didFinishAppSetup = false
+    var activeAppId: String?
+    var activeAppInputSourceId: String?
     let clipboardHistory = ClipboardHistory()
     var permissionCheckTimer: Timer?
 
     // Keycodes of the current word; resets on word break (space → new char) or cancel.
-    var wordRecord: [(withShift: Bool, code: UInt16)] = []
+    var wordRecord: [RecordedKey] = []
     // Keycodes since the last hard cancel (escape, enter, arrow, click, app change); spans multiple words.
-    var lineRecord: [(withShift: Bool, code: UInt16)] = []
+    var lineRecord: [RecordedKey] = []
     // Snapshot of whichever record the current action fired on; consumed by onKeyboardInputSourceChanged.
-    var pendingRecord: [(withShift: Bool, code: UInt16)] = []
+    var pendingRecord: [RecordedKey] = []
 
     var text: String = ""
 
@@ -43,7 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 timer.invalidate()
                 self.permissionCheckTimer = nil
                 self.hasAccessibility = true
-                KeyboardUtils.addGlobalEventListener(self.handleGlobalSystemEvent)
+                self.globeKeyAvailable = KeyboardUtils.addGlobalEventListener(self.handleGlobalSystemEvent)
             }
         }
     }
@@ -71,6 +74,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         InputSourceUtils.onKeyboardInputSourceChanged {
             self.currentLang = InputSourceUtils.getCurrentInputSource()
+            // Notifications may arrive after focus moved. Attribute a layout only
+            // when the tracked app is still in front.
+            if let appId = self.activeAppId,
+               NSWorkspace.shared.frontmostApplication?.bundleIdentifier == appId,
+               let source = self.currentLang {
+              self.activeAppInputSourceId = source.id
+              preferenceStore.rememberInputSource(source.id, for: appId)
+            }
 
             replaceLog("lang changed → \(self.currentLang?.id ?? "nil") waiting=\(self.isWaitingForSwitch) pending=\(self.pendingRecord.map { $0.code })")
             if !self.isWaitingForSwitch { return }
@@ -78,10 +89,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             // Stay in waiting state until the replacement is posted, so action key taps
             // in the meantime are ignored instead of starting a second, overlapping swap
             if self.pendingRecord.count > 0 {
-                Task {
+                let record = self.pendingRecord
+                self.pendingRecord = []
+                Task { @MainActor in
                     try? await Task.sleep(nanoseconds: keyboardDelay)
-                    await KeyboardUtils.replaceTypedText(self.pendingRecord)
-                    await MainActor.run { self.isWaitingForSwitch = false }
+                    await KeyboardUtils.replaceTypedText(record)
+                    self.isWaitingForSwitch = false
                 }
             } else {
                 KeyboardUtils.fetchSelectedText { text in
@@ -92,20 +105,31 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         WorkspaceUtils.onActiveAppChanged { [weak self] app in
-            self?.refreshSecureInput()
-            if let appId = app.bundleIdentifier {
-                let inputSource = preferenceStore.getInputSource(appId)
-                if inputSource != nil {
-                    InputSourceUtils.switchLang(inputSource![0])
-                }
-            }
+          guard let self else { return }
+          self.refreshSecureInput()
+          guard let appId = app.bundleIdentifier else { return }
+          // Use the cached outgoing layout: macOS may already have selected the
+          // incoming app's layout by the time the activation notification arrives.
+          if let previousAppId = self.activeAppId, let sourceId = self.activeAppInputSourceId {
+            preferenceStore.rememberInputSource(sourceId, for: previousAppId)
+          }
+          self.activeAppId = appId
+          let availableIds = Set(InputSourceUtils.inputSources?.map { $0.id } ?? [])
+          if let sourceId = preferenceStore.inputSourceForActivation(appId, availableSourceIds: availableIds) {
+            InputSourceUtils.switchLang(sourceId)
+          }
+          self.currentLang = InputSourceUtils.getCurrentInputSource()
+          self.activeAppInputSourceId = self.currentLang?.id
+          self.wordRecord = []
+          self.lineRecord = []
+          self.text = ""
         }
 
         currentLang = InputSourceUtils.getCurrentInputSource()
         // Everything above works without Accessibility (menu switcher, per-app sources);
         // key monitoring and text replacement need it
         if hasAccessibility {
-            KeyboardUtils.addGlobalEventListener(handleGlobalSystemEvent)
+            globeKeyAvailable = KeyboardUtils.addGlobalEventListener(handleGlobalSystemEvent)
         } else {
             requestAccessibilityPermissions()
         }
@@ -130,13 +154,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let isLeftMouseDown = event.type == .leftMouseDown
         let code = isLeftMouseDown ? 0 : event.keyCode
 
-        let withOption = flags == .option
-        let withCommand = flags == .command
-        let withShift = flags == .shift
-        let withActionModifier = flags == KeyboardUtils.actionKeyFlag
+        let withOption = flags.contains(.option)
+        let withCommand = flags.contains(.command)
+        let withActionModifier = flags.contains(KeyboardUtils.actionKeyFlag)
+        let withGlobe = flags.contains(.function) || KeyboardUtils.isGlobeKeyHeld
         let isArrow = code == Key.leftArrow || code == Key.rightArrow || code == Key.upArrow || code == Key.downArrow
         let isEnter = code == Key.enter || code == Key.returnKey
-        // keyDown only (repeats included) — counting the keyUp too removed two symbols per Backspace
+        // Count Backspace once per keypress, including repeats.
         let isDelete = code == Key.delete && event.type == .keyDown
         let isRecordCanceled = code == Key.escape || code == Key.tab || isArrow || isEnter || isLeftMouseDown
 
@@ -155,22 +179,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         switch actionResult {
-        case .action:
+        case .action, .lineAction:
+            // Text replacement is optional. Every action switches the input language,
+            // including when no text has been typed or selected.
             if preferenceStore.getIsTextReplaceEnabled() && !isSecurityInput {
-                self.pendingRecord = self.wordRecord
+                self.pendingRecord = actionResult == .lineAction ? self.lineRecord : self.wordRecord
                 self.isWaitingForSwitch = true
-            }
-            InputSourceUtils.swapLang()
-            return
-        case .lineAction:
-            if preferenceStore.getIsTextReplaceEnabled() && !isSecurityInput {
-//              print("\n\nlineRecord:", self.lineRecord.map { $0.code},
-//                    "\npending record:", self.pendingRecord.map { $0.code},
-//                    "\nword record: ", self.wordRecord.map { $0.code},
-//                    "\ntext: ", self.text
-//              );
-              self.pendingRecord = self.lineRecord
-              self.isWaitingForSwitch = true
             }
             InputSourceUtils.swapLang()
             return
@@ -186,7 +200,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         if event.type == .flagsChanged { return }
 
         // Erase both records on cancel or when a shortcut modifier is active
-        if isRecordCanceled || (withOption && code != Key.option) || withCommand || (withActionModifier && code != KeyboardUtils.actionKeyCode) {
+        if isRecordCanceled || (withOption && code != Key.option) || withCommand
+            || (withActionModifier && code != KeyboardUtils.actionKeyCode)
+            || (withGlobe && code != Key.function) {
             wordRecord = []
             lineRecord = []
             text = ""
@@ -217,7 +233,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         // Save pressed key to both records
-        let entry = (withShift: withShift, code: event.keyCode)
+        let entry = RecordedKey(code: event.keyCode, flags: flags)
         wordRecord.append(entry)
         lineRecord.append(entry)
         text += event.characters!

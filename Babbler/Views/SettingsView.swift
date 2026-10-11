@@ -27,6 +27,21 @@ private func menuBarIconStylePreview(_ style: MenuBarIconStyle) -> some View {
     }
 }
 
+// The Globe / Fn key drawn as a small keycap, like on the Mac keyboard
+private struct GlobeKeyCap: View {
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "globe")
+            Text("fn")
+        }
+        .font(.system(size: 11, weight: .medium))
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
+        .overlay(RoundedRectangle(cornerRadius: 5).stroke(.tertiary, lineWidth: 0.5))
+    }
+}
+
 struct AppListItem: Identifiable {
     let name: String
     let id: String
@@ -34,12 +49,15 @@ struct AppListItem: Identifiable {
 }
 
 struct SettingsView: View {
+    @EnvironmentObject private var appDelegate: AppDelegate
+    @AppStorage(globeActionKeyEnabledKey) private var globeActionKeyEnabled: Bool = false
     // @AppStorage keeps these live — no init() needed, always in sync with UserDefaults
     // and with the same keys read by MenuBarLabel and AppDelegate.
     @AppStorage(langSwitchKeyCodeKey) private var selectedSwitchKeyCodeRaw: Int = Int(Key.option)
     @AppStorage(menuBarIconStyleKey) private var menuBarIconStyle: MenuBarIconStyle = .flag
     @AppStorage(clipboardHistoryEnabledKey) private var clipboardHistoryEnabled: Bool = true
     @State private var configuredApps: [AppListItem] = []
+    @State private var globeSetupInstructions: [String] = []
     // Read from the system, not UserDefaults — the user can also remove Babbler in Login Items
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
@@ -57,7 +75,7 @@ struct SettingsView: View {
                 HStack(alignment: .top, spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Action key")
-                        Text("Press the action key to convert the last typed word or selected text to the other keyboard layout.")
+                        Text("Switch language. When text replacement is enabled, also convert the last word or selection.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -69,6 +87,28 @@ struct SettingsView: View {
                     }
                     .labelsHidden()
                     .fixedSize()
+                }
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 5) {
+                            Text("Use")
+                            GlobeKeyCap()
+                            Text("as an additional action key")
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Use Globe / Fn as an additional action key")
+                        if globeActionKeyEnabled {
+                            ForEach(globeSetupInstructions, id: \.self) { instruction in
+                                Text(instruction)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                    }
+                    Spacer()
+                    Toggle("Use Globe / Fn as an additional action key", isOn: $globeActionKeyEnabled)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
                 }
                 Toggle("Launch at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in
@@ -128,13 +168,16 @@ struct SettingsView: View {
             } header: {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Default Input Source")
-                    Text("Keyboard input automatically switches when the app is activated.")
+                    Text("Keyboard input automatically switches when the app is activated. Coming back within 3 minutes keeps the language you last used there.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
             }
         }
         .formStyle(.grouped)
+        // A grouped Form scrolls by default, so it has no natural height and the window
+        // opened at an arbitrary size. Without scrolling it reports its content height,
+        // and the window (contentSize resizability) follows it as rows appear/disappear.
         .scrollDisabled(true)
         .frame(width: 500)
         .fixedSize(horizontal: false, vertical: true)
@@ -149,9 +192,37 @@ struct SettingsView: View {
             // @AppStorage already persisted the value; just update the in-memory action key
             KeyboardUtils.setActionKey(code: UInt16(newValue))
         }
+        .onChange(of: globeActionKeyEnabled) { _, _ in
+            appDelegate.globeKeyAvailable = KeyboardUtils.updateGlobeKeyMonitoring()
+            refreshGlobeSetupInstructions()
+        }
+        .onChange(of: appDelegate.globeKeyAvailable) { _, _ in
+            refreshGlobeSetupInstructions()
+        }
+        .onChange(of: appDelegate.hasAccessibility) { _, _ in
+            refreshGlobeSetupInstructions()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshGlobeSetupInstructions()
+        }
         .onAppear {
             loadConfiguredApps()
+            refreshGlobeSetupInstructions()
         }
+    }
+
+    private func refreshGlobeSetupInstructions() {
+        // Don't read the Globe preference or Input Monitoring status unless Globe is in use
+        guard globeActionKeyEnabled else {
+            globeSetupInstructions = []
+            return
+        }
+        globeSetupInstructions = KeyboardUtils.globeSetupInstructions(
+            accessibilityGranted: AXIsProcessTrusted(),
+            inputMonitoringGranted: KeyboardUtils.hasInputMonitoringPermission,
+            systemAction: KeyboardUtils.systemGlobeAction,
+            listenerAvailable: appDelegate.globeKeyAvailable
+        )
     }
     
     private var appVersion: String {

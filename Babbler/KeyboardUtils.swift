@@ -1,6 +1,8 @@
 import Foundation
 import Cocoa
 import os
+import IOKit.hid
+import IOKit.hidsystem
 
 let keyboardDelay = UInt64(50_000_000)
 
@@ -15,6 +17,106 @@ func replaceLog(_ message: @autoclosure () -> String) {
 #endif
 }
 
+struct RecordedKey {
+  let code: UInt16
+  let modifiers: CGEventFlags
+
+  init(code: UInt16, flags: NSEvent.ModifierFlags) {
+    self.code = code
+    var modifiers: CGEventFlags = []
+    if flags.contains(.shift) { modifiers.insert(.maskShift) }
+    if flags.contains(.capsLock) { modifiers.insert(.maskAlphaShift) }
+    self.modifiers = modifiers
+  }
+}
+
+// Read only Apple's Fn / Globe HID elements. macOS can suppress the regular
+// modifier event entirely when "Press Globe key to" is set to "Do Nothing".
+final class GlobeKeyMonitor {
+  private var manager: IOHIDManager?
+  private(set) var isPressed = false
+  private let callback: (NSEvent) -> Void
+  private let matches: [[String: Int]] = [
+    [kIOHIDElementUsagePageKey: 0xFF, kIOHIDElementUsageKey: 0x03],
+    [kIOHIDElementUsagePageKey: 0xFF01, kIOHIDElementUsageKey: 0x03]
+  ]
+
+  init(callback: @escaping (NSEvent) -> Void) { self.callback = callback }
+
+  func start() -> Bool {
+    if manager != nil { return true }
+    let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
+    let keyboardMatch = [kIOHIDDeviceUsagePageKey: Int(kHIDPage_GenericDesktop),
+                         kIOHIDDeviceUsageKey: Int(kHIDUsage_GD_Keyboard)]
+    let vendorMatches = matches.map { match in
+      [kIOHIDDeviceUsagePageKey: match[kIOHIDElementUsagePageKey]!,
+       kIOHIDDeviceUsageKey: match[kIOHIDElementUsageKey]!]
+    }
+    IOHIDManagerSetDeviceMatchingMultiple(manager, ([keyboardMatch] + vendorMatches) as CFArray)
+    IOHIDManagerSetInputValueMatchingMultiple(manager, matches as CFArray)
+    IOHIDManagerRegisterInputValueCallback(manager, { context, result, _, value in
+      guard result == kIOReturnSuccess, let context else { return }
+      let monitor = Unmanaged<GlobeKeyMonitor>.fromOpaque(context).takeUnretainedValue()
+      monitor.handle(isDown: IOHIDValueGetIntegerValue(value) != 0)
+    }, Unmanaged.passUnretained(self).toOpaque())
+    IOHIDManagerScheduleWithRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
+    let result = IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
+    guard result == kIOReturnSuccess else {
+      NSLog("Babbler Globe keyboard monitor could not open: 0x%08X", result)
+      IOHIDManagerUnscheduleFromRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
+      return false
+    }
+    self.manager = manager
+    let devices = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice> ?? []
+    let hasGlobe = devices.contains { device in
+      matches.contains { match in
+        let elements = IOHIDDeviceCopyMatchingElements(device, match as CFDictionary,
+                                                       IOOptionBits(kIOHIDOptionsTypeNone)) as? [IOHIDElement]
+        return !(elements?.isEmpty ?? true)
+      }
+    }
+    guard hasGlobe else {
+      NSLog("Babbler Globe keyboard monitor found no Apple Globe key")
+      stop()
+      return false
+    }
+    return true
+  }
+
+  private func handle(isDown: Bool) {
+    guard isPressed != isDown else { return }
+    isPressed = isDown
+    // Deliver a modifier event directly to Babbler without posting a synthetic
+    // event into other apps. Preserve Shift for whole-line conversion.
+    if let event = Self.modifierEvent(isDown: isDown, flags: CGEventSource.flagsState(.combinedSessionState)) {
+      callback(event)
+    }
+  }
+
+  static func modifierEvent(isDown: Bool, flags: CGEventFlags) -> NSEvent? {
+    guard let event = CGEvent(keyboardEventSource: nil, virtualKey: Key.function, keyDown: isDown) else { return nil }
+    event.type = .flagsChanged
+    // Session flags also contain event metadata. Only keyboard modifiers belong
+    // in the Fn event; otherwise an extra system bit can reject the next tap.
+    let keyboardModifiers: CGEventFlags = [.maskAlphaShift, .maskShift, .maskControl,
+      .maskAlternate, .maskCommand, .maskNumericPad, .maskHelp, .maskSecondaryFn]
+    var flags = flags.intersection(keyboardModifiers)
+    if isDown { flags.insert(.maskSecondaryFn) } else { flags.remove(.maskSecondaryFn) }
+    event.flags = flags
+    return NSEvent(cgEvent: event)
+  }
+
+  func stop() {
+    guard let manager else { return }
+    IOHIDManagerClose(manager, IOOptionBits(kIOHIDOptionsTypeNone))
+    IOHIDManagerUnscheduleFromRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
+    self.manager = nil
+    isPressed = false
+  }
+
+  deinit { stop() }
+}
+
 @objc class KeyboardUtils: NSObject {
     static private(set) var actionKeyCode = CGKeyCode(58);
     
@@ -22,17 +124,62 @@ func replaceLog(_ message: @autoclosure () -> String) {
     
     enum ActionKeyResult {
         case none
-        case action        // plain Action key → switch last typed word
-        case lineAction    // Shift + Action   → switch last typed line
+        case action        // switch language; optionally convert the word or selection
+        case lineAction    // switch language; optionally convert the line or selection
     }
 
-    static private var isActionKeyPressed = false
-    static private var isShiftHeldWithAction = false
-    // Secure input hides keyDown events from the global monitor, so compare the
-    // system-wide keyDown counter between action key press and release instead.
-    static private var keyDownCountAtActionPress: UInt32 = 0
+    struct ActionKeyTracker {
+      private var pressedCode: UInt16?
+      private var pressedFlag: NSEvent.ModifierFlags = []
+      private var withShift = false
+      private var interrupted = false
+      private var keyDownCountAtPress: UInt32 = 0
+
+      mutating func check(_ code: UInt16, _ flags: NSEvent.ModifierFlags,
+                          primaryCode: UInt16, primaryFlag: NSEvent.ModifierFlags,
+                          globeEnabled: Bool, keyDownCount: UInt32) -> ActionKeyResult {
+        if let pressedCode {
+          if code == pressedCode && !flags.contains(pressedFlag) {
+            let result: ActionKeyResult = interrupted || keyDownCount != keyDownCountAtPress
+              ? .none : (withShift ? .lineAction : .action)
+            self = ActionKeyTracker()
+            return result
+          }
+          // Shift may be released before the action key. Preserve the line action.
+          if flags.contains(.shift) { withShift = true }
+          let allowed: NSEvent.ModifierFlags = [pressedFlag, .shift, .capsLock, .numericPad]
+          if !flags.subtracting(allowed).isEmpty || !KeyboardUtils.isModifierKey(code) {
+            interrupted = true
+          }
+          return .none
+        }
+
+        let triggerFlag: NSEvent.ModifierFlags
+        if code == primaryCode {
+          triggerFlag = primaryFlag
+        } else if globeEnabled && code == Key.function {
+          triggerFlag = .function
+        } else {
+          return .none
+        }
+        let allowed: NSEvent.ModifierFlags = [triggerFlag, .shift, .capsLock, .numericPad]
+        guard flags.contains(triggerFlag), flags.subtracting(allowed).isEmpty else { return .none }
+        pressedCode = code
+        pressedFlag = triggerFlag
+        withShift = flags.contains(.shift)
+        interrupted = false
+        keyDownCountAtPress = keyDownCount
+        return .none
+      }
+    }
+
+    static private var actionKeyTracker = ActionKeyTracker()
+    static private var globeMonitor: GlobeKeyMonitor?
+    static private var globeCallback: ((NSEvent) -> Void)?
+    static private var globalMonitor: Any?
 
     static func setActionKey(code: UInt16) {
+        actionKeyTracker = ActionKeyTracker()
         actionKeyCode = CGKeyCode(code)
         switch code {
         case Key.option, Key.rightOption:
@@ -49,51 +196,75 @@ func replaceLog(_ message: @autoclosure () -> String) {
         setActionKey(code: code)
     }
     
-    static func addGlobalEventListener(_ callback: @escaping (NSEvent) -> Void) -> Void {
-        // NSEvent.addGlobalMonitorForEvents delivers on a background thread.
-        // Dispatch to main so that handleEvent can safely call Carbon TIS APIs
-        // (which assert they run on the main queue) and mutate AppDelegate state
-        // without data races.
-        NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp, .leftMouseDown, .flagsChanged]) { event in
-            DispatchQueue.main.async { callback(event) }
-        }
+    static var isGlobeKeyHeld: Bool { globeMonitor?.isPressed == true }
+
+    static var hasInputMonitoringPermission: Bool {
+      IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
     }
-  
-    static func checkActionKeyPress(_ code: UInt16, _ flags: NSEvent.ModifierFlags) -> ActionKeyResult {
-        if flags.contains(actionKeyFlag) && code == actionKeyCode {
-            // Action key pressed — record whether Shift is also held
-            isActionKeyPressed = true
-            isShiftHeldWithAction = flags.contains(.shift)
-            keyDownCountAtActionPress = keyDownCount()
-            return .none
-        } else if code == actionKeyCode && isActionKeyPressed {
-            // Action key released — fire result
-            let withShift = isShiftHeldWithAction
-            let wasInterrupted = keyDownCount() != keyDownCountAtActionPress
-            isActionKeyPressed = false
-            isShiftHeldWithAction = false
-            if wasInterrupted { return .none }
-            return withShift ? .lineAction : .action
-        } else if isActionKeyPressed && flags.contains(actionKeyFlag) {
-            if isModifierKey(code) {
-                // A modifier toggled while action key is held.
-                // Only ever turn isShiftHeldWithAction ON — never clear it here.
-                // Clearing it when Shift releases before Option would wrongly downgrade
-                // the pending lineAction to a plain action.
-                if flags.contains(.shift) {
-                    isShiftHeldWithAction = true
-                }
-            } else {
-                // A regular key (e.g. arrow, click) was pressed while action held — cancel
-                isActionKeyPressed = false
-                isShiftHeldWithAction = false
-            }
-            return .none
-        } else {
-            isActionKeyPressed = false
-            isShiftHeldWithAction = false
-            return .none
+
+    static var systemGlobeAction: Int? {
+      let domain = "com.apple.HIToolbox" as CFString
+      // Refresh after returning from System Settings. Never change the system preference.
+      CFPreferencesAppSynchronize(domain)
+      return CFPreferencesCopyAppValue("AppleFnUsageType" as CFString, domain) as? Int
+    }
+
+    static func globeSetupInstructions(accessibilityGranted: Bool, inputMonitoringGranted: Bool,
+                                       systemAction: Int?, listenerAvailable: Bool) -> [String] {
+      var instructions: [String] = []
+      if !accessibilityGranted {
+        instructions.append("Allow Babbler in Privacy & Security → Accessibility, then restart Babbler.")
+      }
+      if !inputMonitoringGranted {
+        instructions.append("Allow Babbler in Privacy & Security → Input Monitoring, then restart Babbler.")
+      }
+      if systemAction != 0 {
+        instructions.append("In System Settings → Keyboard, set ‘Press Globe key to’ to ‘Do Nothing’.")
+      }
+      if accessibilityGranted && inputMonitoringGranted && !listenerAvailable {
+        instructions.append("Connect an Apple keyboard and restart Babbler to enable Globe.")
+      }
+      return instructions
+    }
+
+    @discardableResult
+    static func addGlobalEventListener(_ callback: @escaping (NSEvent) -> Void) -> Bool {
+      if let monitor = globalMonitor { NSEvent.removeMonitor(monitor) }
+      globalMonitor = NSEvent.addGlobalMonitorForEvents(
+        matching: [.keyDown, .keyUp, .leftMouseDown, .flagsChanged]
+      ) { event in
+        // HID supplies both Globe transitions. Do not also handle a regular
+        // Fn event on systems that still emit one.
+        DispatchQueue.main.async {
+          if event.type == .flagsChanged && event.keyCode == Key.function
+              && globeMonitor != nil && UserDefaults.standard.bool(forKey: globeActionKeyEnabledKey) {
+            return
+          }
+          callback(event)
         }
+      }
+      globeCallback = callback
+      return updateGlobeKeyMonitoring()
+    }
+
+    static func updateGlobeKeyMonitoring() -> Bool {
+      actionKeyTracker = ActionKeyTracker()
+      guard UserDefaults.standard.bool(forKey: globeActionKeyEnabledKey), let callback = globeCallback else {
+        globeMonitor?.stop()
+        globeMonitor = nil
+        return false
+      }
+      if globeMonitor != nil { return true }
+      let monitor = GlobeKeyMonitor(callback: callback)
+      guard monitor.start() else { return false }
+      globeMonitor = monitor
+      return true
+    }
+
+    static func checkActionKeyPress(_ code: UInt16, _ flags: NSEvent.ModifierFlags) -> ActionKeyResult {
+      actionKeyTracker.check(code, flags, primaryCode: actionKeyCode, primaryFlag: actionKeyFlag,
+                             globeEnabled: UserDefaults.standard.bool(forKey: globeActionKeyEnabledKey),
+                             keyDownCount: keyDownCount())
     }
 
     private static func keyDownCount() -> UInt32 {
@@ -103,7 +274,7 @@ func replaceLog(_ message: @autoclosure () -> String) {
     private static func isModifierKey(_ code: UInt16) -> Bool {
         switch code {
         case Key.shift, Key.rightShift, Key.option, Key.rightOption,
-             Key.control, Key.rightControl, Key.command, Key.capsLock, Key.function:
+             Key.control, Key.rightControl, Key.command, Key.rightCommand, Key.capsLock, Key.function:
             return true
         default:
             return false
@@ -119,35 +290,18 @@ func replaceLog(_ message: @autoclosure () -> String) {
         deleteUp?.post(tap: loc)
     }
     
-    private static func deleteTypedText(_ src: CGEventSource?, _ loc: CGEventTapLocation, _ record: [(withShift: Bool, code: UInt16)]) {
-        let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
-        let loc = CGEventTapLocation.cghidEventTap
-
-        // Delete last typed text
-        for _ in 1...record.count {
-            let eventDown = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: true)
-            let eventUp = CGEvent(keyboardEventSource: src, virtualKey: Key.delete, keyDown: false)
-
-            postSynthetic(eventDown, flags: [], loc)
-            postSynthetic(eventUp, flags: [], loc)
-        }
-    }
-    
-    private static func typeRecordedText(
-        _ record: [(withShift: Bool, code: UInt16)],
-        _ src: CGEventSource?,
-        _ loc: CGEventTapLocation
-    ) {
-        let actionUp = CGEvent(keyboardEventSource: src, virtualKey: actionKeyCode, keyDown: false)
-         
-        record.forEach { (withShift: Bool, code: UInt16) in
-            let eventDown = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true)
-            let eventUp = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)
-            
-            postSynthetic(actionUp, flags: [], loc)
-            postSynthetic(eventDown, flags: withShift ? .maskShift : [], loc)
-            postSynthetic(eventUp, flags: withShift ? .maskShift : [], loc)
-        }
+    static func recordedKeyEvents(_ key: RecordedKey, source: CGEventSource?) -> [CGEvent] {
+      let events = [
+        CGEvent(keyboardEventSource: source, virtualKey: key.code, keyDown: true),
+        CGEvent(keyboardEventSource: source, virtualKey: key.code, keyDown: false)
+      ].compactMap { $0 }
+      // CGEvent initially inherits live modifiers. Shift used to trigger a line
+      // conversion must not turn the replacement into uppercase or a selection.
+      for event in events {
+        event.flags = key.modifiers
+        event.setIntegerValueField(.eventSourceUserData, value: syntheticEventMarker)
+      }
+      return events
     }
 
     // Tags events we post so the global monitor can ignore them — the replacement must not
@@ -169,21 +323,24 @@ func replaceLog(_ message: @autoclosure () -> String) {
 
     
     
-    static func replaceTypedText(_ record: [(withShift: Bool, code: UInt16)]) async {
-        let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
-        let loc = CGEventTapLocation.cghidEventTap
-                
-        replaceLog("replace: delete \(record.count) chars")
-        deleteTypedText(src, loc, record)
-        
-        try? await Task.sleep(nanoseconds: keyboardDelay)
-        
-         
-        replaceLog("replace: retype codes \(record.map { ($0.withShift ? "⇧" : "") + String($0.code) })")
-        typeRecordedText(record, src, loc)
-        replaceLog("replace: done")
+    @MainActor
+    static func replaceTypedText(_ record: [RecordedKey]) async {
+      guard !record.isEmpty else { return }
+      let source = CGEventSource(stateID: .privateState)
+      let location = CGEventTapLocation.cghidEventTap
+      let delete = RecordedKey(code: Key.delete, flags: [])
+      replaceLog("replace: delete \(record.count) chars")
+      for _ in record {
+        for event in recordedKeyEvents(delete, source: source) { event.post(tap: location) }
+      }
+      try? await Task.sleep(nanoseconds: keyboardDelay)
+      replaceLog("replace: retype codes \(record.map { $0.code })")
+      for key in record {
+        for event in recordedKeyEvents(key, source: source) { event.post(tap: location) }
+      }
+      replaceLog("replace: done")
     }
-    
+
     static func fetchSelectedText(_ callback: @escaping (String) -> Void) -> Void {
         // Save current text from clipboard
         let clipboardText = NSPasteboard.general.string(forType: .string) ?? ""

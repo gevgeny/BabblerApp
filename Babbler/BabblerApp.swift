@@ -13,7 +13,9 @@ struct BabblerApp: App {
     var body: some Scene {
         Settings {
             SettingsView()
+                .environmentObject(appDelegate)
         }
+        .windowResizability(.contentSize)
 
         MenuBarExtra {
             MenuView()

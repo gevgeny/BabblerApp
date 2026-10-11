@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-14.4%2B-blue?logo=apple&logoColor=white" alt="macOS 14.4+">
-  <img src="https://img.shields.io/badge/version-0.8.1-teal" alt="Version 0.8.1">
+  <img src="https://img.shields.io/badge/version-0.8.4-teal" alt="Version 0.8.4">
   <img src="https://img.shields.io/badge/Swift-SwiftUI-orange?logo=swift&logoColor=white" alt="Swift / SwiftUI">
 </p>
 
@@ -41,12 +41,15 @@ Ghbdtn   →  ⌥  →  Привет
 
 ## Features
 
-- **Instant layout fix** — retypes the last word, line or selection in the other layout
+- **Instant layout fix** — retypes the last word, line or selection in the other layout, preserving capitalization
 - **Menu bar indicator** — shows the current input source as a flag or an "EN / RU" badge, or just the Babbler icon
 - **Per-app input sources** — automatically switch to a chosen layout when an app comes to the front
+- **Per-app language memory** — coming back to an app within 3 minutes restores the language you last used there; after that, its default applies
 - **Clipboard history** — recently copied text, with pinned items, one click away in the menu
 - **Secure input aware** — when an app enables secure input (password fields, Terminal's Secure Keyboard Entry), the icon shows a red dot and text replacement pauses; layout switching still works
 - **Configurable action key** — Option, Right Option, Control or Right Control
+- **Optional Globe action key** — use Globe alongside the selected action key; hold Shift to fix a line.
+  Either key switches the language even with no text to convert or text replacement disabled.
 - **Launch at login**
 
 ## Requirements
@@ -61,7 +64,10 @@ Ghbdtn   →  ⌥  →  Привет
 2. Move **Babbler.app** to `/Applications` and launch it. The icon appears in the menu bar.
 3. macOS asks for Accessibility access — click **Open System Settings** and turn on **Babbler**.
    Babbler picks the permission up automatically; no restart needed.
-4. Optional: open **Settings…** from the menu bar to pick the action key, enable launch at login and set per-app input sources.
+4. Optional: open **Settings…** to pick the action key, enable launch at login and set per-app input sources.
+5. Optional: enable **Use Globe / Fn as an additional action key** in Settings.
+6. If you enable Globe, set macOS **Press Globe key to** to **Do Nothing**.
+7. If you enable Globe, allow Babbler in **Privacy & Security → Input Monitoring** and restart Babbler.
 
 ## Building from source
 

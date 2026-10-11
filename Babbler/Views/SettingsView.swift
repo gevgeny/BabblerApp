@@ -154,9 +154,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        // Height follows the content; the cap only kicks in on small screens (the form scrolls)
         .frame(width: 500)
-        .frame(maxHeight: (NSScreen.main?.visibleFrame.height ?? 800) - 100)
         .overlay(alignment: .topTrailing) {
             Text(appVersion)
                 .font(.system(size: 10))

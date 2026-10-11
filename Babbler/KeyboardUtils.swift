@@ -213,9 +213,7 @@ final class GlobeKeyMonitor {
                                        systemAction: Int?, listenerAvailable: Bool) -> [String] {
       var instructions: [String] = []
       if !accessibilityGranted {
-        let permission = ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 27
-          ? "Device Control and Data Access" : "Accessibility"
-        instructions.append("Allow Babbler in Privacy & Security → \(permission), then restart Babbler.")
+        instructions.append("Allow Babbler in Privacy & Security → Accessibility, then restart Babbler.")
       }
       if !inputMonitoringGranted {
         instructions.append("Allow Babbler in Privacy & Security → Input Monitoring, then restart Babbler.")

@@ -378,12 +378,16 @@ final class GlobeKeyMonitor {
         }
     }
     
-    static func translateText(_ text: String) -> String {
-        // Decide mapping direction based on the current (target) input source
-        // If current input source is Russian, we convert from EN -> RU
-        // Otherwise, convert from RU -> EN
-        guard let currentSource = InputSourceUtils.getCurrentInputSource() else { return text }
-        let targetIsRussian = InputSourceUtils.isRussian(currentSource)
+    // Direction comes from the text itself, not the current layout: a selection may have been
+    // typed any time in either layout (selecting Russian text while EN was active used to
+    // "convert" it to the same text). The first letter decides: Cyrillic → to English,
+    // Latin → to Russian. Only text without letters falls back to the layout.
+    static func translateText(_ text: String) -> (text: String, toRussian: Bool) {
+        let firstLetter = text.unicodeScalars.first {
+            (0x0400...0x04FF).contains($0.value) || ($0.isASCII && $0.properties.isAlphabetic)
+        }
+        let targetIsRussian = firstLetter.map { $0.isASCII }
+            ?? InputSourceUtils.isRussian(InputSourceUtils.getCurrentInputSource())
         let mapper = targetIsRussian ? enRuDictionary : ruEnDictionary
 
         let translated = text.map { ch -> String in
@@ -394,11 +398,11 @@ final class GlobeKeyMonitor {
                 return s
             }
         }
-        return translated.joined()
+        return (translated.joined(), targetIsRussian)
     }
 
     static func typeText(_ text: String) {
-        let tranlatedText = translateText(text)
+        let (tranlatedText, toRussian) = translateText(text)
         
         let utf16Chars = Array(tranlatedText.utf16)
         let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true);
@@ -407,5 +411,8 @@ final class GlobeKeyMonitor {
 
         let event2 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: false);
         postSynthetic(event2, flags: .maskNonCoalesced, .cghidEventTap)
+
+        // Leave the layout matching the converted text (the action key toggled it blindly)
+        InputSourceUtils.selectLang(russian: toRussian)
     }
 }

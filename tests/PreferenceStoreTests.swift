@@ -19,9 +19,6 @@ struct PreferenceStoreTests {
     store.setInputSource("browser", "en", "English")
     assert(source("editor", after: 179) == "ru")
     assert(source("browser") == "en")
-    let restarted = PreferenceStore(defaults: defaults)
-    assert(restarted.inputSourceForActivation("editor", availableSourceIds: available,
-                                             now: start.addingTimeInterval(179)) == "ru")
     assert(source("editor", after: 180) == "en")
     assert(source("editor", after: 1) == "en") // Expired entries cannot be resurrected.
     // Returning repeatedly without changing language refreshes the departure time.
@@ -36,10 +33,6 @@ struct PreferenceStoreTests {
     // A remembered layout that is no longer available falls back to the default.
     store.rememberInputSource("ru", for: "editor", now: start)
     assert(store.inputSourceForActivation("editor", availableSourceIds: ["en"], now: start) == "en")
-    // Legacy language entries without timestamps expire on their first activation.
-    defaults.set(["editor": "ru"], forKey: lastAppInputSourcesKey)
-    defaults.removeObject(forKey: lastAppInputSourceUsedAtKey)
-    assert(source("editor") == "en")
     store.rememberInputSource("ru", for: "editor", now: start)
     assert(source("editor", after: -1) == "en") // Reject timestamps in the future after a clock change.
     print("PreferenceStore tests passed")

@@ -9,8 +9,6 @@
 import Foundation
 
 let appInputSourcesKey = "appInputSources"
-let lastAppInputSourcesKey = "lastAppInputSources"
-let lastAppInputSourceUsedAtKey = "lastAppInputSourceUsedAt"
 // Returning to an app within this window restores the language last used there; after it,
 // the app's default applies. ponytail: fixed on purpose, make it a setting only if users ask
 let appInputSourceMemorySeconds: Double = 3 * 60
@@ -37,6 +35,9 @@ enum MenuBarIconStyle: String, CaseIterable, Identifiable {
 class PreferenceStore {
     private let defaults: UserDefaults
     private var appInputSources: [String: [String]]
+    // Last language per app, kept in memory only: the window is short, so there's
+    // nothing worth persisting (and no app-usage history left on disk)
+    private var lastInputSources: [String: (sourceId: String, usedAt: Date)] = [:]
     
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -61,32 +62,20 @@ class PreferenceStore {
     }
     
     func rememberInputSource(_ sourceId: String, for appId: String, now: Date = Date()) {
-      var remembered = defaults.dictionary(forKey: lastAppInputSourcesKey) as? [String: String] ?? [:]
-      var usedAt = defaults.dictionary(forKey: lastAppInputSourceUsedAtKey) as? [String: Double] ?? [:]
       // Refresh the timestamp even when the language did not change. On app
-      // departure this starts the timeout from when the user stopped using it.
-      remembered[appId] = sourceId
-      usedAt[appId] = now.timeIntervalSince1970
-      defaults.set(remembered, forKey: lastAppInputSourcesKey)
-      defaults.set(usedAt, forKey: lastAppInputSourceUsedAtKey)
+      // departure this starts the window from when the user stopped using it.
+      lastInputSources[appId] = (sourceId, now)
     }
 
     func inputSourceForActivation(_ appId: String, availableSourceIds: Set<String>, now: Date = Date()) -> String? {
-      if var remembered = defaults.dictionary(forKey: lastAppInputSourcesKey) as? [String: String],
-         let sourceId = remembered[appId] {
-        var usedAt = defaults.dictionary(forKey: lastAppInputSourceUsedAtKey) as? [String: Double] ?? [:]
-        if let timestamp = usedAt[appId] {
-          let age = now.timeIntervalSince1970 - timestamp
-          if age >= 0 && age < appInputSourceMemorySeconds && availableSourceIds.contains(sourceId) {
-            return sourceId
-          }
-        }
-        // Expired entries and entries without timestamps must not return later,
+      if let last = lastInputSources.removeValue(forKey: appId) {
+        let age = now.timeIntervalSince(last.usedAt)
+        // Expired entries are dropped above, so they can't come back later,
         // e.g. once a disabled layout is re-enabled.
-        remembered[appId] = nil
-        usedAt[appId] = nil
-        defaults.set(remembered, forKey: lastAppInputSourcesKey)
-        defaults.set(usedAt, forKey: lastAppInputSourceUsedAtKey)
+        if age >= 0 && age < appInputSourceMemorySeconds && availableSourceIds.contains(last.sourceId) {
+          lastInputSources[appId] = last
+          return last.sourceId
+        }
       }
       guard let sourceId = appInputSources[appId]?.first,
             availableSourceIds.contains(sourceId) else { return nil }

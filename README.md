@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <a href="./bin/Babbler%20v0.8.0.zip"><strong>Download v0.8.0</strong></a> ·
+  <a href="./bin/Babbler%20v0.8.4.zip"><strong>Download v0.8.4</strong></a> ·
   <a href="#features">Features</a> ·
   <a href="#installation">Installation</a> ·
   <a href="#building-from-source">Build</a>
@@ -60,7 +60,7 @@ Ghbdtn   →  ⌥  →  Привет
 
 ## Installation
 
-1. Download [**Babbler v0.8.0**](./bin/Babbler%20v0.8.0.zip) and unzip it. The app is signed with a Developer ID and notarized by Apple. Older builds are in [`bin`](./bin).
+1. Download [**Babbler v0.8.4**](./bin/Babbler%20v0.8.4.zip) and unzip it. The app is signed with a Developer ID and notarized by Apple. Older builds are in [`bin`](./bin).
 2. Move **Babbler.app** to `/Applications` and launch it. The icon appears in the menu bar.
 3. macOS asks for Accessibility access — click **Open System Settings** and turn on **Babbler**.
    Babbler picks the permission up automatically; no restart needed.

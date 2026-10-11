@@ -52,6 +52,10 @@ struct KeyboardUtilsTests {
     }
     assert(setup(action: nil).count == 1)
     assert(setup(available: false).first?.contains("Apple keyboard") == true)
+    // Selection direction follows the text, not the current layout
+    assert(KeyboardUtils.translateText("ghbdtn") == ("привет", true))
+    assert(KeyboardUtils.translateText("руддщ") == ("hello", false))
+    assert(KeyboardUtils.translateText("Ghbdtn, vbh!").toRussian) // mixed with punctuation
     print("Keyboard event tests passed")
   }
 }

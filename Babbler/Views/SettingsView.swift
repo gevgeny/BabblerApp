@@ -307,21 +307,25 @@ struct AppInputSourceRow: View {
                 .frame(width: 24, height: 24)
             Text(app.name)
             Spacer()
-            Picker("", selection: $selectedInputSourceId) {
-                if let sources = InputSourceUtils.inputSources {
-                    ForEach(sources, id: \.id) { source in
-                        Text(source.name).tag(source.id)
+            HStack(spacing: 2) {
+                Picker("", selection: $selectedInputSourceId) {
+                    if let sources = InputSourceUtils.inputSources {
+                        ForEach(sources, id: \.id) { source in
+                            Text(source.name).tag(source.id)
+                        }
                     }
                 }
+                .labelsHidden()
+                .frame(width: 150)
+                Button(action: onRemove) {
+                    Image(systemName: "minus.circle")
+                        .foregroundStyle(.red)
+                }
+                .buttonStyle(.plain)
             }
-            .labelsHidden()
-            .frame(width: 150)
-            Button(action: onRemove) {
-                Image(systemName: "minus.circle")
-                    .foregroundStyle(.red)
-            }
-            .buttonStyle(.plain)
         }
+        // Keep the remove button clear of the list's scrollbar
+        .padding(.trailing, 14)
         .onChange(of: selectedInputSourceId) { _, newValue in
             if let source = InputSourceUtils.inputSources?.first(where: { $0.id == newValue }) {
                 preferenceStore.setInputSource(app.id, newValue, source.name)

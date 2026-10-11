@@ -38,6 +38,10 @@ import Carbon
         }
     }
 
+    static func selectLang(russian: Bool) {
+        TISSelectInputSource(russian ? ruInputSource : enInputSource)
+    }
+
     static func switchLang(_ langId: String) {
         guard let inputSource = inputSources?.first(where: { $0.id == langId }) else { return }
         TISSelectInputSource(inputSource)

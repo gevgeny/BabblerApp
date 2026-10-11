@@ -345,6 +345,7 @@ final class GlobeKeyMonitor {
         // Save current text from clipboard
         let clipboardText = NSPasteboard.general.string(forType: .string) ?? ""
         NSPasteboard.general.clearContents()
+        replaceLog("select: app=\(NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "nil") saved clipboard \(clipboardText.count) chars, types before copy=\(NSPasteboard.general.types?.map { $0.rawValue } ?? []) changeCount=\(NSPasteboard.general.changeCount)")
         
         // Fire Cmd+C
         let src = CGEventSource(stateID: CGEventSourceStateID.hidSystemState)
@@ -354,31 +355,43 @@ final class GlobeKeyMonitor {
         postSynthetic(eventDown, flags: .maskCommand, loc)
         postSynthetic(eventUp, flags: [], loc)
         
-        Task {
-            // Wait till text copied
-            try? await Task.sleep(nanoseconds: keyboardDelay)
-
-            // All NSPasteboard access and the callback must run on the main thread.
-            // NSPasteboard (like all AppKit objects) is not thread-safe, and the
-            // downstream callback calls Carbon TIS APIs which also require the main thread.
-            await MainActor.run {
-                let newClipboardText = NSPasteboard.general.string(forType: .string) ?? ""
-
-                // Restore old clipboard contents
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(clipboardText, forType: .string)
-
-                callback(newClipboardText)
+        // All NSPasteboard access and the callback must run on the main thread.
+        // NSPasteboard (like all AppKit objects) is not thread-safe, and the
+        // downstream callback calls Carbon TIS APIs which also require the main thread.
+        Task { @MainActor in
+            // The app copies asynchronously, so a fixed delay was too short for slow apps and
+            // made the swap silently do nothing. We cleared the clipboard above, so any string
+            // appearing now is the copied selection; give up after ~300 ms (nothing selected).
+            var newClipboardText = ""
+            var waitedMs = 0
+            for _ in 0..<30 {
+                try? await Task.sleep(nanoseconds: 10_000_000)
+                waitedMs += 10
+                if let copied = NSPasteboard.general.string(forType: .string) {
+                    newClipboardText = copied
+                    break
+                }
             }
+            replaceLog("select: after \(waitedMs) ms copied='\(newClipboardText)' (\(newClipboardText.utf16.count) utf16) types=\(NSPasteboard.general.types?.map { $0.rawValue } ?? []) changeCount=\(NSPasteboard.general.changeCount)\(newClipboardText.isEmpty ? " — TIMEOUT, nothing copied" : "")")
+
+            // Restore old clipboard contents
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(clipboardText, forType: .string)
+
+            callback(newClipboardText)
         }
     }
     
-    static func translateText(_ text: String) -> String {
-        // Decide mapping direction based on the current (target) input source
-        // If current input source is Russian, we convert from EN -> RU
-        // Otherwise, convert from RU -> EN
-        guard let currentSource = InputSourceUtils.getCurrentInputSource() else { return text }
-        let targetIsRussian = InputSourceUtils.isRussian(currentSource)
+    // Direction comes from the text itself, not the current layout: a selection may have been
+    // typed any time in either layout (selecting Russian text while EN was active used to
+    // "convert" it to the same text). The first letter decides: Cyrillic → to English,
+    // Latin → to Russian. Only text without letters falls back to the layout.
+    static func translateText(_ text: String) -> (text: String, toRussian: Bool) {
+        let firstLetter = text.unicodeScalars.first {
+            (0x0400...0x04FF).contains($0.value) || ($0.isASCII && $0.properties.isAlphabetic)
+        }
+        let targetIsRussian = firstLetter.map { $0.isASCII }
+            ?? InputSourceUtils.isRussian(InputSourceUtils.getCurrentInputSource())
         let mapper = targetIsRussian ? enRuDictionary : ruEnDictionary
 
         let translated = text.map { ch -> String in
@@ -389,18 +402,22 @@ final class GlobeKeyMonitor {
                 return s
             }
         }
-        return translated.joined()
+        return (translated.joined(), targetIsRussian)
     }
 
     static func typeText(_ text: String) {
-        let tranlatedText = translateText(text)
+        let (tranlatedText, toRussian) = translateText(text)
         
         let utf16Chars = Array(tranlatedText.utf16)
+        replaceLog("select: lang=\(InputSourceUtils.getCurrentInputSource()?.id ?? "nil") '\(text)' → '\(tranlatedText)' (\(utf16Chars.count) utf16), typing it")
         let event1 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: true);
         event1?.keyboardSetUnicodeString(stringLength: utf16Chars.count, unicodeString: utf16Chars)
         postSynthetic(event1, flags: .maskNonCoalesced, .cghidEventTap)
 
         let event2 = CGEvent(keyboardEventSource: nil, virtualKey: 0x31, keyDown: false);
         postSynthetic(event2, flags: .maskNonCoalesced, .cghidEventTap)
+
+        // Leave the layout matching the converted text (the action key toggled it blindly)
+        InputSourceUtils.selectLang(russian: toRussian)
     }
 }

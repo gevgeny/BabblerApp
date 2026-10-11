@@ -11,12 +11,12 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-14.4%2B-blue?logo=apple&logoColor=white" alt="macOS 14.4+">
-  <img src="https://img.shields.io/badge/version-0.8.4-teal" alt="Version 0.8.4">
+  <img src="https://img.shields.io/badge/version-0.8.5-teal" alt="Version 0.8.5">
   <img src="https://img.shields.io/badge/Swift-SwiftUI-orange?logo=swift&logoColor=white" alt="Swift / SwiftUI">
 </p>
 
 <p align="center">
-  <a href="./bin/Babbler%20v0.8.4.zip"><strong>Download v0.8.4</strong></a> ·
+  <a href="./bin/Babbler%20v0.8.5.zip"><strong>Download v0.8.5</strong></a> ·
   <a href="#features">Features</a> ·
   <a href="#installation">Installation</a> ·
   <a href="#building-from-source">Build</a>
@@ -60,7 +60,7 @@ Ghbdtn   →  ⌥  →  Привет
 
 ## Installation
 
-1. Download [**Babbler v0.8.4**](./bin/Babbler%20v0.8.4.zip) and unzip it. The app is signed with a Developer ID and notarized by Apple. Older builds are in [`bin`](./bin).
+1. Download [**Babbler v0.8.5**](./bin/Babbler%20v0.8.5.zip) and unzip it. The app is signed with a Developer ID and notarized by Apple. Older builds are in [`bin`](./bin).
 2. Move **Babbler.app** to `/Applications` and launch it. The icon appears in the menu bar.
 3. macOS asks for Accessibility access — click **Open System Settings** and turn on **Babbler**.
    Babbler picks the permission up automatically; no restart needed.

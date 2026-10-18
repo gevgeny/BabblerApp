@@ -47,7 +47,7 @@ struct MenuBarLabel: View {
   }
 
   var body: some View {
-    if appDelegate.isSecurityInput || !appDelegate.hasAccessibility {
+    if appDelegate.isSecurityInput || !appDelegate.hasAllPermissions {
       Image(nsImage: ImageUtils.addSecureInputDot(to: stateIconBase))
     } else if !isTextReplaceEnabled {
       Image(nsImage: ImageUtils.dimmed(stateIconBase))
@@ -86,17 +86,18 @@ struct MenuView: View {
             .padding(.top, 10)
             .padding(.bottom, 6)
 
-            if !appDelegate.hasAccessibility {
-                Text("⛔️ Babbler needs Accessibility access to replace text")
+            if !appDelegate.hasAllPermissions {
+                let permission = appDelegate.hasAccessibility ? "Input Monitoring" : "Accessibility"
+                Text("⛔️ Babbler needs \(permission) access to replace text")
                     .font(.caption)
                     .foregroundStyle(.red)
                     .padding(.horizontal, 14)
                     .padding(.bottom, 2)
                 Button {
                     dismiss()
-                    appDelegate.requestAccessibilityPermissions()
+                    appDelegate.requestPermissions()
                 } label: {
-                    Text("Grant Accessibility Access...")
+                    Text("Grant \(permission) Access...")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(MenuItemButtonStyle())

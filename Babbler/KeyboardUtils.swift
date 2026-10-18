@@ -202,6 +202,17 @@ final class GlobeKeyMonitor {
       IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
     }
 
+    // First time: the system prompt adds Babbler to the Input Monitoring list (switched off).
+    // Once macOS has an answer — denied, or an entry from a differently signed build — the prompt
+    // never shows again, so open the Input Monitoring settings page instead
+    static func requestInputMonitoringPermission() {
+      if IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeUnknown {
+        IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+      } else if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
+        NSWorkspace.shared.open(url)
+      }
+    }
+
     static var systemGlobeAction: Int? {
       let domain = "com.apple.HIToolbox" as CFString
       // Refresh after returning from System Settings. Never change the system preference.

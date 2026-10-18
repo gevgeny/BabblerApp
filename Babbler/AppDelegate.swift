@@ -7,6 +7,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     @Published var isSecurityInput = false
     @Published var securityApp: String?
     @Published var hasAccessibility = AXIsProcessTrusted()
+    // Since macOS 27 the global monitor only receives typed keys (keyDown/keyUp) with Input
+    // Monitoring; modifiers still arrive without it, so the layout switched but no word was recorded
+    @Published var hasInputMonitoring = KeyboardUtils.hasInputMonitoringPermission
+    var hasAllPermissions: Bool { hasAccessibility && hasInputMonitoring }
     @Published var globeKeyAvailable = false
 
     var isWaitingForSwitch = false
@@ -42,21 +46,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 timer.invalidate()
                 return
             }
-            if AXIsProcessTrusted() {
+            let newlyAccessible = !self.hasAccessibility && AXIsProcessTrusted()
+            self.hasAccessibility = AXIsProcessTrusted()
+            self.hasInputMonitoring = KeyboardUtils.hasInputMonitoringPermission
+            if newlyAccessible {
+                // The action key works from here on; ask for the second grant right away
+                self.globeKeyAvailable = KeyboardUtils.addGlobalEventListener(self.handleGlobalSystemEvent)
+                if !self.hasInputMonitoring { KeyboardUtils.requestInputMonitoringPermission() }
+            }
+            if self.hasAllPermissions {
                 timer.invalidate()
                 self.permissionCheckTimer = nil
-                self.hasAccessibility = true
+                // (Re)create the monitor so it picks up the new grants without a restart
                 self.globeKeyAvailable = KeyboardUtils.addGlobalEventListener(self.handleGlobalSystemEvent)
             }
         }
     }
 
-    func requestAccessibilityPermissions() {
-        // The system prompt (re)adds Babbler to the Accessibility list, switched off, and its
+    func requestPermissions() {
+        // The system prompts (re)add Babbler to the list, switched off, and their
         // "Open System Settings" button goes straight there — so the user only flips the switch.
-        // No dialog of our own: every call shows the system one, two at once is noise
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        AXIsProcessTrustedWithOptions(options)
+        // No dialog of our own: every call shows the system one, two at once is noise.
+        // One prompt at a time: Accessibility first, Input Monitoring once that's granted
+        if !AXIsProcessTrusted() {
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+            AXIsProcessTrustedWithOptions(options)
+        } else if !KeyboardUtils.hasInputMonitoringPermission {
+            KeyboardUtils.requestInputMonitoringPermission()
+        }
         startPermissionPolling()
     }
 
@@ -98,7 +115,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 }
             } else {
                 KeyboardUtils.fetchSelectedText { text in
-                    if text.count > 0 { KeyboardUtils.typeText(text) }
+                    // Editors (Zed, VS Code, JetBrains) copy the whole current line when nothing is
+                    // selected; typing that back inserted a converted duplicate of the line.
+                    // ponytail: a real selection ending in a line break is skipped too — read the
+                    // selection via Accessibility if that case matters
+                    if !text.isEmpty && !text.hasSuffix("\n") { KeyboardUtils.typeText(text) }
                     self.isWaitingForSwitch = false
                 }
             }
@@ -126,12 +147,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         currentLang = InputSourceUtils.getCurrentInputSource()
-        // Everything above works without Accessibility (menu switcher, per-app sources);
-        // key monitoring and text replacement need it
+        // Everything above works without permissions (menu switcher, per-app sources);
+        // key monitoring and text replacement need Accessibility + Input Monitoring
         if hasAccessibility {
             globeKeyAvailable = KeyboardUtils.addGlobalEventListener(handleGlobalSystemEvent)
-        } else {
-            requestAccessibilityPermissions()
+        }
+        if !hasAllPermissions {
+            requestPermissions()
         }
         if UserDefaults.standard.object(forKey: clipboardHistoryEnabledKey) == nil || UserDefaults.standard.bool(forKey: clipboardHistoryEnabledKey) {
             clipboardHistory.start()
